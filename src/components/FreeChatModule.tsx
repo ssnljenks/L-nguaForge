@@ -1,10 +1,8 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
   ArrowRight,
-  AudioLines,
   BookmarkPlus,
   Captions,
-  Check,
   HelpCircle,
   Keyboard,
   Loader2,
@@ -14,37 +12,18 @@ import {
   RotateCcw,
   Send,
   Volume2,
-  X,
 } from 'lucide-react';
-import type {
-  ChatRegisterMode,
-  FreeChatMessage,
-  FreeChatThread,
-  MissionConfig,
-  ModuleTab,
-  VocabCategory,
-  VocabItem,
-} from '../types';
-import {
-  buildChatThreadTitle,
-  getDialectInfo,
-  getDomainInfo,
-  LANGUAGE_LABELS,
-  normalizeVocabCategory,
-  resolveActiveThreadForLanguage,
-  tokenizeTranscript,
-} from '../utils/ilrLogic';
-import {
-  type EnrichedTotResult,
-  type EnrichedWordLookup,
-  incrementApiSavedCount,
-  lookupLocalWord,
-  type LookupSource,
-} from '../utils/localDictionary';
-import {lookupContextualWord, requestTotPhrase, sendFreeChatTurn} from '../services/api';
+import type {ChatRegisterMode, FreeChatMessage, FreeChatThread, MissionConfig, ModuleTab, VocabItem} from '../types';
+import {buildChatThreadTitle, getDialectInfo, LANGUAGE_LABELS, resolveActiveThreadForLanguage} from '../utils/ilrLogic';
+import {sendFreeChatTurn} from '../services/api';
 import {useGeminiLive, type GeminiLiveVoice} from '../hooks/useGeminiLive';
 import {useSpeechSynthesis} from '../hooks/useSpeech';
+import {type SaveVocabFn, useWordLookup} from '../hooks/useWordLookup';
 import {createId} from '../utils/ids';
+import {TappableText} from './shared/TappableText';
+import {WordLookupPopover} from './shared/WordLookupPopover';
+import {FlagWordDrawer} from './chat/FlagWordDrawer';
+import {LiveVoiceOrb} from './chat/LiveVoiceOrb';
 
 interface FreeChatModuleProps {
   config: MissionConfig;
@@ -52,28 +31,10 @@ interface FreeChatModuleProps {
   vocabItems: VocabItem[];
   onUpdateThreads: React.Dispatch<React.SetStateAction<FreeChatThread[]>>;
   onUpdateConfig: (patch: Partial<MissionConfig>) => void;
-  onSaveVocab: (item: Omit<VocabItem, 'id' | 'createdAt' | 'mastery' | 'reviewCount'>) => void;
+  onSaveVocab: SaveVocabFn;
   onNavigateTab: (tab: ModuleTab) => void;
   onOpenTabHelp: () => void;
 }
-
-interface ActiveWordPopover {
-  messageId: string;
-  word: string;
-  contextSentence: string;
-  loading: boolean;
-  result?: EnrichedWordLookup;
-  error?: string;
-  saved?: boolean;
-}
-
-const SOURCE_LABELS: Record<LookupSource, string> = {
-  vault: 'In Vault · Offline',
-  military_dict: 'Military Dict · Offline',
-  dictionary: 'Local Dict · Offline',
-  cache: 'Cached · Offline',
-  ai: 'AI Context · Cached',
-};
 
 const VOICE_OPTIONS: {id: GeminiLiveVoice; label: string}[] = [
   {id: 'Zephyr', label: 'Zephyr'},
@@ -93,7 +54,6 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
   onOpenTabHelp,
 }) => {
   const dialectInfo = getDialectInfo(config.language, config.dialect);
-  const domainInfo = getDomainInfo(config.domain);
 
   const [activeThreadId, setActiveThreadId] = useState<string>(
     () => threads.find((t) => t.language === config.language)?.id ?? ''
@@ -109,30 +69,10 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
   const [isSendingText, setIsSendingText] = useState(false);
   const [textError, setTextError] = useState<string | null>(null);
 
-  // Tap-any-word lookup popover
-  const [wordPopover, setWordPopover] = useState<ActiveWordPopover | null>(null);
-
-  // Lightweight inline "Flag a word" drawer state
-  const [flagMode, setFlagMode] = useState<'lookup' | 'direct'>('lookup');
-  const [flagInput, setFlagInput] = useState('');
-  const [flagDirectEnglish, setFlagDirectEnglish] = useState('');
-  const [flagCategory, setFlagCategory] = useState<VocabCategory>('Regional Idioms');
-  const [flagLoading, setFlagLoading] = useState(false);
-  const [flagError, setFlagError] = useState<string | null>(null);
-  const [flagResult, setFlagResult] = useState<EnrichedTotResult | null>(null);
-  const [flagSaved, setFlagSaved] = useState(false);
-
   const activeThreadIdRef = useRef(activeThreadId);
   activeThreadIdRef.current = activeThreadId;
 
-  const currentLanguageRef = useRef(config.language);
-  currentLanguageRef.current = config.language;
-
-  const threadsRef = useRef(threads);
-  threadsRef.current = threads;
-
   const transcriptPaneRef = useRef<HTMLDivElement | null>(null);
-  const wordPopoverRef = useRef<HTMLDivElement | null>(null);
   const tts = useSpeechSynthesis();
 
   const activeThread = useMemo(
@@ -209,16 +149,13 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     );
   };
 
+  const wordLookup = useWordLookup({config, vocabItems, onSaveVocab, onSaved: recordSavedTerm});
+
   const live = useGeminiLive({
     onTurnComplete: (role, text) => {
       appendMessageToThread(role, text);
     },
   });
-
-  const liveRef = useRef(live);
-  liveRef.current = live;
-  const ttsRef = useRef(tts);
-  ttsRef.current = tts;
 
   // Scroll only the internal transcript pane smoothly without stacking animations on rapid captions
   useEffect(() => {
@@ -233,43 +170,9 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     return () => window.cancelAnimationFrame(rafId);
   }, [activeThread?.messages.length, live.liveUserTranscript, live.livePartnerTranscript, isSendingText]);
 
-  // Keep newly opened word lookup popover fully visible inside the transcript pane
-  useEffect(() => {
-    if (!wordPopover) return;
-    const rafId = window.requestAnimationFrame(() => {
-      wordPopoverRef.current?.scrollIntoView({behavior: 'smooth', block: 'nearest'});
-    });
-    return () => window.cancelAnimationFrame(rafId);
-  }, [wordPopover?.messageId, wordPopover?.word, wordPopover?.loading]);
-
-  // Enforce complete isolation whenever the user switches target language (ES <-> PT)
-  const prevLangRef = useRef(config.language);
-  useEffect(() => {
-    if (prevLangRef.current !== config.language) {
-      prevLangRef.current = config.language;
-      if (liveRef.current.isLive) {
-        liveRef.current.endSession();
-      }
-      ttsRef.current.stop();
-      const nextThreadId = threadsRef.current.find((t) => t.language === config.language)?.id ?? '';
-      activeThreadIdRef.current = nextThreadId;
-      setActiveThreadId(nextThreadId);
-      setWordPopover(null);
-      setTextInput('');
-      setTextError(null);
-      setIsSendingText(false);
-      setShowFlagDrawer(false);
-      setFlagInput('');
-      setFlagDirectEnglish('');
-      setFlagResult(null);
-      setFlagError(null);
-      setFlagSaved(false);
-    }
-  }, [config.language]);
-
   const handleToggleLiveCall = () => {
     setTextError(null);
-    setWordPopover(null);
+    wordLookup.close();
     if (live.isLive) {
       live.endSession();
       return;
@@ -277,8 +180,8 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     tts.stop();
     live.startSession({
       language: config.language,
-      dialect: dialectInfo.id,
-      domain: domainInfo.id,
+      dialect: config.dialect,
+      domain: config.domain,
       registerMode,
       voiceName,
     });
@@ -295,7 +198,7 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     if (clearedId) {
       onUpdateThreads((prev) => prev.filter((t) => t.id !== clearedId));
     }
-    setWordPopover(null);
+    wordLookup.close();
     setTextError(null);
   };
 
@@ -306,7 +209,7 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
 
     setTextInput('');
     setTextError(null);
-    setWordPopover(null);
+    wordLookup.close();
 
     // If Live Voice session is active, inject directly into the live stream!
     if (live.isLive) {
@@ -318,7 +221,6 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
       return;
     }
 
-    const requestLang = config.language;
     const priorHistory = (activeThread?.messages ?? []).map((m) => ({
       role: m.role,
       text: typeof m.text === 'string' ? m.text : '',
@@ -329,200 +231,30 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
 
     try {
       const res = await sendFreeChatTurn({
-        language: requestLang,
-        dialect: dialectInfo.id,
-        domain: domainInfo.id,
+        language: config.language,
+        dialect: config.dialect,
+        domain: config.domain,
         registerMode,
         history: priorHistory,
         userMessage: clean,
       });
-      if (currentLanguageRef.current !== requestLang) return;
       const reply = typeof res?.replyText === 'string' ? res.replyText.trim() : '';
       if (!reply) {
         throw new Error('Partner reply was empty. Please try again.');
       }
       appendMessageToThread('assistant', reply);
     } catch (err) {
-      if (currentLanguageRef.current !== requestLang) return;
       setTextError(err instanceof Error ? err.message : 'Unable to reach conversation partner.');
     } finally {
-      if (currentLanguageRef.current === requestLang) {
-        setIsSendingText(false);
-      }
+      setIsSendingText(false);
     }
-  };
-
-  const handleWordClick = async (messageId: string, cleanWord: string, contextSentence: string, forceAi = false) => {
-    if (!cleanWord) return;
-    const requestLang = config.language;
-
-    // Instant synchronous resolution from Vault, Offline Military Dict, Core Dict, or localStorage LRU cache
-    if (!forceAi) {
-      const localHit = lookupLocalWord(requestLang, cleanWord, vocabItems);
-      if (localHit) {
-        incrementApiSavedCount();
-        setWordPopover({
-          messageId,
-          word: cleanWord,
-          contextSentence,
-          loading: false,
-          result: localHit,
-          saved: localHit.source === 'vault',
-        });
-        return;
-      }
-    }
-
-    setWordPopover({
-      messageId,
-      word: cleanWord,
-      contextSentence,
-      loading: true,
-    });
-    try {
-      const result = await lookupContextualWord({
-        language: requestLang,
-        dialect: dialectInfo.id,
-        word: cleanWord,
-        contextSentence,
-        vocabItems,
-        forceAi,
-      });
-      if (currentLanguageRef.current !== requestLang) return;
-      if (!result.contextualMeaning?.trim()) {
-        throw new Error('Could not retrieve the word meaning. Please tap Retry.');
-      }
-      setWordPopover({
-        messageId,
-        word: cleanWord,
-        contextSentence,
-        loading: false,
-        result,
-        saved: false,
-      });
-    } catch (err) {
-      if (currentLanguageRef.current !== requestLang) return;
-      setWordPopover({
-        messageId,
-        word: cleanWord,
-        contextSentence,
-        loading: false,
-        error: err instanceof Error ? err.message : 'Lookup failed.',
-      });
-    }
-  };
-
-  const handleSavePopoverWord = () => {
-    if (!wordPopover?.result) return;
-    onSaveVocab({
-      term: wordPopover.word,
-      englishConcept: wordPopover.result.contextualMeaning,
-      contextSentence: wordPopover.contextSentence,
-      registerTag: wordPopover.result.registerTag,
-      category: normalizeVocabCategory(wordPopover.result.suggestedCategory),
-      language: config.language,
-      dialect: config.dialect,
-      domain: config.domain,
-    });
-    recordSavedTerm(wordPopover.word);
-    setWordPopover((prev) => (prev ? {...prev, saved: true} : null));
-  };
-
-  const handleFlagSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFlagError(null);
-    setFlagSaved(false);
-
-    if (flagMode === 'direct') {
-      if (!flagInput.trim() || !flagDirectEnglish.trim()) {
-        setFlagError('Enter both the word/phrase and its English meaning.');
-        return;
-      }
-      const term = flagInput.trim();
-      onSaveVocab({
-        term,
-        englishConcept: flagDirectEnglish.trim(),
-        contextSentence:
-          activeThread?.messages[activeThread.messages.length - 1]?.text ||
-          `Saved during live ${LANGUAGE_LABELS[config.language]} conversation.`,
-        registerTag: 'Live Voice Capture',
-        category: flagCategory,
-        language: config.language,
-        dialect: config.dialect,
-        domain: config.domain,
-      });
-      recordSavedTerm(term);
-      setFlagInput('');
-      setFlagDirectEnglish('');
-      setFlagSaved(true);
-      return;
-    }
-
-    if (!flagInput.trim()) {
-      setFlagError('Type the English phrase you wanted to say.');
-      return;
-    }
-
-    const requestLang = config.language;
-    setFlagLoading(true);
-    setFlagResult(null);
-    try {
-      const res = await requestTotPhrase({
-        language: requestLang,
-        dialect: dialectInfo.id,
-        domain: domainInfo.id,
-        englishQuery: flagInput.trim(),
-      });
-      if (currentLanguageRef.current !== requestLang) return;
-      setFlagResult(res);
-    } catch (err) {
-      if (currentLanguageRef.current !== requestLang) return;
-      setFlagError(err instanceof Error ? err.message : 'Could not translate phrase.');
-    } finally {
-      if (currentLanguageRef.current === requestLang) {
-        setFlagLoading(false);
-      }
-    }
-  };
-
-  const handleSaveFlagResult = () => {
-    if (!flagResult) return;
-    onSaveVocab({
-      term: flagResult.targetPhrase,
-      englishConcept: flagInput.trim() || flagResult.registerNote,
-      contextSentence: flagResult.exampleSentence,
-      registerTag: flagResult.registerNote,
-      category: normalizeVocabCategory(flagResult.category),
-      language: config.language,
-      dialect: config.dialect,
-      domain: config.domain,
-    });
-    recordSavedTerm(flagResult.targetPhrase);
-    setFlagSaved(true);
   };
 
   const messages = useMemo(
     () => (activeThread?.messages ?? []).filter((m) => m && typeof m.id === 'string'),
     [activeThread?.messages]
   );
-  const tokenizedByMessageId = useMemo(() => {
-    const map = new Map<string, ReturnType<typeof tokenizeTranscript>>();
-    for (const msg of messages) {
-      if (msg.role === 'assistant') {
-        const safeText = typeof msg.text === 'string' ? msg.text : '';
-        map.set(msg.id, tokenizeTranscript(safeText));
-      }
-    }
-    return map;
-  }, [messages]);
   const savedCount = activeThread?.savedTerms.length ?? 0;
-  const activeEnergy =
-    live.status === 'speaking'
-      ? Math.max(0.22, live.aiLevel)
-      : live.status === 'listening' && !live.isMuted
-        ? Math.max(0.08, live.micLevel)
-        : 0;
-
   const statusHeadline =
     live.status === 'connecting'
       ? 'Connecting live audio…'
@@ -535,9 +267,6 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
           : `Live ${LANGUAGE_LABELS[config.language]} Voice Partner`;
 
   const activeError = live.error || textError;
-
-  // 5 reactive acoustic bars for the Gemini Live orb
-  const barMultipliers = [0.55, 0.85, 1.0, 0.85, 0.55];
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
@@ -614,57 +343,13 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
 
       {/* Main Gemini Live Voice Stage */}
       <section className="rounded-2xl border border-[#23303E] bg-[#111922] px-5 py-8 sm:py-10 flex flex-col items-center text-center space-y-6">
-        {/* Reactive Voice Orb */}
-        <div className="relative flex items-center justify-center w-36 h-36 sm:w-40 sm:h-40">
-          {/* Outer reactive pulse ring */}
-          <div
-            aria-hidden="true"
-            className={`absolute inset-0 rounded-full transition-all duration-150 ${
-              live.status === 'speaking'
-                ? 'bg-sky-400/12 border border-sky-400/40'
-                : live.status === 'listening' && !live.isMuted
-                  ? 'bg-[#D99B26]/12 border border-[#D99B26]/45'
-                  : live.status === 'connecting'
-                    ? 'bg-[#D99B26]/10 border border-[#D99B26]/30 animate-pulse'
-                    : 'bg-[#16202B]/70 border border-[#23303E]'
-            }`}
-            style={{
-              transform: `scale(${1 + activeEnergy * 0.22})`,
-            }}
-          />
-
-          {/* Inner orb core */}
-          <div
-            className={`relative z-10 w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center border transition-colors ${
-              live.status === 'speaking'
-                ? 'bg-[#0F1E2E] border-sky-400/60'
-                : live.status === 'listening' && !live.isMuted
-                  ? 'bg-[#1A1812] border-[#D99B26]/70'
-                  : 'bg-[#0D141C] border-[#2A394A]'
-            }`}
-          >
-            {live.status === 'connecting' ? (
-              <Loader2 className="w-8 h-8 text-[#D99B26] animate-spin" />
-            ) : live.isLive ? (
-              <div className="flex items-center gap-1.5 h-10" aria-hidden="true">
-                {barMultipliers.map((mult, idx) => {
-                  const heightPx = live.isMuted ? 6 : Math.max(8, Math.round((0.18 + activeEnergy * mult) * 38));
-                  return (
-                    <span
-                      key={idx}
-                      className={`w-1.5 rounded-full transition-all duration-100 ${
-                        live.status === 'speaking' ? 'bg-sky-400' : live.isMuted ? 'bg-[#475569]' : 'bg-[#D99B26]'
-                      }`}
-                      style={{height: `${heightPx}px`}}
-                    />
-                  );
-                })}
-              </div>
-            ) : (
-              <AudioLines className="w-9 h-9 text-[#D99B26]" />
-            )}
-          </div>
-        </div>
+        <LiveVoiceOrb
+          status={live.status}
+          isLive={live.isLive}
+          isMuted={live.isMuted}
+          micLevel={live.micLevel}
+          aiLevel={live.aiLevel}
+        />
 
         {/* Live Status Copy */}
         <div className="space-y-1 max-w-md">
@@ -835,126 +520,13 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
 
           {/* Collapsible Inline "Flag a Word You Struggled With" Drawer */}
           {showFlagDrawer && (
-            <div className="p-4 border-b border-[#23303E] bg-[#0D141C] space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center p-0.5 rounded-lg bg-[#111922] border border-[#23303E]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFlagMode('lookup');
-                      setFlagError(null);
-                    }}
-                    className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                      flagMode === 'lookup' ? 'bg-[#1D2B3A] text-white' : 'text-[#8B9BB0]'
-                    }`}
-                  >
-                    How do I say…?
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFlagMode('direct');
-                      setFlagResult(null);
-                      setFlagError(null);
-                    }}
-                    className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                      flagMode === 'direct' ? 'bg-[#1D2B3A] text-white' : 'text-[#8B9BB0]'
-                    }`}
-                  >
-                    Save Directly
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowFlagDrawer(false)}
-                  aria-label="Close flag word drawer"
-                  className="p-1 text-[#94A3B8] hover:text-white"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <form onSubmit={handleFlagSubmit} className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                <input
-                  type="text"
-                  value={flagInput}
-                  onChange={(e) => {
-                    setFlagInput(e.target.value);
-                    setFlagSaved(false);
-                  }}
-                  placeholder={
-                    flagMode === 'lookup'
-                      ? 'English phrase you got stuck on…'
-                      : `${LANGUAGE_LABELS[config.language]} word or phrase`
-                  }
-                  className={`${
-                    flagMode === 'direct' ? 'sm:col-span-4' : 'sm:col-span-9'
-                  } min-h-[40px] rounded-lg border border-[#23303E] bg-[#111922] px-3 py-2 text-xs text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]`}
-                />
-
-                {flagMode === 'direct' && (
-                  <>
-                    <input
-                      type="text"
-                      value={flagDirectEnglish}
-                      onChange={(e) => setFlagDirectEnglish(e.target.value)}
-                      placeholder="English meaning"
-                      className="sm:col-span-4 min-h-[40px] rounded-lg border border-[#23303E] bg-[#111922] px-3 py-2 text-xs text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
-                    />
-                    <select
-                      aria-label="Vault category"
-                      value={flagCategory}
-                      onChange={(e) => setFlagCategory(e.target.value as VocabCategory)}
-                      className="sm:col-span-2 min-h-[40px] rounded-lg border border-[#23303E] bg-[#111922] px-2 text-xs text-[#E6EDF3]"
-                    >
-                      <option value="Regional Idioms">Idioms</option>
-                      <option value="High-Register Connectors">Connectors</option>
-                      <option value="Operational/Military Terms">Operational</option>
-                      <option value="False Friends">False Friends</option>
-                    </select>
-                  </>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={flagLoading}
-                  className={`${
-                    flagMode === 'direct' ? 'sm:col-span-2' : 'sm:col-span-3'
-                  } min-h-[40px] rounded-lg bg-[#16202B] border border-[#2E4054] text-xs font-semibold text-[#F8FAFC] hover:bg-[#1E2C3A] disabled:opacity-50 flex items-center justify-center gap-1.5`}
-                >
-                  {flagLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin text-[#D99B26]" /> : null}
-                  <span>{flagMode === 'lookup' ? 'Look Up' : 'Save'}</span>
-                </button>
-              </form>
-
-              {flagError && <p className="text-xs text-red-300">{flagError}</p>}
-              {flagSaved && flagMode === 'direct' && <p className="text-xs text-emerald-400">Saved to Vocab Vault.</p>}
-
-              {flagResult && (
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-[#23303E]">
-                  <div className="space-y-0.5">
-                    <p className="text-[11px] text-[#7D8FA3]">
-                      {flagResult.source === 'dictionary'
-                        ? 'Instant Dictionary (0 API)'
-                        : flagResult.source === 'cache'
-                          ? 'Cached (0 API)'
-                          : 'AI Suggestion'}
-                    </p>
-                    <p className="text-sm font-semibold text-[#F3C669]">{flagResult.targetPhrase}</p>
-                    <p className="text-xs text-[#94A3B8]">{flagResult.exampleSentence}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSaveFlagResult}
-                    disabled={flagSaved}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-70 shrink-0"
-                  >
-                    {flagSaved ? <Check className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
-                    <span>{flagSaved ? 'Saved' : 'Save to Vault'}</span>
-                  </button>
-                </div>
-              )}
-            </div>
+            <FlagWordDrawer
+              config={config}
+              fallbackContextSentence={activeThread?.messages[activeThread.messages.length - 1]?.text ?? ''}
+              onSaveVocab={onSaveVocab}
+              onSaved={recordSavedTerm}
+              onClose={() => setShowFlagDrawer(false)}
+            />
           )}
 
           {/* Transcript Scroll Area */}
@@ -969,7 +541,6 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
                 {messages.map((msg) => {
                   const isPartner = msg.role === 'assistant';
                   const safeText = typeof msg.text === 'string' ? msg.text : '';
-                  const tokens = isPartner ? (tokenizedByMessageId.get(msg.id) ?? []) : [];
                   return (
                     <div key={msg.id} className={`flex flex-col ${isPartner ? 'items-start' : 'items-end'}`}>
                       <div className="flex items-center gap-2 text-[11px] text-[#7D8FA3] mb-1 px-1">
@@ -1000,136 +571,26 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
                         }`}
                       >
                         {isPartner ? (
-                          <p>
-                            {tokens.map((tok, idx) =>
-                              tok.isWord ? (
-                                <button
-                                  key={`${msg.id}-${idx}`}
-                                  type="button"
-                                  onClick={() => handleWordClick(msg.id, tok.cleanWord, safeText)}
-                                  className={`inline rounded px-0.5 transition-colors hover:bg-[#D99B26]/25 hover:text-white ${
-                                    wordPopover?.messageId === msg.id && wordPopover?.word === tok.cleanWord
-                                      ? 'bg-[#D99B26]/30 text-[#F3C669] underline decoration-[#D99B26]'
-                                      : ''
-                                  }`}
-                                >
-                                  {tok.text}
-                                </button>
-                              ) : (
-                                <span key={`${msg.id}-${idx}`}>{tok.text}</span>
-                              )
-                            )}
-                          </p>
+                          <TappableText
+                            text={safeText}
+                            activeWord={wordLookup.lookup?.messageId === msg.id ? wordLookup.lookup.word : undefined}
+                            onWordTap={(word) => wordLookup.lookUpWord(msg.id, word, safeText)}
+                            hoverClassName="hover:text-white"
+                          />
                         ) : (
                           <p>{safeText}</p>
                         )}
                       </div>
 
                       {/* Tap-to-Save Word Popover */}
-                      {isPartner && wordPopover?.messageId === msg.id && (
-                        <div
-                          ref={wordPopoverRef}
-                          role="region"
-                          aria-label={`Word lookup for ${wordPopover.word}`}
-                          className="mt-2 w-full max-w-sm rounded-xl border border-[#D99B26]/45 bg-[#0D141C] p-3.5 space-y-2"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <p className="text-sm font-semibold text-[#F8FAFC]">{wordPopover.word}</p>
-                              {wordPopover.result &&
-                                [
-                                  SOURCE_LABELS[wordPopover.result.source],
-                                  wordPopover.result.registerTag,
-                                  wordPopover.result.suggestedCategory,
-                                ].filter(Boolean).length > 0 && (
-                                  <p className="text-[11px] text-[#94A3B8]">
-                                    {[
-                                      SOURCE_LABELS[wordPopover.result.source],
-                                      wordPopover.result.registerTag,
-                                      wordPopover.result.suggestedCategory,
-                                    ]
-                                      .filter(Boolean)
-                                      .join(' · ')}
-                                  </p>
-                                )}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setWordPopover(null)}
-                              aria-label="Close word lookup"
-                              className="p-1 text-[#94A3B8] hover:text-white"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-
-                          {wordPopover.loading && (
-                            <div className="flex items-center gap-2 text-xs text-[#94A3B8]">
-                              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#D99B26]" />
-                              <span>Looking up meaning…</span>
-                            </div>
-                          )}
-
-                          {wordPopover.error && (
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="text-xs text-red-300">{wordPopover.error}</p>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleWordClick(wordPopover.messageId, wordPopover.word, wordPopover.contextSentence)
-                                }
-                                className="px-2.5 py-1 rounded-md border border-[#2E4054] bg-[#16202B] text-xs font-medium text-[#F8FAFC] hover:bg-[#1E2C3A] shrink-0"
-                              >
-                                Retry
-                              </button>
-                            </div>
-                          )}
-
-                          {wordPopover.result && (
-                            <>
-                              <p className="text-sm font-medium text-[#E6EDF3]">
-                                {wordPopover.result.contextualMeaning}
-                              </p>
-                              {wordPopover.result.grammarNote && (
-                                <p className="text-xs text-[#94A3B8]">{wordPopover.result.grammarNote}</p>
-                              )}
-                              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                                {wordPopover.result.source !== 'ai' ? (
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleWordClick(
-                                        wordPopover.messageId,
-                                        wordPopover.word,
-                                        wordPopover.contextSentence,
-                                        true
-                                      )
-                                    }
-                                    className="text-[11px] font-medium text-[#94A3B8] hover:text-[#F3C669] hover:underline"
-                                  >
-                                    Ask AI for sentence context
-                                  </button>
-                                ) : (
-                                  <span />
-                                )}
-
-                                <button
-                                  type="button"
-                                  onClick={handleSavePopoverWord}
-                                  disabled={wordPopover.saved}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-70"
-                                >
-                                  {wordPopover.saved ? (
-                                    <Check className="w-3.5 h-3.5" />
-                                  ) : (
-                                    <BookmarkPlus className="w-3.5 h-3.5" />
-                                  )}
-                                  <span>{wordPopover.saved ? 'Saved to Vault' : 'Save to Vocab Vault'}</span>
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
+                      {isPartner && wordLookup.lookup?.messageId === msg.id && (
+                        <WordLookupPopover
+                          lookup={wordLookup.lookup}
+                          onClose={wordLookup.close}
+                          onRetry={wordLookup.retry}
+                          onSave={wordLookup.save}
+                          compact
+                        />
                       )}
                     </div>
                   );

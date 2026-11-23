@@ -397,6 +397,8 @@ export default function App() {
         {/* Main Content Viewport */}
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-10">
           <div className="max-w-6xl mx-auto">
+            {/* Keyed by language: switching language remounts the module, which resets its session state
+                (modules rely on this instead of their own reset logic). */}
             <ErrorBoundary key={`${activeTab}-${config.language}`} scopeLabel="Active Module">
               {activeTab === 'chat' && (
                 <FreeChatModule

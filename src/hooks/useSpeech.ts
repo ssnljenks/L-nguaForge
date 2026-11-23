@@ -49,6 +49,8 @@ export function useSpeechSynthesis() {
     window.speechSynthesis.onvoiceschanged = loadVoices;
     return () => {
       window.speechSynthesis.onvoiceschanged = null;
+      // Stop speech when the owning module unmounts (tab or language switch).
+      window.speechSynthesis.cancel();
     };
   }, [supported]);
 
