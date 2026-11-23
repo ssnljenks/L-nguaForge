@@ -11,7 +11,7 @@ import {
   PREP_PHASES,
 } from '../../utils/ilrLogic';
 import {generatePrepPrompt, gradePrepMonologue} from '../../services/api';
-import {getCachedPrepPrompt, savePrepPromptCache} from '../../utils/localDictionary';
+import {getCachedPrepPrompt, savePrepPromptCache} from '../../utils/lookupCacheStore';
 import {useAudioRecorder, useSpeechRecognition} from '../../hooks/useSpeech';
 import {createId} from '../../utils/ids';
 

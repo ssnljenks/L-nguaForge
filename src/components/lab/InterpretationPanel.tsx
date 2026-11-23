@@ -4,7 +4,7 @@ import type {DrillHistoryEntry, InterpBriefing, InterpEvaluation, MissionConfig}
 import {SEED_INTERP_BRIEFINGS} from '../../data/seedData';
 import {getDialectInfo, LANGUAGE_LABELS} from '../../utils/ilrLogic';
 import {generateInterpBriefing, gradeInterpretation} from '../../services/api';
-import {getCachedInterpBriefing, saveInterpBriefingCache} from '../../utils/localDictionary';
+import {getCachedInterpBriefing, saveInterpBriefingCache} from '../../utils/lookupCacheStore';
 import {useSpeechRecognition, useSpeechSynthesis} from '../../hooks/useSpeech';
 import {createId} from '../../utils/ids';
 import type {LabPanelHandle} from './PrepMonologuePanel';

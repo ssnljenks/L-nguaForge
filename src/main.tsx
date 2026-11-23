@@ -17,6 +17,18 @@ if (import.meta.env.DEV && typeof navigator !== 'undefined' && 'serviceWorker' i
     .catch(() => {});
 }
 
+// After a deploy, an open tab may request code-split chunks that no longer exist. Reload once to
+// pick up the new build instead of showing an error (guarded so a real outage can't loop).
+window.addEventListener('vite:preloadError', (event) => {
+  const RELOAD_KEY = 'linguaforge_chunk_reload_at';
+  const last = Number(sessionStorage.getItem(RELOAD_KEY) ?? 0);
+  if (Date.now() - last > 60_000) {
+    event.preventDefault();
+    sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+    window.location.reload();
+  }
+});
+
 createRoot(document.getElementById('root')!).render(
   <ErrorBoundary scopeLabel="LinguaForge ILR">
     <App />
