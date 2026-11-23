@@ -200,9 +200,8 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
     try {
       const fresh = await generatePrepPrompt({
         language: requestLang,
-        dialectLabel: dialectInfo.label,
+        dialect: dialectInfo.id,
         domain: config.domain,
-        domainLabel: domainInfo.label,
       });
       savePrepPromptCache(requestLang, config.domain, fresh);
       if (currentLanguageRef.current !== requestLang) return;
@@ -234,7 +233,7 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
     try {
       const evaluation = await gradePrepMonologue({
         language: requestLang,
-        dialectLabel: dialectInfo.label,
+        dialect: dialectInfo.id,
         promptTarget: prepPrompt.promptTarget,
         transcript: clean,
         durationSeconds: Math.max(prepElapsed, 30),
@@ -299,9 +298,7 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
       const fresh = await generateInterpBriefing({
         language: requestLang,
         dialect: config.dialect,
-        dialectLabel: dialectInfo.label,
         domain: config.domain,
-        domainLabel: domainInfo.label,
       });
       saveInterpBriefingCache(requestLang, config.dialect, config.domain, fresh);
       if (currentLanguageRef.current !== requestLang) return;

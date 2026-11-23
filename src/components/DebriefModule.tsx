@@ -53,8 +53,8 @@ export const DebriefModule: React.FC<DebriefModuleProps> = ({
       const domainInfo = getDomainInfo(activeSession.domain);
       const report = await runSessionDebrief({
         language: activeSession.language,
-        dialectLabel: dialectInfo.label,
-        domainLabel: domainInfo.label,
+        dialect: dialectInfo.id,
+        domain: domainInfo.id,
         messages: activeSession.messages.map((m) => ({role: m.role, text: m.text})),
       });
       onSaveDebrief(activeSession.id, report);

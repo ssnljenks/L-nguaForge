@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import type {ChatRegisterMode, TargetLanguage} from '../types';
+import type {ChatRegisterMode, MilitaryDomain, TargetLanguage} from '../types';
 import {
   base64PcmToFloat32,
   computeRmsLevel,
@@ -14,8 +14,8 @@ export type GeminiLiveStatus = 'idle' | 'connecting' | 'listening' | 'speaking' 
 
 export interface LiveSessionStartOptions {
   language: TargetLanguage;
-  dialectLabel: string;
-  domainLabel: string;
+  dialect: string;
+  domain: MilitaryDomain;
   registerMode: ChatRegisterMode;
   voiceName: GeminiLiveVoice;
 }
@@ -312,8 +312,8 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
             JSON.stringify({
               type: 'start',
               language: options.language,
-              dialectLabel: options.dialectLabel,
-              domainLabel: options.domainLabel,
+              dialect: options.dialect,
+              domain: options.domain,
               registerMode: options.registerMode,
               voiceName: options.voiceName,
             })

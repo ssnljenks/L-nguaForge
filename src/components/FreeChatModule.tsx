@@ -276,8 +276,8 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     tts.stop();
     live.startSession({
       language: config.language,
-      dialectLabel: dialectInfo.label,
-      domainLabel: domainInfo.label,
+      dialect: dialectInfo.id,
+      domain: domainInfo.id,
       registerMode,
       voiceName,
     });
@@ -329,8 +329,8 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     try {
       const res = await sendFreeChatTurn({
         language: requestLang,
-        dialectLabel: dialectInfo.label,
-        domainLabel: domainInfo.label,
+        dialect: dialectInfo.id,
+        domain: domainInfo.id,
         registerMode,
         history: priorHistory,
         userMessage: clean,
@@ -381,7 +381,7 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     try {
       const result = await lookupContextualWord({
         language: requestLang,
-        dialectLabel: dialectInfo.label,
+        dialect: dialectInfo.id,
         word: cleanWord,
         contextSentence,
         vocabItems,
@@ -468,8 +468,8 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     try {
       const res = await requestTotPhrase({
         language: requestLang,
-        dialectLabel: dialectInfo.label,
-        domainLabel: domainInfo.label,
+        dialect: dialectInfo.id,
+        domain: domainInfo.id,
         englishQuery: flagInput.trim(),
       });
       if (currentLanguageRef.current !== requestLang) return;

@@ -249,12 +249,11 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
     setEvalLoading(true);
     setEvalError(null);
     try {
-      const domainLabel = getDomainInfo(currentCard.domain).label;
       const res = await evaluateRecallSentence({
         language: currentCard.language,
         targetTerm: currentCard.term,
         userSentence: usageSentence.trim(),
-        domainLabel,
+        domain: currentCard.domain,
       });
       setSentenceEval(res);
     } catch (err) {

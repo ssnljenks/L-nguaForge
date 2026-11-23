@@ -219,8 +219,8 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
     try {
       const turn = await requestOpiTurn({
         language: requestLang,
-        dialectLabel: dialectInfo.label,
-        domainLabel: domainInfo.label,
+        dialect: dialectInfo.id,
+        domain: domainInfo.id,
         probeLevel: 'level_2_baseline',
         elapsedSeconds: 0,
         history: [],
@@ -285,8 +285,8 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
     try {
       const turn = await requestOpiTurn({
         language: requestLang,
-        dialectLabel: dialectInfo.label,
-        domainLabel: domainInfo.label,
+        dialect: dialectInfo.id,
+        domain: domainInfo.id,
         probeLevel: probeDecision.level,
         elapsedSeconds,
         history: nextMessages.map((m) => ({role: m.role, text: m.text})),
@@ -360,7 +360,7 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
     try {
       const result = await lookupContextualWord({
         language: requestLang,
-        dialectLabel: dialectInfo.label,
+        dialect: dialectInfo.id,
         word: cleanWord,
         contextSentence,
         vocabItems,
@@ -417,8 +417,8 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
     try {
       const result = await requestTotPhrase({
         language: config.language,
-        dialectLabel: dialectInfo.label,
-        domainLabel: domainInfo.label,
+        dialect: dialectInfo.id,
+        domain: domainInfo.id,
         englishQuery: q,
       });
       setTotPendingResult(result);
