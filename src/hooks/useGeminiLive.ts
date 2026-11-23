@@ -1,12 +1,7 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {ChatRegisterMode, MilitaryDomain, TargetLanguage} from '../types';
-import {
-  base64PcmToFloat32,
-  computeRmsLevel,
-  downsampleFloat32ToInt16Pcm,
-  int16ToBase64,
-  mergeTranscriptChunk,
-} from '../utils/liveAudio';
+import {base64PcmToFloat32, computeRmsLevel, mergeTranscriptChunk, pcm16BytesToFloat32} from '../utils/liveAudio';
+import {type MicCapture, startMicCapture} from '../audio/micCapture';
 
 export type GeminiLiveVoice = 'Zephyr' | 'Puck' | 'Kore' | 'Fenrir' | 'Charon';
 
@@ -44,8 +39,7 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
   const wsRef = useRef<WebSocket | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const inputAudioCtxRef = useRef<AudioContext | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
-  const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const captureRef = useRef<MicCapture | null>(null);
 
   const outputAudioCtxRef = useRef<AudioContext | null>(null);
   const nextStartTimeRef = useRef<number>(0);
@@ -112,24 +106,8 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
     isReadyRef.current = false;
     stopQueuedPlayback();
 
-    if (processorRef.current) {
-      processorRef.current.onaudioprocess = null;
-      try {
-        processorRef.current.disconnect();
-      } catch {
-        // Ignore disconnect errors
-      }
-      processorRef.current = null;
-    }
-
-    if (sourceNodeRef.current) {
-      try {
-        sourceNodeRef.current.disconnect();
-      } catch {
-        // Ignore
-      }
-      sourceNodeRef.current = null;
-    }
+    captureRef.current?.stop();
+    captureRef.current = null;
 
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => {
@@ -176,8 +154,9 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
     setAiLevel(0);
   }, [stopQueuedPlayback]);
 
+  /** Queues a chunk of 24 kHz model audio for gapless playback. */
   const scheduleAudioChunk = useCallback(
-    (base64Pcm24k: string) => {
+    (floats: Float32Array) => {
       const ctx = outputAudioCtxRef.current;
       if (!ctx || ctx.state === 'closed') return;
 
@@ -185,7 +164,6 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
         ctx.resume().catch(() => {});
       }
 
-      const floats = base64PcmToFloat32(base64Pcm24k);
       if (floats.length === 0) return;
 
       const nowMs = performance.now();
@@ -305,6 +283,7 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
         // 3. Open WebSocket to our server-side Gemini Live bridge
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const ws = new WebSocket(`${protocol}//${window.location.host}/ws/live`);
+        ws.binaryType = 'arraybuffer';
         wsRef.current = ws;
 
         ws.onopen = () => {
@@ -316,11 +295,20 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
               domain: options.domain,
               registerMode: options.registerMode,
               voiceName: options.voiceName,
+              // Ask the server for raw binary PCM frames instead of base64-in-JSON (~33% smaller).
+              binaryAudio: true,
             })
           );
         };
 
         ws.onmessage = (event) => {
+          if (event.data instanceof ArrayBuffer) {
+            // Binary frame: model audio as 24 kHz Int16 PCM.
+            flushUserDraft();
+            scheduleAudioChunk(pcm16BytesToFloat32(new Uint8Array(event.data)));
+            return;
+          }
+
           let payload: Record<string, unknown>;
           try {
             payload = JSON.parse(String(event.data));
@@ -335,8 +323,9 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
           }
 
           if (payload.type === 'audio' && typeof payload.data === 'string') {
+            // Legacy JSON/base64 audio (servers without binary support).
             flushUserDraft();
-            scheduleAudioChunk(payload.data);
+            scheduleAudioChunk(base64PcmToFloat32(payload.data));
             return;
           }
 
@@ -421,41 +410,28 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
           }
         };
 
-        // 4. Stream mic audio frames -> downsampled 16kHz Int16 PCM -> base64 over WebSocket
+        // 4. Stream mic audio as binary 16 kHz Int16 PCM frames (AudioWorklet, off the main thread)
         const source = inputCtx.createMediaStreamSource(stream);
-        const processor = inputCtx.createScriptProcessor(4096, 1, 1);
-        sourceNodeRef.current = source;
-        processorRef.current = processor;
-
-        processor.onaudioprocess = (e) => {
-          if (isMutedRef.current) {
-            setMicLevel(0);
-            return;
-          }
-          const channelData = e.inputBuffer.getChannelData(0);
+        const capture = await startMicCapture(inputCtx, source, (pcm, rms) => {
+          if (isMutedRef.current) return;
           const nowMs = performance.now();
           if (nowMs - lastMicEmitAtRef.current >= 100) {
             lastMicEmitAtRef.current = nowMs;
-            setMicLevel(computeRmsLevel(channelData));
+            setMicLevel(rms);
           }
-
-          if (!isReadyRef.current) return;
+          if (!isReadyRef.current || pcm.length === 0) return;
           const activeWs = wsRef.current;
           if (!activeWs || activeWs.readyState !== WebSocket.OPEN) return;
+          // Drop audio rather than queue it if the network can't keep up (keeps latency bounded).
           if (activeWs.bufferedAmount > 256 * 1024) return;
-
-          const pcm16 = downsampleFloat32ToInt16Pcm(channelData, inputCtx.sampleRate, 16000);
-          if (pcm16.length === 0) return;
-          const base64 = int16ToBase64(pcm16);
-          activeWs.send(JSON.stringify({type: 'audio', data: base64}));
-        };
-
-        // Keep processor alive with silent gain node (avoids feedback/echo on speakers)
-        const silentGain = inputCtx.createGain();
-        silentGain.gain.value = 0;
-        source.connect(processor);
-        processor.connect(silentGain);
-        silentGain.connect(inputCtx.destination);
+          activeWs.send(pcm as Int16Array<ArrayBuffer>);
+        });
+        // The session may have been ended while the worklet module was loading.
+        if (inputAudioCtxRef.current !== inputCtx) {
+          capture.stop();
+          return;
+        }
+        captureRef.current = capture;
       } catch (err) {
         userEndedRef.current = true;
         cleanupResources();
