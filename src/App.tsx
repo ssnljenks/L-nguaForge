@@ -15,6 +15,14 @@ import {DEFAULT_MISSION_CONFIG, SEED_SAMPLE_SESSIONS, SEED_VOCAB} from './data/s
 import {DIALECTS_BY_LANGUAGE, filterItemsByLanguage, getDefaultDialect, MILITARY_DOMAINS} from './utils/ilrLogic';
 import {API_SAVED_EVENT, clearLocalLookupCaches, getApiSavedCount} from './utils/localDictionary';
 import {useLocalStorage} from './hooks/useLocalStorage';
+import {
+  sanitizeChatThreads,
+  sanitizeHistory,
+  sanitizeMissionConfig,
+  sanitizeSeenTabs,
+  sanitizeSessions,
+  sanitizeVocabItems,
+} from './utils/storageSchemas';
 import {OpiSimulatorModule} from './components/OpiSimulatorModule';
 import {DebriefModule} from './components/DebriefModule';
 import {VocabVaultModule} from './components/VocabVaultModule';
@@ -40,6 +48,8 @@ const NAV_ITEMS: {
   {id: 'lab', label: 'PREP & Interp Lab', shortLabel: 'Lab', icon: Timer},
 ];
 
+const sanitizeStoredConfig = sanitizeMissionConfig(DEFAULT_MISSION_CONFIG);
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<ModuleTab>('chat');
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -48,20 +58,10 @@ export default function App() {
   const isAutostart =
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('autostart') === '1';
 
-  const [seenTabs, setSeenTabs] = useLocalStorage<ModuleTab[]>('linguaforge_seen_tabs_v1', []);
-  const [tabIntroOpen, setTabIntroOpen] = useState<ModuleTab | null>(() => {
-    if (isAutostart) return null;
-    if (typeof window !== 'undefined') {
-      try {
-        const raw = window.localStorage.getItem('linguaforge_seen_tabs_v1');
-        const parsed = raw ? (JSON.parse(raw) as unknown) : [];
-        if (Array.isArray(parsed) && parsed.includes('chat')) return null;
-      } catch {
-        // Ignore storage read error
-      }
-    }
-    return 'chat';
-  });
+  const [seenTabs, setSeenTabs] = useLocalStorage<ModuleTab[]>('linguaforge_seen_tabs_v1', [], sanitizeSeenTabs);
+  const [tabIntroOpen, setTabIntroOpen] = useState<ModuleTab | null>(() =>
+    isAutostart || seenTabs.includes('chat') ? null : 'chat'
+  );
 
   const [apiSavedCount, setApiSavedCount] = useState<number>(() => getApiSavedCount());
 
@@ -104,11 +104,27 @@ export default function App() {
     setTabIntroOpen(activeTab);
   };
 
-  const [config, setConfig] = useLocalStorage<MissionConfig>('linguaforge_config_v1', DEFAULT_MISSION_CONFIG);
-  const [vocabItems, setVocabItems] = useLocalStorage<VocabItem[]>('linguaforge_vocab_v1', SEED_VOCAB);
-  const [sessions, setSessions] = useLocalStorage<OpiSession[]>('linguaforge_sessions_v1', SEED_SAMPLE_SESSIONS);
-  const [history, setHistory] = useLocalStorage<DrillHistoryEntry[]>('linguaforge_history_v1', []);
-  const [chatThreads, setChatThreads] = useLocalStorage<FreeChatThread[]>('linguaforge_chat_threads_v1', []);
+  const [config, setConfig] = useLocalStorage<MissionConfig>(
+    'linguaforge_config_v1',
+    DEFAULT_MISSION_CONFIG,
+    sanitizeStoredConfig
+  );
+  const [vocabItems, setVocabItems] = useLocalStorage<VocabItem[]>(
+    'linguaforge_vocab_v1',
+    SEED_VOCAB,
+    sanitizeVocabItems
+  );
+  const [sessions, setSessions] = useLocalStorage<OpiSession[]>(
+    'linguaforge_sessions_v1',
+    SEED_SAMPLE_SESSIONS,
+    sanitizeSessions
+  );
+  const [history, setHistory] = useLocalStorage<DrillHistoryEntry[]>('linguaforge_history_v1', [], sanitizeHistory);
+  const [chatThreads, setChatThreads] = useLocalStorage<FreeChatThread[]>(
+    'linguaforge_chat_threads_v1',
+    [],
+    sanitizeChatThreads
+  );
   const [selectedSessionId, setSelectedSessionId] = useState<string>(() => sessions[0]?.id ?? '');
 
   const updateConfig = (patch: Partial<MissionConfig>) => {

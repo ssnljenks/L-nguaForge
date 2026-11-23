@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   clearWordCacheOnly,
+  getApiSavedCount,
+  getCachedInterpBriefing,
+  getCachedPrepPrompt,
   getCandidateLookupKeys,
   getLocalCacheStats,
   getOfflineMilitaryEntries,
@@ -224,4 +227,32 @@ test('lookupLocalTotPhrase resolves common English concepts offline', () => {
   assert.ok(ptFollowUp);
   assert.equal(ptFollowUp.source, 'dictionary');
   assert.ok(ptFollowUp.targetPhrase.includes('seguimento'));
+});
+
+test('corrupted cache entries fall back safely instead of throwing', () => {
+  const store = new Map<string, string>();
+  const fakeStorage = {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+  };
+  const original = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  Object.defineProperty(globalThis, 'localStorage', {value: fakeStorage, configurable: true});
+  try {
+    for (const raw of ['null', '"text"', '[1,2]', '{not json']) {
+      for (const key of store.keys()) store.delete(key);
+      for (const key of ['linguaforge_tot_cache_v1', 'linguaforge_lab_cache_v1', 'linguaforge_api_saved_count_v1']) {
+        store.set(key, raw);
+      }
+      assert.doesNotThrow(() => lookupLocalTotPhrase('es', 'some unknown phrase'), raw);
+      assert.equal(getCachedPrepPrompt('es', 'general_policy'), null, raw);
+      assert.equal(getCachedInterpBriefing('es', 'neutral_latam', 'general_policy'), null, raw);
+      assert.equal(typeof getApiSavedCount(), 'number', raw);
+    }
+    store.set('linguaforge_lab_cache_v1', JSON.stringify({prep: {'es:general_policy': {promptTarget: 'x'}}}));
+    assert.equal(getCachedPrepPrompt('es', 'general_policy'), null, 'missing connectors array');
+  } finally {
+    if (original) Object.defineProperty(globalThis, 'localStorage', original);
+    else delete (globalThis as {localStorage?: unknown}).localStorage;
+  }
 });

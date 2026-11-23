@@ -1667,7 +1667,13 @@ function readStorageJson<T>(key: string, fallback: T): T {
   if (!storage) return fallback;
   try {
     const raw = storage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
+    if (!raw) return fallback;
+    const parsed: unknown = JSON.parse(raw);
+    // Stored values must have the same shape as the fallback (plain object vs. number etc.);
+    // otherwise a corrupted entry such as `null` would crash the first property access.
+    const isPlainObject = (v: unknown) => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
+    if (isPlainObject(fallback) ? !isPlainObject(parsed) : typeof parsed !== typeof fallback) return fallback;
+    return parsed as T;
   } catch {
     return fallback;
   }
@@ -1974,6 +1980,21 @@ export function saveTotToLocalCache(language: TargetLanguage, englishQuery: stri
   dispatchBrowserEvent(WORD_CACHE_EVENT);
 }
 
+function isValidPrepPrompt(item: unknown): item is PrepPromptItem {
+  const rec = item as Partial<PrepPromptItem> | null;
+  return (
+    Boolean(rec) &&
+    typeof rec?.promptTarget === 'string' &&
+    typeof rec.promptEnglish === 'string' &&
+    Array.isArray(rec.recommendedConnectors)
+  );
+}
+
+function isValidInterpBriefing(item: unknown): item is InterpBriefing {
+  const rec = item as Partial<InterpBriefing> | null;
+  return Boolean(rec) && typeof rec?.briefingText === 'string' && Array.isArray(rec.keyFacts);
+}
+
 interface LabCacheStore {
   prep?: Record<string, PrepPromptItem>;
   interp?: Record<string, InterpBriefing>;
@@ -1981,7 +2002,8 @@ interface LabCacheStore {
 
 export function getCachedPrepPrompt(language: TargetLanguage, domain: string): PrepPromptItem | null {
   const store = readStorageJson<LabCacheStore>(LAB_CACHE_KEY, {});
-  return store.prep?.[`${language}:${domain}`] ?? null;
+  const item: unknown = store.prep?.[`${language}:${domain}`];
+  return isValidPrepPrompt(item) ? item : null;
 }
 
 export function savePrepPromptCache(language: TargetLanguage, domain: string, item: PrepPromptItem): void {
@@ -1996,7 +2018,8 @@ export function getCachedInterpBriefing(
   domain: string
 ): InterpBriefing | null {
   const store = readStorageJson<LabCacheStore>(LAB_CACHE_KEY, {});
-  return store.interp?.[`${language}:${dialect}:${domain}`] ?? null;
+  const item: unknown = store.interp?.[`${language}:${dialect}:${domain}`];
+  return isValidInterpBriefing(item) ? item : null;
 }
 
 export function saveInterpBriefingCache(
