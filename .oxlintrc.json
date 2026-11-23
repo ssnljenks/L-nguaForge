@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "jsx-a11y", "oxc"],
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2022": true
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    "react/react-in-jsx-scope": "off",
+    "no-unused-vars": "warn",
+    "jsx-a11y/prefer-tag-over-role": "off",
+
+    // Existing findings, tracked for the component refactor / a11y pass.
+    // Kept as warnings until fixed, then promote to "error".
+    "react/refs": "warn",
+    "react/set-state-in-effect": "warn",
+    "jsx-a11y/click-events-have-key-events": "warn",
+    "jsx-a11y/no-noninteractive-element-interactions": "warn",
+    "jsx-a11y/label-has-associated-control": "warn",
+    "jsx-a11y/media-has-caption": "warn"
+  },
+  "ignorePatterns": ["dist/**", "dev-dist/**", "node_modules/**"]
+}
