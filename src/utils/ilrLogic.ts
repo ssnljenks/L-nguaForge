@@ -1,10 +1,12 @@
 import type {
+  ChatRegisterMode,
   FreeChatThread,
   MilitaryDomain,
   OpiSession,
   PrepPhase,
   ProbeLevel,
   TargetLanguage,
+  VocabCategory,
   VocabItem,
 } from '../types';
 
@@ -299,12 +301,22 @@ export function buildChatThreadTitle(firstMessage: string, maxLen = 44): string 
   return `${cleaned.slice(0, maxLen - 1).trimEnd()}…`;
 }
 
-const VALID_VOCAB_CATEGORIES = [
+export const VALID_VOCAB_CATEGORIES = [
   'High-Register Connectors',
   'Operational/Military Terms',
   'Regional Idioms',
   'False Friends',
-] as const;
+] as const satisfies readonly VocabCategory[];
+
+export const CHAT_REGISTER_MODES = [
+  'everyday',
+  'professional',
+  'debate',
+] as const satisfies readonly ChatRegisterMode[];
+
+export function isVocabCategory(value: unknown): value is VocabCategory {
+  return typeof value === 'string' && (VALID_VOCAB_CATEGORIES as readonly string[]).includes(value);
+}
 
 export function normalizeVocabCategory(raw: string): (typeof VALID_VOCAB_CATEGORIES)[number] {
   const matched = VALID_VOCAB_CATEGORIES.find(

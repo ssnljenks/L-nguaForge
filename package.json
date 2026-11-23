@@ -14,7 +14,7 @@
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
-    "test": "tsx --test \"src/**/*.test.ts\"",
+    "test": "tsx --test \"src/**/*.test.ts\" \"server/**/*.test.ts\"",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
