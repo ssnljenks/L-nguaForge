@@ -534,20 +534,24 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
           </div>
 
           <div className="space-y-3">
-            <label className="flex items-start justify-between gap-3 cursor-pointer">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-[#E6EDF3]">Hands-Free Auto-Listen</p>
-                <p className="text-xs text-[#94A3B8]">
+                <label htmlFor="opi-hands-free" className="text-sm font-medium text-[#E6EDF3] cursor-pointer">
+                  Hands-Free Auto-Listen
+                </label>
+                <p id="opi-hands-free-desc" className="text-xs text-[#94A3B8]">
                   Automatically open microphone right after the examiner finishes speaking.
                 </p>
               </div>
               <input
+                id="opi-hands-free"
                 type="checkbox"
+                aria-describedby="opi-hands-free-desc"
                 checked={config.handsFreeMode}
                 onChange={(e) => onUpdateConfig({handsFreeMode: e.target.checked})}
-                className="mt-1 h-4 w-4 accent-[#D99B26]"
+                className="mt-1 h-4 w-4 accent-[#D99B26] cursor-pointer"
               />
-            </label>
+            </div>
           </div>
 
           <div className="pt-4 border-t border-[#23303E] space-y-2">

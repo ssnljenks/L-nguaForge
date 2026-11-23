@@ -1,6 +1,7 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {BookMarked, Check, Compass, FileBarChart2, MessageSquare, Mic, Timer, X} from 'lucide-react';
 import type {ModuleTab} from '../types';
+import {Dialog} from './shared/Dialog';
 
 interface TabIntroModalProps {
   tab: ModuleTab | null;
@@ -86,89 +87,76 @@ const TAB_INTROS: Record<ModuleTab, TabIntroSpec> = {
 };
 
 export const TabIntroModal: React.FC<TabIntroModalProps> = ({tab, onDismiss, onOpenFullTour}) => {
-  useEffect(() => {
-    if (!tab) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onDismiss(tab);
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [tab, onDismiss]);
-
   if (!tab) return null;
 
   const spec = TAB_INTROS[tab];
   const Icon = spec.icon;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="tab-intro-title"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onDismiss(tab);
-      }}
+    <Dialog
+      labelledBy="tab-intro-title"
+      onClose={() => onDismiss(tab)}
+      closeOnBackdrop
+      overlayClassName="bg-black/70"
+      className="w-full max-w-md rounded-2xl border border-[#23303E] bg-[#111922] shadow-2xl overflow-hidden"
     >
-      <div className="w-full max-w-md rounded-2xl border border-[#23303E] bg-[#111922] shadow-2xl overflow-hidden">
-        <div className="px-5 pt-5 pb-4 border-b border-[#23303E] flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-lg border border-[#D99B26]/40 bg-[#D99B26]/10 flex items-center justify-center shrink-0">
-              <Icon className="w-4 h-4 text-[#D99B26]" />
-            </div>
-            <p className="text-xs font-medium text-[#F3C669] truncate">{spec.eyebrow}</p>
+      <div className="px-5 pt-5 pb-4 border-b border-[#23303E] flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 rounded-lg border border-[#D99B26]/40 bg-[#D99B26]/10 flex items-center justify-center shrink-0">
+            <Icon className="w-4 h-4 text-[#D99B26]" />
           </div>
-
-          <button
-            type="button"
-            onClick={() => onDismiss(tab)}
-            aria-label="Close tab introduction"
-            className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#192533] transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <p className="text-xs font-medium text-[#F3C669] truncate">{spec.eyebrow}</p>
         </div>
 
-        <div className="p-5 space-y-4">
-          <div className="space-y-1.5">
-            <h2 id="tab-intro-title" className="text-lg font-semibold tracking-tight text-[#F8FAFC]">
-              {spec.title}
-            </h2>
-            <p className="text-sm text-[#CBD5E1] leading-relaxed">{spec.summary}</p>
-          </div>
-
-          <ul className="space-y-2 rounded-xl border border-[#23303E] bg-[#0B1117] p-3.5">
-            {spec.bullets.map((line) => (
-              <li key={line} className="flex items-start gap-2 text-xs text-[#94A3B8] leading-relaxed">
-                <Check className="w-3.5 h-3.5 text-[#D99B26] shrink-0 mt-0.5" />
-                <span>{line}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="px-5 py-3.5 border-t border-[#23303E] bg-[#0D141C] flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              onDismiss(tab);
-              onOpenFullTour();
-            }}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition-colors"
-          >
-            <Compass className="w-3.5 h-3.5 text-[#D99B26]" />
-            <span>Full App Tour</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onDismiss(tab)}
-            className="px-4 py-2 min-h-[38px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
-          >
-            {spec.cta}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => onDismiss(tab)}
+          aria-label="Close tab introduction"
+          className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#192533] transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
-    </div>
+
+      <div className="p-5 space-y-4">
+        <div className="space-y-1.5">
+          <h2 id="tab-intro-title" className="text-lg font-semibold tracking-tight text-[#F8FAFC]">
+            {spec.title}
+          </h2>
+          <p className="text-sm text-[#CBD5E1] leading-relaxed">{spec.summary}</p>
+        </div>
+
+        <ul className="space-y-2 rounded-xl border border-[#23303E] bg-[#0B1117] p-3.5">
+          {spec.bullets.map((line) => (
+            <li key={line} className="flex items-start gap-2 text-xs text-[#94A3B8] leading-relaxed">
+              <Check className="w-3.5 h-3.5 text-[#D99B26] shrink-0 mt-0.5" />
+              <span>{line}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="px-5 py-3.5 border-t border-[#23303E] bg-[#0D141C] flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            onDismiss(tab);
+            onOpenFullTour();
+          }}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition-colors"
+        >
+          <Compass className="w-3.5 h-3.5 text-[#D99B26]" />
+          <span>Full App Tour</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onDismiss(tab)}
+          className="px-4 py-2 min-h-[38px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+        >
+          {spec.cta}
+        </button>
+      </div>
+    </Dialog>
   );
 };

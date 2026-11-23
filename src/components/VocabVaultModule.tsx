@@ -217,10 +217,11 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
       {/* Filter Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         {mode === 'glossary' ? (
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by domain">
             <button
               type="button"
               onClick={() => setGlossaryDomainFilter('all')}
+              aria-pressed={glossaryDomainFilter === 'all'}
               className={`px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
                 glossaryDomainFilter === 'all'
                   ? 'bg-[#1D2B3A] text-[#F8FAFC] border border-[#35495E]'
@@ -234,6 +235,7 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
                 key={dom.id}
                 type="button"
                 onClick={() => setGlossaryDomainFilter(dom.id)}
+                aria-pressed={glossaryDomainFilter === dom.id}
                 className={`px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
                   glossaryDomainFilter === dom.id
                     ? 'bg-[#1D2B3A] text-[#F8FAFC] border border-[#35495E]'
@@ -245,7 +247,7 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
             ))}
           </div>
         ) : (
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by category">
             {(['all', ...VALID_VOCAB_CATEGORIES] as const).map((cat) => (
               <button
                 key={cat}
@@ -254,6 +256,7 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
                   setCategoryFilter(cat);
                   setDrillIndex(0);
                 }}
+                aria-pressed={categoryFilter === cat}
                 className={`px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
                   categoryFilter === cat
                     ? 'bg-[#1D2B3A] text-[#F8FAFC] border border-[#35495E]'

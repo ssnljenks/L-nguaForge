@@ -301,6 +301,7 @@ export default function App() {
                   key={lang}
                   type="button"
                   onClick={() => handleLanguageToggle(lang)}
+                  aria-pressed={config.language === lang}
                   className={`px-2 py-1 text-xs font-semibold rounded transition-colors ${
                     config.language === lang ? 'bg-[#D99B26] text-[#0B1117]' : 'text-[#94A3B8]'
                   }`}
@@ -343,6 +344,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => handleLanguageToggle('es')}
+                  aria-pressed={config.language === 'es'}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap ${
                     config.language === 'es' ? 'bg-[#D99B26] text-[#0B1117]' : 'text-[#94A3B8] hover:text-white'
                   }`}
@@ -352,6 +354,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => handleLanguageToggle('pt')}
+                  aria-pressed={config.language === 'pt'}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap ${
                     config.language === 'pt' ? 'bg-[#D99B26] text-[#0B1117]' : 'text-[#94A3B8] hover:text-white'
                   }`}

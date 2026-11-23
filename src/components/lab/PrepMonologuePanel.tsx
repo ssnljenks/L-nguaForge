@@ -338,7 +338,14 @@ export const PrepMonologuePanel: React.FC<PrepMonologuePanelProps> = ({
         {recorder.audioUrl && (
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-2">
             <span className="text-xs text-[#94A3B8] shrink-0">Recorded Monologue:</span>
-            <audio controls src={recorder.audioUrl} className="h-9 w-full max-w-md" />
+            {/* The user's own recording: captions can't exist; the editable transcript below is its text alternative. */}
+            {/* oxlint-disable-next-line jsx-a11y/media-has-caption */}
+            <audio
+              controls
+              src={recorder.audioUrl}
+              aria-label="Your recorded monologue"
+              className="h-9 w-full max-w-md"
+            />
           </div>
         )}
 

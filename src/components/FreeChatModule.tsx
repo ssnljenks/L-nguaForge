@@ -297,6 +297,7 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
                 type="button"
                 disabled={live.isLive}
                 onClick={() => setRegisterMode(opt.id)}
+                aria-pressed={registerMode === opt.id}
                 className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap disabled:opacity-50 ${
                   registerMode === opt.id ? 'bg-[#1D2B3A] text-[#F8FAFC]' : 'text-[#8B9BB0] hover:text-white'
                 }`}

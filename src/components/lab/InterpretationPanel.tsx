@@ -189,10 +189,15 @@ export const InterpretationPanel: React.FC<InterpretationPanelProps> = ({config,
             <span>{blindMode ? 'Reveal Source Script' : 'Hide Script (Blind Listen)'}</span>
           </button>
 
-          <div className="flex items-center rounded-lg bg-[#0B1117] p-0.5 border border-[#23303E] ml-auto">
+          <div
+            className="flex items-center rounded-lg bg-[#0B1117] p-0.5 border border-[#23303E] ml-auto"
+            role="group"
+            aria-label="Interpretation direction"
+          >
             <button
               type="button"
               onClick={() => setDirection('target_to_en')}
+              aria-pressed={direction === 'target_to_en'}
               className={`px-2.5 py-1.5 text-xs rounded-md ${
                 direction === 'target_to_en' ? 'bg-[#1D2B3A] text-white font-medium' : 'text-[#8B9BB0]'
               }`}
@@ -202,6 +207,7 @@ export const InterpretationPanel: React.FC<InterpretationPanelProps> = ({config,
             <button
               type="button"
               onClick={() => setDirection('en_to_target')}
+              aria-pressed={direction === 'en_to_target'}
               className={`px-2.5 py-1.5 text-xs rounded-md ${
                 direction === 'en_to_target' ? 'bg-[#1D2B3A] text-white font-medium' : 'text-[#8B9BB0]'
               }`}
