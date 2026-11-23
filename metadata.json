@@ -1,0 +1,6 @@
+{
+  "name": "LinguaForge ILR",
+  "description": "Operational language training platform for military linguists targeting ILR 2 to 2+/3 progression in Spanish and Portuguese.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
