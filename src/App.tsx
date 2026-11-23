@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {lazy, Suspense, useEffect, useState} from 'react';
 import {BookMarked, FileBarChart2, HelpCircle, MessageSquare, Mic, Settings, Timer} from 'lucide-react';
 import type {
   DebriefReport,
@@ -13,18 +13,44 @@ import type {
 } from './types';
 import {DEFAULT_MISSION_CONFIG, SEED_SAMPLE_SESSIONS, SEED_VOCAB} from './data/seedData';
 import {DIALECTS_BY_LANGUAGE, filterItemsByLanguage, getDefaultDialect, MILITARY_DOMAINS} from './utils/ilrLogic';
-import {API_SAVED_EVENT, clearLocalLookupCaches, getApiSavedCount} from './utils/localDictionary';
+import {API_SAVED_EVENT, clearLocalLookupCaches, getApiSavedCount} from './utils/lookupCacheStore';
 import {useLocalStorage} from './hooks/useLocalStorage';
-import {OpiSimulatorModule} from './components/OpiSimulatorModule';
-import {DebriefModule} from './components/DebriefModule';
-import {VocabVaultModule} from './components/VocabVaultModule';
-import {PrepInterpLabModule} from './components/PrepInterpLabModule';
-import {FreeChatModule} from './components/FreeChatModule';
-import {SettingsModal} from './components/SettingsModal';
-import {WalkthroughModal} from './components/WalkthroughModal';
-import {TabIntroModal} from './components/TabIntroModal';
+import {
+  sanitizeChatThreads,
+  sanitizeHistory,
+  sanitizeMissionConfig,
+  sanitizeSeenTabs,
+  sanitizeSessions,
+  sanitizeVocabItems,
+} from './utils/storageSchemas';
+// Tab modules and modals are code-split: each loads on first use, keeping the initial bundle small.
+// (All chunks are still precached by the service worker, so tabs work offline after the first visit.)
+const FreeChatModule = lazy(() => import('./components/FreeChatModule').then((m) => ({default: m.FreeChatModule})));
+const OpiSimulatorModule = lazy(() =>
+  import('./components/OpiSimulatorModule').then((m) => ({default: m.OpiSimulatorModule}))
+);
+const DebriefModule = lazy(() => import('./components/DebriefModule').then((m) => ({default: m.DebriefModule})));
+const VocabVaultModule = lazy(() =>
+  import('./components/VocabVaultModule').then((m) => ({default: m.VocabVaultModule}))
+);
+const PrepInterpLabModule = lazy(() =>
+  import('./components/PrepInterpLabModule').then((m) => ({default: m.PrepInterpLabModule}))
+);
+const SettingsModal = lazy(() => import('./components/SettingsModal').then((m) => ({default: m.SettingsModal})));
+const WalkthroughModal = lazy(() =>
+  import('./components/WalkthroughModal').then((m) => ({default: m.WalkthroughModal}))
+);
+const TabIntroModal = lazy(() => import('./components/TabIntroModal').then((m) => ({default: m.TabIntroModal})));
+
+const ModuleLoading: React.FC = () => (
+  <div role="status" className="flex items-center justify-center py-24 text-sm text-[#94A3B8]">
+    <span className="h-4 w-4 mr-3 rounded-full border-2 border-[#D99B26] border-t-transparent animate-spin" />
+    Loading module…
+  </div>
+);
 import {OfflineIndicator, PWAInstallButton} from './components/PWAControls';
 import {ErrorBoundary} from './components/ErrorBoundary';
+import {createId} from './utils/ids';
 
 const NAV_ITEMS: {
   id: ModuleTab;
@@ -39,6 +65,8 @@ const NAV_ITEMS: {
   {id: 'lab', label: 'PREP & Interp Lab', shortLabel: 'Lab', icon: Timer},
 ];
 
+const sanitizeStoredConfig = sanitizeMissionConfig(DEFAULT_MISSION_CONFIG);
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<ModuleTab>('chat');
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -47,20 +75,10 @@ export default function App() {
   const isAutostart =
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('autostart') === '1';
 
-  const [seenTabs, setSeenTabs] = useLocalStorage<ModuleTab[]>('linguaforge_seen_tabs_v1', []);
-  const [tabIntroOpen, setTabIntroOpen] = useState<ModuleTab | null>(() => {
-    if (isAutostart) return null;
-    if (typeof window !== 'undefined') {
-      try {
-        const raw = window.localStorage.getItem('linguaforge_seen_tabs_v1');
-        const parsed = raw ? (JSON.parse(raw) as unknown) : [];
-        if (Array.isArray(parsed) && parsed.includes('chat')) return null;
-      } catch {
-        // Ignore storage read error
-      }
-    }
-    return 'chat';
-  });
+  const [seenTabs, setSeenTabs] = useLocalStorage<ModuleTab[]>('linguaforge_seen_tabs_v1', [], sanitizeSeenTabs);
+  const [tabIntroOpen, setTabIntroOpen] = useState<ModuleTab | null>(() =>
+    isAutostart || seenTabs.includes('chat') ? null : 'chat'
+  );
 
   const [apiSavedCount, setApiSavedCount] = useState<number>(() => getApiSavedCount());
 
@@ -103,11 +121,27 @@ export default function App() {
     setTabIntroOpen(activeTab);
   };
 
-  const [config, setConfig] = useLocalStorage<MissionConfig>('linguaforge_config_v1', DEFAULT_MISSION_CONFIG);
-  const [vocabItems, setVocabItems] = useLocalStorage<VocabItem[]>('linguaforge_vocab_v1', SEED_VOCAB);
-  const [sessions, setSessions] = useLocalStorage<OpiSession[]>('linguaforge_sessions_v1', SEED_SAMPLE_SESSIONS);
-  const [history, setHistory] = useLocalStorage<DrillHistoryEntry[]>('linguaforge_history_v1', []);
-  const [chatThreads, setChatThreads] = useLocalStorage<FreeChatThread[]>('linguaforge_chat_threads_v1', []);
+  const [config, setConfig] = useLocalStorage<MissionConfig>(
+    'linguaforge_config_v1',
+    DEFAULT_MISSION_CONFIG,
+    sanitizeStoredConfig
+  );
+  const [vocabItems, setVocabItems] = useLocalStorage<VocabItem[]>(
+    'linguaforge_vocab_v1',
+    SEED_VOCAB,
+    sanitizeVocabItems
+  );
+  const [sessions, setSessions] = useLocalStorage<OpiSession[]>(
+    'linguaforge_sessions_v1',
+    SEED_SAMPLE_SESSIONS,
+    sanitizeSessions
+  );
+  const [history, setHistory] = useLocalStorage<DrillHistoryEntry[]>('linguaforge_history_v1', [], sanitizeHistory);
+  const [chatThreads, setChatThreads] = useLocalStorage<FreeChatThread[]>(
+    'linguaforge_chat_threads_v1',
+    [],
+    sanitizeChatThreads
+  );
   const [selectedSessionId, setSelectedSessionId] = useState<string>(() => sessions[0]?.id ?? '');
 
   const updateConfig = (patch: Partial<MissionConfig>) => {
@@ -129,7 +163,7 @@ export default function App() {
       if (exists) return prev;
       const newEntry: VocabItem = {
         ...item,
-        id: `v-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        id: createId('v'),
         createdAt: new Date().toISOString(),
         mastery: 'new',
         reviewCount: 0,
@@ -154,7 +188,7 @@ export default function App() {
     setSessions((prev) => [session, ...prev].slice(0, 25));
     setSelectedSessionId(session.id);
     handleLogHistory({
-      id: `hist-opi-${Date.now()}`,
+      id: createId('hist-opi'),
       module: 'opi',
       language: session.language,
       dialect: session.dialect,
@@ -267,6 +301,7 @@ export default function App() {
                   key={lang}
                   type="button"
                   onClick={() => handleLanguageToggle(lang)}
+                  aria-pressed={config.language === lang}
                   className={`px-2 py-1 text-xs font-semibold rounded transition-colors ${
                     config.language === lang ? 'bg-[#D99B26] text-[#0B1117]' : 'text-[#94A3B8]'
                   }`}
@@ -309,6 +344,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => handleLanguageToggle('es')}
+                  aria-pressed={config.language === 'es'}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap ${
                     config.language === 'es' ? 'bg-[#D99B26] text-[#0B1117]' : 'text-[#94A3B8] hover:text-white'
                   }`}
@@ -318,6 +354,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => handleLanguageToggle('pt')}
+                  aria-pressed={config.language === 'pt'}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap ${
                     config.language === 'pt' ? 'bg-[#D99B26] text-[#0B1117]' : 'text-[#94A3B8] hover:text-white'
                   }`}
@@ -380,59 +417,63 @@ export default function App() {
         {/* Main Content Viewport */}
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-10">
           <div className="max-w-6xl mx-auto">
+            {/* Keyed by language: switching language remounts the module, which resets its session state
+                (modules rely on this instead of their own reset logic). */}
             <ErrorBoundary key={`${activeTab}-${config.language}`} scopeLabel="Active Module">
-              {activeTab === 'chat' && (
-                <FreeChatModule
-                  config={config}
-                  threads={chatThreads}
-                  vocabItems={vocabItems}
-                  onUpdateThreads={setChatThreads}
-                  onUpdateConfig={updateConfig}
-                  onSaveVocab={handleSaveVocab}
-                  onNavigateTab={navigateToTab}
-                  onOpenTabHelp={() => setTabIntroOpen('chat')}
-                />
-              )}
+              <Suspense fallback={<ModuleLoading />}>
+                {activeTab === 'chat' && (
+                  <FreeChatModule
+                    config={config}
+                    threads={chatThreads}
+                    vocabItems={vocabItems}
+                    onUpdateThreads={setChatThreads}
+                    onUpdateConfig={updateConfig}
+                    onSaveVocab={handleSaveVocab}
+                    onNavigateTab={navigateToTab}
+                    onOpenTabHelp={() => setTabIntroOpen('chat')}
+                  />
+                )}
 
-              {activeTab === 'opi' && (
-                <OpiSimulatorModule
-                  config={config}
-                  vocabItems={vocabItems}
-                  onUpdateConfig={updateConfig}
-                  onSaveVocab={handleSaveVocab}
-                  onCompleteSession={handleCompleteOpiSession}
-                />
-              )}
+                {activeTab === 'opi' && (
+                  <OpiSimulatorModule
+                    config={config}
+                    vocabItems={vocabItems}
+                    onUpdateConfig={updateConfig}
+                    onSaveVocab={handleSaveVocab}
+                    onCompleteSession={handleCompleteOpiSession}
+                  />
+                )}
 
-              {activeTab === 'debrief' && (
-                <DebriefModule
-                  language={config.language}
-                  sessions={sessions}
-                  selectedSessionId={selectedSessionId}
-                  onSelectSession={setSelectedSessionId}
-                  onSaveDebrief={handleSaveDebrief}
-                  onSaveVocab={handleSaveVocab}
-                />
-              )}
+                {activeTab === 'debrief' && (
+                  <DebriefModule
+                    language={config.language}
+                    sessions={sessions}
+                    selectedSessionId={selectedSessionId}
+                    onSelectSession={setSelectedSessionId}
+                    onSaveDebrief={handleSaveDebrief}
+                    onSaveVocab={handleSaveVocab}
+                  />
+                )}
 
-              {activeTab === 'vault' && (
-                <VocabVaultModule
-                  config={config}
-                  items={vocabItems}
-                  onAddVocab={handleSaveVocab}
-                  onDeleteVocab={handleDeleteVocab}
-                  onUpdateMastery={handleUpdateMastery}
-                  onLogHistory={handleLogHistory}
-                />
-              )}
+                {activeTab === 'vault' && (
+                  <VocabVaultModule
+                    config={config}
+                    items={vocabItems}
+                    onAddVocab={handleSaveVocab}
+                    onDeleteVocab={handleDeleteVocab}
+                    onUpdateMastery={handleUpdateMastery}
+                    onLogHistory={handleLogHistory}
+                  />
+                )}
 
-              {activeTab === 'lab' && (
-                <PrepInterpLabModule
-                  config={config}
-                  onSaveMonologueSession={handleSaveMonologueSession}
-                  onLogHistory={handleLogHistory}
-                />
-              )}
+                {activeTab === 'lab' && (
+                  <PrepInterpLabModule
+                    config={config}
+                    onSaveMonologueSession={handleSaveMonologueSession}
+                    onLogHistory={handleLogHistory}
+                  />
+                )}
+              </Suspense>
             </ErrorBoundary>
           </div>
         </main>
@@ -465,30 +506,36 @@ export default function App() {
         </div>
       </nav>
 
-      <SettingsModal
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        config={config}
-        onUpdateConfig={updateConfig}
-        history={history}
-        apiSavedCount={apiSavedCount}
-        onOpenWalkthrough={() => setWalkthroughOpen(true)}
-        onResetTabIntros={handleResetTabIntros}
-        onResetAllData={handleResetAllData}
-      />
-
-      <TabIntroModal
-        tab={tabIntroOpen}
-        onDismiss={handleDismissTabIntro}
-        onOpenFullTour={() => setWalkthroughOpen(true)}
-      />
-
-      <WalkthroughModal
-        open={walkthroughOpen}
-        onClose={() => setWalkthroughOpen(false)}
-        onNavigateTab={navigateToTab}
-        apiSavedCount={apiSavedCount}
-      />
+      <Suspense fallback={null}>
+        {settingsOpen && (
+          <SettingsModal
+            open
+            onClose={() => setSettingsOpen(false)}
+            config={config}
+            onUpdateConfig={updateConfig}
+            history={history}
+            apiSavedCount={apiSavedCount}
+            onOpenWalkthrough={() => setWalkthroughOpen(true)}
+            onResetTabIntros={handleResetTabIntros}
+            onResetAllData={handleResetAllData}
+          />
+        )}
+        {tabIntroOpen && (
+          <TabIntroModal
+            tab={tabIntroOpen}
+            onDismiss={handleDismissTabIntro}
+            onOpenFullTour={() => setWalkthroughOpen(true)}
+          />
+        )}
+        {walkthroughOpen && (
+          <WalkthroughModal
+            open
+            onClose={() => setWalkthroughOpen(false)}
+            onNavigateTab={navigateToTab}
+            apiSavedCount={apiSavedCount}
+          />
+        )}
+      </Suspense>
 
       <OfflineIndicator />
     </div>

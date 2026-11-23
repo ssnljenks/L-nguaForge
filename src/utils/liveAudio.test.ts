@@ -6,6 +6,8 @@ import {
   downsampleFloat32ToInt16Pcm,
   int16ToBase64,
   mergeTranscriptChunk,
+  PcmChunker,
+  pcm16BytesToFloat32,
 } from './liveAudio.ts';
 
 test('downsampleFloat32ToInt16Pcm accurately downsamples 48kHz to 16kHz and clamps peaks', () => {
@@ -58,4 +60,33 @@ test('base64PcmToFloat32 gracefully handles corrupt, empty, or URL-safe base64 p
   assert.equal(decoded.length, 2);
   assert.ok(Math.abs(decoded[0] - 12000 / 32768) < 0.001);
   assert.ok(Math.abs(decoded[1] + 12000 / 32768) < 0.001);
+});
+
+test('pcm16BytesToFloat32 decodes little-endian Int16 and ignores a trailing odd byte', () => {
+  const bytes = new Uint8Array([0x00, 0x40, 0x00, 0xc0, 0xff, 0x7f, 0x01]);
+  const floats = pcm16BytesToFloat32(bytes);
+  assert.equal(floats.length, 3);
+  assert.equal(floats[0], 0.5);
+  assert.equal(floats[1], -0.5);
+  assert.ok(Math.abs(floats[2] - 32767 / 32768) < 1e-9);
+});
+
+test('PcmChunker emits fixed 100 ms chunks at 16 kHz from 128-sample worklet blocks', () => {
+  const chunker = new PcmChunker(48000, 16000, 100);
+  const block = new Float32Array(128).fill(0.25);
+  const chunks = [];
+  for (let i = 0; i < 100; i++) chunks.push(...chunker.push(block)); // 12,800 samples = 2 full chunks + remainder
+  assert.equal(chunks.length, 2);
+  for (const chunk of chunks) {
+    assert.equal(chunk.pcm.length, 1600); // 100 ms at 16 kHz
+    assert.equal(chunk.pcm[0], Math.round(0.25 * 0x7fff));
+    assert.ok(chunk.rms > 0 && chunk.rms <= 1);
+  }
+});
+
+test('PcmChunker passes through when input is already 16 kHz and handles oversized pushes', () => {
+  const chunker = new PcmChunker(16000, 16000, 100);
+  const chunks = chunker.push(new Float32Array(4000));
+  assert.equal(chunks.length, 2);
+  assert.equal(chunks[0].pcm.length, 1600);
 });

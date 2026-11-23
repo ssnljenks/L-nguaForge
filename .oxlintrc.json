@@ -17,14 +17,10 @@
     "no-unused-vars": "warn",
     "jsx-a11y/prefer-tag-over-role": "off",
 
-    // Existing findings, tracked for the component refactor / a11y pass.
-    // Kept as warnings until fixed, then promote to "error".
+    // Remaining findings are intentional patterns (mirroring browser speech recognition into
+    // editable inputs, a ref mirror for live-voice callbacks); kept visible as warnings.
     "react/refs": "warn",
-    "react/set-state-in-effect": "warn",
-    "jsx-a11y/click-events-have-key-events": "warn",
-    "jsx-a11y/no-noninteractive-element-interactions": "warn",
-    "jsx-a11y/label-has-associated-control": "warn",
-    "jsx-a11y/media-has-caption": "warn"
+    "react/set-state-in-effect": "warn"
   },
   "ignorePatterns": ["dist/**", "dev-dist/**", "node_modules/**"]
 }

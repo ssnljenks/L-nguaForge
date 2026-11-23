@@ -78,15 +78,64 @@ export function base64PcmToFloat32(base64: string): Float32Array {
     return new Float32Array(0);
   }
 
+  return pcm16BytesToFloat32(bytes);
+}
+
+/** Decodes 16-bit signed little-endian PCM bytes (e.g. a binary WebSocket frame) to floats in [-1, 1). */
+export function pcm16BytesToFloat32(bytes: Uint8Array): Float32Array {
   const sampleCount = Math.floor(bytes.byteLength / 2);
   if (sampleCount <= 0) return new Float32Array(0);
   const view = new DataView(bytes.buffer, bytes.byteOffset, sampleCount * 2);
   const floats = new Float32Array(sampleCount);
   for (let i = 0; i < sampleCount; i++) {
-    const sample = view.getInt16(i * 2, true);
-    floats[i] = sample / 32768;
+    floats[i] = view.getInt16(i * 2, true) / 32768;
   }
   return floats;
+}
+
+export interface PcmChunk {
+  /** 16 kHz mono Int16 PCM, ready to send as a binary frame. */
+  pcm: Int16Array;
+  /** Input level of this chunk (0..1) for the mic meter. */
+  rms: number;
+}
+
+/**
+ * Collects small capture blocks (128 samples per AudioWorklet render quantum) into fixed-size
+ * chunks, then downsamples each chunk to the target rate. Used by the AudioWorklet and by the
+ * ScriptProcessor fallback, so both paths produce identical frames.
+ */
+export class PcmChunker {
+  private readonly buffer: Float32Array;
+  private filled = 0;
+  private readonly inputSampleRate: number;
+  private readonly targetSampleRate: number;
+
+  constructor(inputSampleRate: number, targetSampleRate = 16000, chunkMs = 100) {
+    this.inputSampleRate = inputSampleRate;
+    this.targetSampleRate = targetSampleRate;
+    this.buffer = new Float32Array(Math.max(1, Math.round((inputSampleRate * chunkMs) / 1000)));
+  }
+
+  /** Adds samples; returns any chunks completed by them (usually zero or one). */
+  push(samples: Float32Array): PcmChunk[] {
+    const chunks: PcmChunk[] = [];
+    let offset = 0;
+    while (offset < samples.length) {
+      const take = Math.min(samples.length - offset, this.buffer.length - this.filled);
+      this.buffer.set(samples.subarray(offset, offset + take), this.filled);
+      this.filled += take;
+      offset += take;
+      if (this.filled === this.buffer.length) {
+        chunks.push({
+          pcm: downsampleFloat32ToInt16Pcm(this.buffer, this.inputSampleRate, this.targetSampleRate),
+          rms: computeRmsLevel(this.buffer),
+        });
+        this.filled = 0;
+      }
+    }
+    return chunks;
+  }
 }
 
 export function computeRmsLevel(samples: Float32Array): number {

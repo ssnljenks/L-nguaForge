@@ -41,7 +41,7 @@ async function postJson<T>(url: string, body: Record<string, unknown>, timeoutMs
     });
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new Error('Request timed out. Tap Retry to try again.');
+      throw new Error('Request timed out. Tap Retry to try again.', {cause: err});
     }
     throw err;
   } finally {

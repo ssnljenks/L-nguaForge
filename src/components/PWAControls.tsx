@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {Download, WifiOff, X} from 'lucide-react';
 import {useOnlineStatus, usePWAInstall} from '../hooks/usePWAInstall';
+import {Dialog} from './shared/Dialog';
 
 export const PWAInstallButton: React.FC<{compact?: boolean}> = ({compact = false}) => {
   const {isInstallable, isInstalled, isIOS, install} = usePWAInstall();
@@ -40,40 +41,39 @@ export const PWAInstallButton: React.FC<{compact?: boolean}> = ({compact = false
         </button>
 
         {showGuide && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="ios-install-title"
+          <Dialog
+            labelledBy="ios-install-title"
+            onClose={() => setShowGuide(false)}
+            closeOnBackdrop
+            overlayClassName="bg-black/70"
+            className="w-full max-w-sm rounded-xl border border-[#23303E] bg-[#111922] p-6"
           >
-            <div className="w-full max-w-sm rounded-xl border border-[#23303E] bg-[#111922] p-6">
-              <div className="flex items-center justify-between gap-4">
-                <h3 id="ios-install-title" className="text-lg font-semibold text-[#F1F5F9]">
-                  Install LinguaForge on iOS
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setShowGuide(false)}
-                  aria-label="Close install instructions"
-                  className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <ol className="mt-4 space-y-2.5 text-sm text-[#CBD5E1] list-decimal list-inside leading-relaxed">
-                <li>Tap the Share icon in Safari&apos;s bottom toolbar.</li>
-                <li>Scroll down and tap Add to Home Screen.</li>
-                <li>Tap Add to launch LinguaForge ILR in standalone mode.</li>
-              </ol>
+            <div className="flex items-center justify-between gap-4">
+              <h3 id="ios-install-title" className="text-lg font-semibold text-[#F1F5F9]">
+                Install LinguaForge on iOS
+              </h3>
               <button
                 type="button"
                 onClick={() => setShowGuide(false)}
-                className="mt-6 w-full rounded-lg bg-[#D99B26] py-2.5 text-sm font-semibold text-[#0B1117] hover:bg-[#E5AE42] transition-colors"
+                aria-label="Close install instructions"
+                className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white"
               >
-                Got it
+                <X className="w-5 h-5" />
               </button>
             </div>
-          </div>
+            <ol className="mt-4 space-y-2.5 text-sm text-[#CBD5E1] list-decimal list-inside leading-relaxed">
+              <li>Tap the Share icon in Safari&apos;s bottom toolbar.</li>
+              <li>Scroll down and tap Add to Home Screen.</li>
+              <li>Tap Add to launch LinguaForge ILR in standalone mode.</li>
+            </ol>
+            <button
+              type="button"
+              onClick={() => setShowGuide(false)}
+              className="mt-6 w-full rounded-lg bg-[#D99B26] py-2.5 text-sm font-semibold text-[#0B1117] hover:bg-[#E5AE42] transition-colors"
+            >
+              Got it
+            </button>
+          </Dialog>
         )}
       </>
     );
