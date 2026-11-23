@@ -108,10 +108,7 @@ export function mergeTranscriptChunk(existing: string, incoming: string): string
   // If Gemini emits cumulative text starting with existing, replace cleanly
   if (next.startsWith(base)) return next;
 
-  const needsSpace =
-    !/\s$/.test(base) &&
-    !/^\s/.test(next) &&
-    !/^[.,!?;:)\]]/.test(next);
+  const needsSpace = !/\s$/.test(base) && !/^\s/.test(next) && !/^[.,!?;:)\]]/.test(next);
 
   return needsSpace ? `${base} ${next}` : `${base}${next}`;
 }

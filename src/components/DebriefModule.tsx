@@ -1,11 +1,5 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {
-  ArrowRight,
-  BookmarkPlus,
-  Check,
-  FileCheck2,
-  Loader2,
-} from 'lucide-react';
+import {ArrowRight, BookmarkPlus, Check, FileCheck2, Loader2} from 'lucide-react';
 import type {DebriefReport, OpiSession, TargetLanguage, VocabItem} from '../types';
 import {
   filterItemsByLanguage,
@@ -38,10 +32,7 @@ export const DebriefModule: React.FC<DebriefModuleProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [savedKeys, setSavedKeys] = useState<Record<string, boolean>>({});
 
-  const languageSessions = useMemo(
-    () => filterItemsByLanguage(sessions, language),
-    [sessions, language]
-  );
+  const languageSessions = useMemo(() => filterItemsByLanguage(sessions, language), [sessions, language]);
 
   const activeSession = useMemo(
     () => resolveActiveSessionForLanguage(sessions, selectedSessionId, language),
@@ -62,8 +53,8 @@ export const DebriefModule: React.FC<DebriefModuleProps> = ({
       const domainInfo = getDomainInfo(activeSession.domain);
       const report = await runSessionDebrief({
         language: activeSession.language,
-        dialectLabel: dialectInfo.label,
-        domainLabel: domainInfo.label,
+        dialect: dialectInfo.id,
+        domain: domainInfo.id,
         messages: activeSession.messages.map((m) => ({role: m.role, text: m.text})),
       });
       onSaveDebrief(activeSession.id, report);
@@ -93,11 +84,10 @@ export const DebriefModule: React.FC<DebriefModuleProps> = ({
   if (!activeSession) {
     return (
       <div className="rounded-xl border border-[#23303E] bg-[#111922] p-10 text-center space-y-2">
-        <h1 className="text-xl font-semibold text-[#F8FAFC]">
-          No Completed {LANGUAGE_LABELS[language]} Sessions Yet
-        </h1>
+        <h1 className="text-xl font-semibold text-[#F8FAFC]">No Completed {LANGUAGE_LABELS[language]} Sessions Yet</h1>
         <p className="text-sm text-[#94A3B8]">
-          Complete a {LANGUAGE_LABELS[language]} OPI conversation or PREP monologue to unlock ILR Discourse Audit and Level 2 → 2+ Upgrades.
+          Complete a {LANGUAGE_LABELS[language]} OPI conversation or PREP monologue to unlock ILR Discourse Audit and
+          Level 2 → 2+ Upgrades.
         </p>
       </div>
     );
@@ -153,7 +143,9 @@ export const DebriefModule: React.FC<DebriefModuleProps> = ({
             className="flex items-center gap-2 px-4 py-2.5 min-h-[42px] rounded-lg bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
           >
             {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileCheck2 className="w-4 h-4" />}
-            <span>{isAnalyzing ? 'Auditing Transcript…' : report ? 'Re-Run Diagnostic Audit' : 'Run Diagnostic Debrief'}</span>
+            <span>
+              {isAnalyzing ? 'Auditing Transcript…' : report ? 'Re-Run Diagnostic Audit' : 'Run Diagnostic Debrief'}
+            </span>
           </button>
         </div>
       </div>
@@ -166,7 +158,9 @@ export const DebriefModule: React.FC<DebriefModuleProps> = ({
 
       {/* Session Context Summary Line */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#94A3B8]">
-        <span>{LANGUAGE_LABELS[activeSession.language]} ({dialectInfo.label})</span>
+        <span>
+          {LANGUAGE_LABELS[activeSession.language]} ({dialectInfo.label})
+        </span>
         <span aria-hidden="true">·</span>
         <span>{domainInfo.label}</span>
         <span aria-hidden="true">·</span>
@@ -293,7 +287,11 @@ export const DebriefModule: React.FC<DebriefModuleProps> = ({
                             disabled={isSaved}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-[#2E4054] bg-[#16202B] text-xs font-medium text-[#E6EDF3] hover:border-[#D99B26] disabled:opacity-60 transition-colors"
                           >
-                            {isSaved ? <Check className="w-3 h-3 text-emerald-400" /> : <BookmarkPlus className="w-3 h-3 text-[#D99B26]" />}
+                            {isSaved ? (
+                              <Check className="w-3 h-3 text-emerald-400" />
+                            ) : (
+                              <BookmarkPlus className="w-3 h-3 text-[#D99B26]" />
+                            )}
                             <span>{conn}</span>
                           </button>
                         );

@@ -8,11 +8,7 @@ if (import.meta.env.DEV && typeof navigator !== 'undefined' && 'serviceWorker' i
     .getRegistrations()
     .then((regs) => {
       for (const reg of regs) {
-        const urls = [
-          reg.active?.scriptURL ?? '',
-          reg.waiting?.scriptURL ?? '',
-          reg.installing?.scriptURL ?? '',
-        ];
+        const urls = [reg.active?.scriptURL ?? '', reg.waiting?.scriptURL ?? '', reg.installing?.scriptURL ?? ''];
         if (urls.some((u) => u.includes('dev-sw.js'))) {
           reg.unregister().catch(() => {});
         }

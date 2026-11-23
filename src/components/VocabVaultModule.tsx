@@ -14,13 +14,7 @@ import {
   Volume2,
   X,
 } from 'lucide-react';
-import type {
-  DrillHistoryEntry,
-  MilitaryDomain,
-  MissionConfig,
-  VocabCategory,
-  VocabItem,
-} from '../types';
+import type {DrillHistoryEntry, MilitaryDomain, MissionConfig, VocabCategory, VocabItem} from '../types';
 import {
   filterItemsByLanguage,
   formatVocabToAnkiCsv,
@@ -90,10 +84,7 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
   const tts = useSpeechSynthesis();
   const stt = useSpeechRecognition();
 
-  const languageItems = useMemo(
-    () => filterItemsByLanguage(items, config.language),
-    [items, config.language]
-  );
+  const languageItems = useMemo(() => filterItemsByLanguage(items, config.language), [items, config.language]);
 
   const filteredItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -121,10 +112,7 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
 
   const currentCard = drillDeck[drillIndex % Math.max(1, drillDeck.length)] ?? null;
 
-  const offlineMilitaryEntries = useMemo(
-    () => getOfflineMilitaryEntries(config.language),
-    [config.language]
-  );
+  const offlineMilitaryEntries = useMemo(() => getOfflineMilitaryEntries(config.language), [config.language]);
 
   const filteredGlossaryEntries = useMemo(() => {
     const q = normalizeLookupKey(searchQuery);
@@ -261,12 +249,11 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
     setEvalLoading(true);
     setEvalError(null);
     try {
-      const domainLabel = getDomainInfo(currentCard.domain).label;
       const res = await evaluateRecallSentence({
         language: currentCard.language,
         targetTerm: currentCard.term,
         userSentence: usageSentence.trim(),
-        domainLabel,
+        domain: currentCard.domain,
       });
       setSentenceEval(res);
     } catch (err) {
@@ -312,7 +299,11 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex flex-wrap items-center p-1 rounded-lg bg-[#111922] border border-[#23303E]" role="tablist" aria-label="Vault mode">
+          <div
+            className="flex flex-wrap items-center p-1 rounded-lg bg-[#111922] border border-[#23303E]"
+            role="tablist"
+            aria-label="Vault mode"
+          >
             <button
               type="button"
               role="tab"
@@ -462,14 +453,9 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
 
       {/* Manual Entry Form */}
       {mode === 'browse' && showAddForm && (
-        <form
-          onSubmit={handleManualAdd}
-          className="rounded-xl border border-[#D99B26]/35 bg-[#111922] p-5 space-y-4"
-        >
+        <form onSubmit={handleManualAdd} className="rounded-xl border border-[#D99B26]/35 bg-[#111922] p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-[#F8FAFC]">
-              Add to {LANGUAGE_LABELS[config.language]} Vault
-            </h2>
+            <h2 className="text-sm font-semibold text-[#F8FAFC]">Add to {LANGUAGE_LABELS[config.language]} Vault</h2>
             <button
               type="button"
               onClick={() => setShowAddForm(false)}
@@ -611,9 +597,13 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
                       <p className="text-xs text-[#94A3B8] leading-relaxed">{entry.note}</p>
                       <p className="text-xs text-[#7D8FA3]">
                         {getDomainInfo(entry.domain).shortLabel}
-                        <span className="mx-1.5" aria-hidden="true">·</span>
+                        <span className="mx-1.5" aria-hidden="true">
+                          ·
+                        </span>
                         {entry.register}
-                        <span className="mx-1.5" aria-hidden="true">·</span>
+                        <span className="mx-1.5" aria-hidden="true">
+                          ·
+                        </span>
                         <span className="text-emerald-400">Offline Ready</span>
                       </p>
                     </div>
@@ -672,7 +662,8 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
               No {LANGUAGE_LABELS[config.language]} vocabulary entries match this filter.
             </p>
             <p className="text-xs text-[#94A3B8]">
-              Tap words in Live Voice Chat or OPI Transcript, save upgrades from ILR Debrief, or add a new {LANGUAGE_LABELS[config.language]} entry above.
+              Tap words in Live Voice Chat or OPI Transcript, save upgrades from ILR Debrief, or add a new{' '}
+              {LANGUAGE_LABELS[config.language]} entry above.
             </p>
           </div>
         ) : (
@@ -694,25 +685,31 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
                     </p>
                     <p className="text-xs text-[#7D8FA3]">
                       {item.category}
-                      <span className="mx-1.5" aria-hidden="true">·</span>
+                      <span className="mx-1.5" aria-hidden="true">
+                        ·
+                      </span>
                       {LANGUAGE_LABELS[item.language]} ({dialect.short})
-                      <span className="mx-1.5" aria-hidden="true">·</span>
+                      <span className="mx-1.5" aria-hidden="true">
+                        ·
+                      </span>
                       {item.registerTag}
-                      <span className="mx-1.5" aria-hidden="true">·</span>
+                      <span className="mx-1.5" aria-hidden="true">
+                        ·
+                      </span>
                       <span
                         className={
                           item.mastery === 'mastered'
                             ? 'text-emerald-400'
                             : item.mastery === 'practicing'
-                            ? 'text-amber-300'
-                            : 'text-[#94A3B8]'
+                              ? 'text-amber-300'
+                              : 'text-[#94A3B8]'
                         }
                       >
                         {item.mastery === 'mastered'
                           ? 'Mastered'
                           : item.mastery === 'practicing'
-                          ? 'Practicing'
-                          : 'New'}
+                            ? 'Practicing'
+                            : 'New'}
                       </span>
                     </p>
                   </div>
@@ -746,211 +743,213 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
             })}
           </div>
         )
-      ) : (
-        /* REVERSE ACTIVE-RECALL DRILL MODE */
-        currentCard ? (
-          <div className="max-w-3xl mx-auto rounded-xl border border-[#23303E] bg-[#111922] p-5 sm:p-7 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#94A3B8]">
-              <span>
-                Reverse Active-Recall · Card{' '}
-                <span className="font-mono text-[#F8FAFC] tabular-nums">
-                  {(drillIndex % drillDeck.length) + 1}/{drillDeck.length}
-                </span>
+      ) : /* REVERSE ACTIVE-RECALL DRILL MODE */
+      currentCard ? (
+        <div className="max-w-3xl mx-auto rounded-xl border border-[#23303E] bg-[#111922] p-5 sm:p-7 space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#94A3B8]">
+            <span>
+              Reverse Active-Recall · Card{' '}
+              <span className="font-mono text-[#F8FAFC] tabular-nums">
+                {(drillIndex % drillDeck.length) + 1}/{drillDeck.length}
               </span>
-              <span>
-                Target: <strong className="text-[#E6EDF3]">{LANGUAGE_LABELS[currentCard.language]}</strong> · {currentCard.category}
-              </span>
-            </div>
+            </span>
+            <span>
+              Target: <strong className="text-[#E6EDF3]">{LANGUAGE_LABELS[currentCard.language]}</strong> ·{' '}
+              {currentCard.category}
+            </span>
+          </div>
 
-            {/* Step 1: English Concept Only (Target Term Hidden!) */}
-            <div className="space-y-2 py-2">
-              <p className="text-xs text-[#7D8FA3]">Recall the {LANGUAGE_LABELS[currentCard.language]} expression for:</p>
-              <h2 data-testid="recall-english-prompt" className="text-2xl font-semibold text-[#F8FAFC] leading-snug">
-                {currentCard.englishConcept}
-              </h2>
-              <p className="text-xs text-[#94A3B8]">
-                Register target: {currentCard.registerTag} · Domain: {getDomainInfo(currentCard.domain).shortLabel}
-              </p>
-            </div>
+          {/* Step 1: English Concept Only (Target Term Hidden!) */}
+          <div className="space-y-2 py-2">
+            <p className="text-xs text-[#7D8FA3]">Recall the {LANGUAGE_LABELS[currentCard.language]} expression for:</p>
+            <h2 data-testid="recall-english-prompt" className="text-2xl font-semibold text-[#F8FAFC] leading-snug">
+              {currentCard.englishConcept}
+            </h2>
+            <p className="text-xs text-[#94A3B8]">
+              Register target: {currentCard.registerTag} · Domain: {getDomainInfo(currentCard.domain).shortLabel}
+            </p>
+          </div>
 
-            {!revealed ? (
-              <form onSubmit={handleCheckRecall} className="space-y-4">
+          {!revealed ? (
+            <form onSubmit={handleCheckRecall} className="space-y-4">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleVoiceRecall}
+                  aria-label={stt.isListening ? 'Stop voice recall' : 'Speak target phrase from memory'}
+                  className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border transition-colors shrink-0 ${
+                    stt.isListening
+                      ? 'border-red-500 bg-red-600 text-white'
+                      : 'border-[#2E4054] bg-[#16202B] text-[#E6EDF3] hover:bg-[#1E2C3A]'
+                  }`}
+                >
+                  {stt.isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </button>
+
+                <label htmlFor="recall-attempt-input" className="sr-only">
+                  Type or speak the target term from memory
+                </label>
+                <input
+                  id="recall-attempt-input"
+                  type="text"
+                  value={recallGuess}
+                  onChange={(e) => setRecallGuess(e.target.value)}
+                  placeholder={`Speak or type the ${LANGUAGE_LABELS[currentCard.language]} phrase from memory…`}
+                  className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRecallMatchScore(0);
+                    setRevealed(true);
+                  }}
+                  className="px-3.5 py-2 min-h-[42px] rounded-lg text-xs font-medium text-[#94A3B8] hover:text-white"
+                >
+                  Reveal Answer
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 min-h-[44px] rounded-lg bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
+                >
+                  Check Recall
+                </button>
+              </div>
+            </form>
+          ) : (
+            /* Step 2: Reveal Target Term + Full Operational Sentence Prompt */
+            <div className="space-y-6 pt-4 border-t border-[#23303E]">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-[#94A3B8]">
+                    Target Expression
+                    {recallMatchScore !== null && (
+                      <>
+                        <span className="mx-1.5" aria-hidden="true">
+                          ·
+                        </span>
+                        <span
+                          className={`font-mono font-semibold tabular-nums ${
+                            recallMatchScore >= 75 ? 'text-emerald-400' : 'text-amber-300'
+                          }`}
+                        >
+                          {recallMatchScore}% recall match
+                        </span>
+                      </>
+                    )}
+                  </p>
+                  <p data-testid="recall-revealed-term" className="text-2xl font-bold text-[#F3C669]">
+                    {currentCard.term}
+                  </p>
+                  <p className="text-sm text-[#CBD5E1] italic mt-1">&ldquo;{currentCard.contextSentence}&rdquo;</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    tts.speak(currentCard.term.replace(/\s*\(.*?\)\s*/g, ''), {
+                      lang: getDialectInfo(currentCard.language, currentCard.dialect).bcp47,
+                      rate: config.speechRate,
+                      voiceURI: config.voiceURI,
+                    })
+                  }
+                  className="flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg border border-[#2E4054] bg-[#16202B] text-xs font-medium text-[#E6EDF3] hover:bg-[#1E2C3A]"
+                >
+                  <Volume2 className="w-4 h-4 text-[#D99B26]" />
+                  <span>Listen</span>
+                </button>
+              </div>
+
+              {/* Production step: use it in a full operational sentence */}
+              <form onSubmit={handleEvaluateSentence} className="space-y-3 pt-4 border-t border-[#23303E]">
+                <label htmlFor="recall-sentence-input" className="block text-xs font-semibold text-[#E6EDF3]">
+                  Step 2 — Use &ldquo;{currentCard.term.replace(/\s*\(.*?\)\s*/g, '')}&rdquo; in a full operational
+                  sentence:
+                </label>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={handleVoiceRecall}
-                    aria-label={stt.isListening ? 'Stop voice recall' : 'Speak target phrase from memory'}
-                    className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border transition-colors shrink-0 ${
+                    aria-label={stt.isListening ? 'Stop speaking sentence' : 'Speak full sentence'}
+                    className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border shrink-0 ${
                       stt.isListening
                         ? 'border-red-500 bg-red-600 text-white'
-                        : 'border-[#2E4054] bg-[#16202B] text-[#E6EDF3] hover:bg-[#1E2C3A]'
+                        : 'border-[#2E4054] bg-[#16202B] text-[#E6EDF3]'
                     }`}
                   >
                     {stt.isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                   </button>
-
-                  <label htmlFor="recall-attempt-input" className="sr-only">
-                    Type or speak the target term from memory
-                  </label>
                   <input
-                    id="recall-attempt-input"
+                    id="recall-sentence-input"
                     type="text"
-                    value={recallGuess}
-                    onChange={(e) => setRecallGuess(e.target.value)}
-                    placeholder={`Speak or type the ${LANGUAGE_LABELS[currentCard.language]} phrase from memory…`}
+                    value={usageSentence}
+                    onChange={(e) => setUsageSentence(e.target.value)}
+                    placeholder={`Produce a complete ${LANGUAGE_LABELS[currentCard.language]} sentence…`}
                     className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
                   />
-                </div>
-
-                <div className="flex items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRecallMatchScore(0);
-                      setRevealed(true);
-                    }}
-                    className="px-3.5 py-2 min-h-[42px] rounded-lg text-xs font-medium text-[#94A3B8] hover:text-white"
-                  >
-                    Reveal Answer
-                  </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 min-h-[44px] rounded-lg bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
+                    disabled={!usageSentence.trim() || evalLoading}
+                    className="px-4 py-2 min-h-[44px] rounded-lg border border-[#2E4054] bg-[#16202B] text-xs font-semibold text-[#F8FAFC] hover:bg-[#1E2C3A] disabled:opacity-40 whitespace-nowrap shrink-0"
                   >
-                    Check Recall
+                    {evalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Coach Check'}
                   </button>
                 </div>
-              </form>
-            ) : (
-              /* Step 2: Reveal Target Term + Full Operational Sentence Prompt */
-              <div className="space-y-6 pt-4 border-t border-[#23303E]">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="space-y-1">
+
+                {evalError && <p className="text-xs text-red-300">{evalError}</p>}
+
+                {sentenceEval && (
+                  <div className="rounded-lg border border-[#23303E] bg-[#0B1117] p-3.5 space-y-1.5">
+                    <p
+                      className={`text-xs font-semibold ${sentenceEval.isNatural ? 'text-emerald-400' : 'text-amber-300'}`}
+                    >
+                      {sentenceEval.isNatural ? 'Natural Operational Register' : 'Register Adjustment Suggested'}
+                    </p>
+                    <p className="text-xs text-[#CBD5E1]">{sentenceEval.feedback}</p>
                     <p className="text-xs text-[#94A3B8]">
-                      Target Expression
-                      {recallMatchScore !== null && (
-                        <>
-                          <span className="mx-1.5" aria-hidden="true">·</span>
-                          <span
-                            className={`font-mono font-semibold tabular-nums ${
-                              recallMatchScore >= 75 ? 'text-emerald-400' : 'text-amber-300'
-                            }`}
-                          >
-                            {recallMatchScore}% recall match
-                          </span>
-                        </>
-                      )}
-                    </p>
-                    <p data-testid="recall-revealed-term" className="text-2xl font-bold text-[#F3C669]">
-                      {currentCard.term}
-                    </p>
-                    <p className="text-sm text-[#CBD5E1] italic mt-1">
-                      &ldquo;{currentCard.contextSentence}&rdquo;
+                      Polished: <span className="text-[#F8FAFC]">{sentenceEval.polishedVersion}</span>
                     </p>
                   </div>
+                )}
+              </form>
 
+              {/* Mastery Self-Rating & Next Card */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[#23303E]">
+                <span className="text-xs text-[#94A3B8]">Log mastery to advance:</span>
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() =>
-                      tts.speak(currentCard.term.replace(/\s*\(.*?\)\s*/g, ''), {
-                        lang: getDialectInfo(currentCard.language, currentCard.dialect).bcp47,
-                        rate: config.speechRate,
-                        voiceURI: config.voiceURI,
-                      })
-                    }
-                    className="flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg border border-[#2E4054] bg-[#16202B] text-xs font-medium text-[#E6EDF3] hover:bg-[#1E2C3A]"
+                    onClick={() => handleGradeCard('new')}
+                    className="px-3.5 py-2 min-h-[40px] rounded-lg border border-red-500/30 bg-red-950/20 text-xs font-medium text-red-300 hover:bg-red-950/40"
                   >
-                    <Volume2 className="w-4 h-4 text-[#D99B26]" />
-                    <span>Listen</span>
+                    Needs Work
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleGradeCard('practicing')}
+                    className="px-3.5 py-2 min-h-[40px] rounded-lg border border-amber-500/30 bg-amber-950/20 text-xs font-medium text-amber-300 hover:bg-amber-950/40"
+                  >
+                    Solid
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleGradeCard('mastered')}
+                    className="flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-lg bg-emerald-600/20 border border-emerald-500/40 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/30"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Mastered</span>
                   </button>
                 </div>
-
-                {/* Production step: use it in a full operational sentence */}
-                <form onSubmit={handleEvaluateSentence} className="space-y-3 pt-4 border-t border-[#23303E]">
-                  <label htmlFor="recall-sentence-input" className="block text-xs font-semibold text-[#E6EDF3]">
-                    Step 2 — Use &ldquo;{currentCard.term.replace(/\s*\(.*?\)\s*/g, '')}&rdquo; in a full operational sentence:
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={handleVoiceRecall}
-                      aria-label={stt.isListening ? 'Stop speaking sentence' : 'Speak full sentence'}
-                      className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border shrink-0 ${
-                        stt.isListening
-                          ? 'border-red-500 bg-red-600 text-white'
-                          : 'border-[#2E4054] bg-[#16202B] text-[#E6EDF3]'
-                      }`}
-                    >
-                      {stt.isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                    </button>
-                    <input
-                      id="recall-sentence-input"
-                      type="text"
-                      value={usageSentence}
-                      onChange={(e) => setUsageSentence(e.target.value)}
-                      placeholder={`Produce a complete ${LANGUAGE_LABELS[currentCard.language]} sentence…`}
-                      className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!usageSentence.trim() || evalLoading}
-                      className="px-4 py-2 min-h-[44px] rounded-lg border border-[#2E4054] bg-[#16202B] text-xs font-semibold text-[#F8FAFC] hover:bg-[#1E2C3A] disabled:opacity-40 whitespace-nowrap shrink-0"
-                    >
-                      {evalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Coach Check'}
-                    </button>
-                  </div>
-
-                  {evalError && <p className="text-xs text-red-300">{evalError}</p>}
-
-                  {sentenceEval && (
-                    <div className="rounded-lg border border-[#23303E] bg-[#0B1117] p-3.5 space-y-1.5">
-                      <p className={`text-xs font-semibold ${sentenceEval.isNatural ? 'text-emerald-400' : 'text-amber-300'}`}>
-                        {sentenceEval.isNatural ? 'Natural Operational Register' : 'Register Adjustment Suggested'}
-                      </p>
-                      <p className="text-xs text-[#CBD5E1]">{sentenceEval.feedback}</p>
-                      <p className="text-xs text-[#94A3B8]">
-                        Polished: <span className="text-[#F8FAFC]">{sentenceEval.polishedVersion}</span>
-                      </p>
-                    </div>
-                  )}
-                </form>
-
-                {/* Mastery Self-Rating & Next Card */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[#23303E]">
-                  <span className="text-xs text-[#94A3B8]">Log mastery to advance:</span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleGradeCard('new')}
-                      className="px-3.5 py-2 min-h-[40px] rounded-lg border border-red-500/30 bg-red-950/20 text-xs font-medium text-red-300 hover:bg-red-950/40"
-                    >
-                      Needs Work
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleGradeCard('practicing')}
-                      className="px-3.5 py-2 min-h-[40px] rounded-lg border border-amber-500/30 bg-amber-950/20 text-xs font-medium text-amber-300 hover:bg-amber-950/40"
-                    >
-                      Solid
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleGradeCard('mastered')}
-                      className="flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-lg bg-emerald-600/20 border border-emerald-500/40 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/30"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Mastered</span>
-                    </button>
-                  </div>
-                </div>
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-[#23303E] bg-[#111922] p-10 text-center text-sm text-[#94A3B8]">
-            Save at least one {LANGUAGE_LABELS[config.language]} vocabulary item to launch Reverse Active-Recall drills.
-          </div>
-        )
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-[#23303E] bg-[#111922] p-10 text-center text-sm text-[#94A3B8]">
+          Save at least one {LANGUAGE_LABELS[config.language]} vocabulary item to launch Reverse Active-Recall drills.
+        </div>
       )}
     </div>
   );

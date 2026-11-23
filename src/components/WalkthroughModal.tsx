@@ -1,14 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  ArrowRight,
-  BookMarked,
-  Check,
-  DatabaseZap,
-  MessageSquare,
-  Mic,
-  Timer,
-  X,
-} from 'lucide-react';
+import {ArrowRight, BookMarked, Check, DatabaseZap, MessageSquare, Mic, Timer, X} from 'lucide-react';
 import type {ModuleTab} from '../types';
 
 interface WalkthroughModalProps {
@@ -79,8 +70,7 @@ const TOUR_STEPS: TourStep[] = [
     id: 'lab-vault',
     eyebrow: 'Targeted Drills & Retention',
     title: '90-Second PREP, Interp Lab & Active Recall',
-    description:
-      'Sharpen high-register briefing delivery and lock in words you struggled with during conversation.',
+    description: 'Sharpen high-register briefing delivery and lock in words you struggled with during conversation.',
     highlights: [
       'PREP Monologue: Visual 90s pacing timeline (Point → Reason → Example → Pivot) with structural grading.',
       'Consecutive Interp: Blind-listen delegation clips with Rozan-style chunking scratchpad.',
@@ -92,12 +82,7 @@ const TOUR_STEPS: TourStep[] = [
   },
 ];
 
-export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({
-  open,
-  onClose,
-  onNavigateTab,
-  apiSavedCount,
-}) => {
+export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({open, onClose, onNavigateTab, apiSavedCount}) => {
   const [stepIndex, setStepIndex] = useState(0);
 
   useEffect(() => {
@@ -162,9 +147,7 @@ export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({
           {TOUR_STEPS.map((s, idx) => (
             <div
               key={s.id}
-              className={`h-1 rounded-full transition-colors ${
-                idx <= stepIndex ? 'bg-[#D99B26]' : 'bg-[#23303E]'
-              }`}
+              className={`h-1 rounded-full transition-colors ${idx <= stepIndex ? 'bg-[#D99B26]' : 'bg-[#23303E]'}`}
             />
           ))}
         </div>

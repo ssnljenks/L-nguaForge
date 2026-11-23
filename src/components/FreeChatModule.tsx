@@ -250,8 +250,7 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
         liveRef.current.endSession();
       }
       ttsRef.current.stop();
-      const nextThreadId =
-        threadsRef.current.find((t) => t.language === config.language)?.id ?? '';
+      const nextThreadId = threadsRef.current.find((t) => t.language === config.language)?.id ?? '';
       activeThreadIdRef.current = nextThreadId;
       setActiveThreadId(nextThreadId);
       setWordPopover(null);
@@ -277,8 +276,8 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     tts.stop();
     live.startSession({
       language: config.language,
-      dialectLabel: dialectInfo.label,
-      domainLabel: domainInfo.label,
+      dialect: dialectInfo.id,
+      domain: domainInfo.id,
       registerMode,
       voiceName,
     });
@@ -330,8 +329,8 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     try {
       const res = await sendFreeChatTurn({
         language: requestLang,
-        dialectLabel: dialectInfo.label,
-        domainLabel: domainInfo.label,
+        dialect: dialectInfo.id,
+        domain: domainInfo.id,
         registerMode,
         history: priorHistory,
         userMessage: clean,
@@ -352,12 +351,7 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     }
   };
 
-  const handleWordClick = async (
-    messageId: string,
-    cleanWord: string,
-    contextSentence: string,
-    forceAi = false
-  ) => {
+  const handleWordClick = async (messageId: string, cleanWord: string, contextSentence: string, forceAi = false) => {
     if (!cleanWord) return;
     const requestLang = config.language;
 
@@ -387,7 +381,7 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     try {
       const result = await lookupContextualWord({
         language: requestLang,
-        dialectLabel: dialectInfo.label,
+        dialect: dialectInfo.id,
         word: cleanWord,
         contextSentence,
         vocabItems,
@@ -474,8 +468,8 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     try {
       const res = await requestTotPhrase({
         language: requestLang,
-        dialectLabel: dialectInfo.label,
-        domainLabel: domainInfo.label,
+        dialect: dialectInfo.id,
+        domain: domainInfo.id,
         englishQuery: flagInput.trim(),
       });
       if (currentLanguageRef.current !== requestLang) return;
@@ -525,19 +519,19 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     live.status === 'speaking'
       ? Math.max(0.22, live.aiLevel)
       : live.status === 'listening' && !live.isMuted
-      ? Math.max(0.08, live.micLevel)
-      : 0;
+        ? Math.max(0.08, live.micLevel)
+        : 0;
 
   const statusHeadline =
     live.status === 'connecting'
       ? 'Connecting live audio…'
       : live.status === 'speaking'
-      ? 'Partner speaking — interrupt anytime'
-      : live.status === 'listening'
-      ? live.isMuted
-        ? 'Microphone muted'
-        : 'Listening — speak naturally'
-      : `Live ${LANGUAGE_LABELS[config.language]} Voice Partner`;
+        ? 'Partner speaking — interrupt anytime'
+        : live.status === 'listening'
+          ? live.isMuted
+            ? 'Microphone muted'
+            : 'Listening — speak naturally'
+          : `Live ${LANGUAGE_LABELS[config.language]} Voice Partner`;
 
   const activeError = live.error || textError;
 
@@ -549,9 +543,7 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
       {/* Minimal Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#23303E]">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#F8FAFC]">
-            Live Voice Chat
-          </h1>
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#F8FAFC]">Live Voice Chat</h1>
           <p className="text-xs text-[#94A3B8]">
             {LANGUAGE_LABELS[config.language]} · {dialectInfo.short} · Real-time back-and-forth speech
           </p>
@@ -630,10 +622,10 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
               live.status === 'speaking'
                 ? 'bg-sky-400/12 border border-sky-400/40'
                 : live.status === 'listening' && !live.isMuted
-                ? 'bg-[#D99B26]/12 border border-[#D99B26]/45'
-                : live.status === 'connecting'
-                ? 'bg-[#D99B26]/10 border border-[#D99B26]/30 animate-pulse'
-                : 'bg-[#16202B]/70 border border-[#23303E]'
+                  ? 'bg-[#D99B26]/12 border border-[#D99B26]/45'
+                  : live.status === 'connecting'
+                    ? 'bg-[#D99B26]/10 border border-[#D99B26]/30 animate-pulse'
+                    : 'bg-[#16202B]/70 border border-[#23303E]'
             }`}
             style={{
               transform: `scale(${1 + activeEnergy * 0.22})`,
@@ -646,8 +638,8 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
               live.status === 'speaking'
                 ? 'bg-[#0F1E2E] border-sky-400/60'
                 : live.status === 'listening' && !live.isMuted
-                ? 'bg-[#1A1812] border-[#D99B26]/70'
-                : 'bg-[#0D141C] border-[#2A394A]'
+                  ? 'bg-[#1A1812] border-[#D99B26]/70'
+                  : 'bg-[#0D141C] border-[#2A394A]'
             }`}
           >
             {live.status === 'connecting' ? (
@@ -655,18 +647,12 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
             ) : live.isLive ? (
               <div className="flex items-center gap-1.5 h-10" aria-hidden="true">
                 {barMultipliers.map((mult, idx) => {
-                  const heightPx = live.isMuted
-                    ? 6
-                    : Math.max(8, Math.round((0.18 + activeEnergy * mult) * 38));
+                  const heightPx = live.isMuted ? 6 : Math.max(8, Math.round((0.18 + activeEnergy * mult) * 38));
                   return (
                     <span
                       key={idx}
                       className={`w-1.5 rounded-full transition-all duration-100 ${
-                        live.status === 'speaking'
-                          ? 'bg-sky-400'
-                          : live.isMuted
-                          ? 'bg-[#475569]'
-                          : 'bg-[#D99B26]'
+                        live.status === 'speaking' ? 'bg-sky-400' : live.isMuted ? 'bg-[#475569]' : 'bg-[#D99B26]'
                       }`}
                       style={{height: `${heightPx}px`}}
                     />
@@ -941,9 +927,7 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
               </form>
 
               {flagError && <p className="text-xs text-red-300">{flagError}</p>}
-              {flagSaved && flagMode === 'direct' && (
-                <p className="text-xs text-emerald-400">Saved to Vocab Vault.</p>
-              )}
+              {flagSaved && flagMode === 'direct' && <p className="text-xs text-emerald-400">Saved to Vocab Vault.</p>}
 
               {flagResult && (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-[#23303E]">
@@ -952,8 +936,8 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
                       {flagResult.source === 'dictionary'
                         ? 'Instant Dictionary (0 API)'
                         : flagResult.source === 'cache'
-                        ? 'Cached (0 API)'
-                        : 'AI Suggestion'}
+                          ? 'Cached (0 API)'
+                          : 'AI Suggestion'}
                     </p>
                     <p className="text-sm font-semibold text-[#F3C669]">{flagResult.targetPhrase}</p>
                     <p className="text-xs text-[#94A3B8]">{flagResult.exampleSentence}</p>
@@ -976,7 +960,8 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
           <div ref={transcriptPaneRef} className="max-h-[340px] overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && !live.liveUserTranscript && !live.livePartnerTranscript ? (
               <p className="text-xs text-[#7D8FA3] text-center py-6">
-                Live captions will appear here as you speak. Tap any partner word at any time to save it to your Vocab Vault.
+                Live captions will appear here as you speak. Tap any partner word at any time to save it to your Vocab
+                Vault.
               </p>
             ) : (
               <>
@@ -1055,9 +1040,7 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
                                   SOURCE_LABELS[wordPopover.result.source],
                                   wordPopover.result.registerTag,
                                   wordPopover.result.suggestedCategory,
-                                ]
-                                  .filter(Boolean)
-                                  .length > 0 && (
+                                ].filter(Boolean).length > 0 && (
                                   <p className="text-[11px] text-[#94A3B8]">
                                     {[
                                       SOURCE_LABELS[wordPopover.result.source],

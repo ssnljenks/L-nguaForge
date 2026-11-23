@@ -10,7 +10,7 @@ import {
   normalizeLookupKey,
   resetInMemoryCacheForTests,
   saveWordToLocalCache,
-} from './localDictionary';
+} from './localDictionary.ts';
 import type {VocabItem} from '../types';
 
 function installMockLocalStorage(initial: Record<string, string> = {}) {

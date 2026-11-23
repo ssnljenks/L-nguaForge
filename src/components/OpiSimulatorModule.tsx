@@ -15,14 +15,7 @@ import {
   VolumeX,
   X,
 } from 'lucide-react';
-import type {
-  MissionConfig,
-  OpiMessage,
-  OpiSession,
-  ProbeLevel,
-  VocabCategory,
-  VocabItem,
-} from '../types';
+import type {MissionConfig, OpiMessage, OpiSession, ProbeLevel, VocabCategory, VocabItem} from '../types';
 import {
   determineProbeLevel,
   formatSecondsClock,
@@ -192,10 +185,7 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
     }
   }, [totCountdown, totPendingResult, totRevealed]);
 
-  const candidateTurns = useMemo(
-    () => messages.filter((m) => m.role === 'candidate').length,
-    [messages]
-  );
+  const candidateTurns = useMemo(() => messages.filter((m) => m.role === 'candidate').length, [messages]);
 
   const speakIfEnabled = (text: string) => {
     if (!config.autoSpeakExaminer) return;
@@ -229,8 +219,8 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
     try {
       const turn = await requestOpiTurn({
         language: requestLang,
-        dialectLabel: dialectInfo.label,
-        domainLabel: domainInfo.label,
+        dialect: dialectInfo.id,
+        domain: domainInfo.id,
         probeLevel: 'level_2_baseline',
         elapsedSeconds: 0,
         history: [],
@@ -295,8 +285,8 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
     try {
       const turn = await requestOpiTurn({
         language: requestLang,
-        dialectLabel: dialectInfo.label,
-        domainLabel: domainInfo.label,
+        dialect: dialectInfo.id,
+        domain: domainInfo.id,
         probeLevel: probeDecision.level,
         elapsedSeconds,
         history: nextMessages.map((m) => ({role: m.role, text: m.text})),
@@ -339,12 +329,7 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
     }
   };
 
-  const handleWordClick = async (
-    messageId: string,
-    cleanWord: string,
-    contextSentence: string,
-    forceAi = false
-  ) => {
+  const handleWordClick = async (messageId: string, cleanWord: string, contextSentence: string, forceAi = false) => {
     if (!cleanWord) return;
     const requestLang = config.language;
 
@@ -375,7 +360,7 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
     try {
       const result = await lookupContextualWord({
         language: requestLang,
-        dialectLabel: dialectInfo.label,
+        dialect: dialectInfo.id,
         word: cleanWord,
         contextSentence,
         vocabItems,
@@ -432,8 +417,8 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
     try {
       const result = await requestTotPhrase({
         language: config.language,
-        dialectLabel: dialectInfo.label,
-        domainLabel: domainInfo.label,
+        dialect: dialectInfo.id,
+        domain: domainInfo.id,
         englishQuery: q,
       });
       setTotPendingResult(result);
@@ -493,7 +478,9 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#94A3B8]">
             <span>ILR OPI Examiner</span>
             <span aria-hidden="true">·</span>
-            <span>{LANGUAGE_LABELS[config.language]} ({dialectInfo.short})</span>
+            <span>
+              {LANGUAGE_LABELS[config.language]} ({dialectInfo.short})
+            </span>
             <span aria-hidden="true">·</span>
             <span>{domainInfo.shortLabel}</span>
           </div>
@@ -523,7 +510,11 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
             onClick={() => onUpdateConfig({autoSpeakExaminer: !config.autoSpeakExaminer})}
             className="flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg border border-[#23303E] bg-[#111922] text-xs font-medium text-[#CBD5E1] hover:text-white transition-colors whitespace-nowrap"
           >
-            {config.autoSpeakExaminer ? <Volume2 className="w-3.5 h-3.5 text-[#D99B26]" /> : <VolumeX className="w-3.5 h-3.5 text-[#64748B]" />}
+            {config.autoSpeakExaminer ? (
+              <Volume2 className="w-3.5 h-3.5 text-[#D99B26]" />
+            ) : (
+              <VolumeX className="w-3.5 h-3.5 text-[#64748B]" />
+            )}
             <span>{config.autoSpeakExaminer ? 'Voice On' : 'Voice Muted'}</span>
           </button>
 
@@ -571,11 +562,10 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
         >
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-sm font-semibold text-[#F8FAFC]">
-                5-Second Tip-of-the-Tongue Retrieval Helper
-              </h2>
+              <h2 className="text-sm font-semibold text-[#F8FAFC]">5-Second Tip-of-the-Tongue Retrieval Helper</h2>
               <p className="text-xs text-[#94A3B8] mt-0.5">
-                Enter what you want to say in English. Hold for the 5-second active recall window to retrieve it from memory before reveal.
+                Enter what you want to say in English. Hold for the 5-second active recall window to retrieve it from
+                memory before reveal.
               </p>
             </div>
             <button
@@ -619,7 +609,9 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
                   {totCountdown}
                 </span>
                 <div>
-                  <p className="text-sm font-medium text-[#F8FAFC]">Active Retrieval Window — Try saying it aloud first</p>
+                  <p className="text-sm font-medium text-[#F8FAFC]">
+                    Active Retrieval Window — Try saying it aloud first
+                  </p>
                   <p className="text-xs text-[#94A3B8]">
                     Retrieving before seeing the answer strengthens ILR 2+ lexical access.
                   </p>
@@ -654,8 +646,8 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
                       totRevealed.source === 'dictionary'
                         ? 'Instant Dictionary (0 API)'
                         : totRevealed.source === 'cache'
-                        ? 'Cached (0 API)'
-                        : 'Target High-Register Phrase',
+                          ? 'Cached (0 API)'
+                          : 'Target High-Register Phrase',
                       totRevealed.category,
                     ]
                       .filter(Boolean)
@@ -753,18 +745,11 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
                 const isExaminer = msg.role === 'examiner';
                 const tokens = isExaminer ? tokenizeTranscript(msg.text) : [];
                 return (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col ${isExaminer ? 'items-start' : 'items-end'}`}
-                  >
+                  <div key={msg.id} className={`flex flex-col ${isExaminer ? 'items-start' : 'items-end'}`}>
                     <div className="flex items-center gap-2 text-xs text-[#7D8FA3] mb-1.5 px-1">
-                      <span className="font-medium text-[#CBD5E1]">
-                        {isExaminer ? 'ILR Examiner' : 'You'}
-                      </span>
+                      <span className="font-medium text-[#CBD5E1]">{isExaminer ? 'ILR Examiner' : 'You'}</span>
                       <span aria-hidden="true">·</span>
-                      <span>
-                        {msg.probeLevel === 'level_3_probe' ? 'Level 3 Probe' : 'Level 2 Baseline'}
-                      </span>
+                      <span>{msg.probeLevel === 'level_3_probe' ? 'Level 3 Probe' : 'Level 2 Baseline'}</span>
                       {isExaminer && (
                         <button
                           type="button"
@@ -832,9 +817,7 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
                                 OPI_SOURCE_LABELS[wordPopover.result.source],
                                 wordPopover.result.registerTag,
                                 wordPopover.result.suggestedCategory,
-                              ]
-                                .filter(Boolean)
-                                .length > 0 && (
+                              ].filter(Boolean).length > 0 && (
                                 <p className="text-xs text-[#94A3B8]">
                                   {[
                                     OPI_SOURCE_LABELS[wordPopover.result.source],
@@ -880,13 +863,9 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
 
                         {wordPopover.result && (
                           <>
-                            <p className="text-sm text-[#E6EDF3] font-medium">
-                              {wordPopover.result.contextualMeaning}
-                            </p>
+                            <p className="text-sm text-[#E6EDF3] font-medium">{wordPopover.result.contextualMeaning}</p>
                             {wordPopover.result.grammarNote && (
-                              <p className="text-xs text-[#94A3B8] leading-relaxed">
-                                {wordPopover.result.grammarNote}
-                              </p>
+                              <p className="text-xs text-[#94A3B8] leading-relaxed">{wordPopover.result.grammarNote}</p>
                             )}
                             <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                               {wordPopover.result.source !== 'ai' ? (
@@ -913,7 +892,11 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
                                 disabled={wordPopover.saved}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-70 transition-colors"
                               >
-                                {wordPopover.saved ? <Check className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
+                                {wordPopover.saved ? (
+                                  <Check className="w-3.5 h-3.5" />
+                                ) : (
+                                  <BookmarkPlus className="w-3.5 h-3.5" />
+                                )}
                                 <span>{wordPopover.saved ? 'Saved to Vault' : 'Save to Vocab Vault'}</span>
                               </button>
                             </div>
@@ -1011,9 +994,7 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
             </div>
             <div>
               <p className="text-xs text-[#7D8FA3]">Your Turns</p>
-              <p className="mt-1 font-mono text-sm font-semibold text-[#F8FAFC] tabular-nums">
-                {candidateTurns}
-              </p>
+              <p className="mt-1 font-mono text-sm font-semibold text-[#F8FAFC] tabular-nums">{candidateTurns}</p>
             </div>
           </div>
 
@@ -1038,8 +1019,14 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
             <h3 className="text-xs font-semibold text-[#CBD5E1]">Level 2+ / 3 Checklist</h3>
             <ul className="space-y-1.5 text-xs text-[#94A3B8] leading-relaxed">
               <li>• Lead with a clear thesis before giving operational examples.</li>
-              <li>• Trigger imperfect subjunctive on hypotheticals ({config.language === 'es' ? 'si se redujera…' : 'caso houvesse…'}).</li>
-              <li>• Use formal pivots ({config.language === 'es' ? 'no obstante, por consiguiente' : 'todavia, em contrapartida'}).</li>
+              <li>
+                • Trigger imperfect subjunctive on hypotheticals (
+                {config.language === 'es' ? 'si se redujera…' : 'caso houvesse…'}).
+              </li>
+              <li>
+                • Use formal pivots (
+                {config.language === 'es' ? 'no obstante, por consiguiente' : 'todavia, em contrapartida'}).
+              </li>
             </ul>
           </div>
         </aside>

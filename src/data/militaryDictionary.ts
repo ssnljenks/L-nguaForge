@@ -2249,10 +2249,7 @@ export const PT_MILITARY_DICT: Record<string, MilitaryDictEntry> = {
   },
 };
 
-export const MILITARY_DICT_BY_LANGUAGE: Record<
-  TargetLanguage,
-  Record<string, MilitaryDictEntry>
-> = {
+export const MILITARY_DICT_BY_LANGUAGE: Record<TargetLanguage, Record<string, MilitaryDictEntry>> = {
   es: ES_MILITARY_DICT,
   pt: PT_MILITARY_DICT,
 };

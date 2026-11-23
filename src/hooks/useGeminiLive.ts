@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import type {ChatRegisterMode, TargetLanguage} from '../types';
+import type {ChatRegisterMode, MilitaryDomain, TargetLanguage} from '../types';
 import {
   base64PcmToFloat32,
   computeRmsLevel,
@@ -14,8 +14,8 @@ export type GeminiLiveStatus = 'idle' | 'connecting' | 'listening' | 'speaking' 
 
 export interface LiveSessionStartOptions {
   language: TargetLanguage;
-  dialectLabel: string;
-  domainLabel: string;
+  dialect: string;
+  domain: MilitaryDomain;
   registerMode: ChatRegisterMode;
   voiceName: GeminiLiveVoice;
 }
@@ -24,10 +24,7 @@ export interface UseGeminiLiveCallbacks {
   onTurnComplete?: (role: 'user' | 'assistant', text: string) => void;
 }
 
-function createResilientAudioContext(
-  AudioCtxCtor: typeof AudioContext,
-  preferredSampleRate: number
-): AudioContext {
+function createResilientAudioContext(AudioCtxCtor: typeof AudioContext, preferredSampleRate: number): AudioContext {
   try {
     return new AudioCtxCtor({sampleRate: preferredSampleRate});
   } catch {
@@ -286,8 +283,7 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
 
         // 2. Initialize separate 16kHz input and 24kHz output AudioContexts (with safe hardware fallback)
         const AudioCtxCtor =
-          window.AudioContext ||
-          (window as unknown as {webkitAudioContext: typeof AudioContext}).webkitAudioContext;
+          window.AudioContext || (window as unknown as {webkitAudioContext: typeof AudioContext}).webkitAudioContext;
         const inputCtx = createResilientAudioContext(AudioCtxCtor, 16000);
         const outputCtx = createResilientAudioContext(AudioCtxCtor, 24000);
         inputAudioCtxRef.current = inputCtx;
@@ -316,8 +312,8 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
             JSON.stringify({
               type: 'start',
               language: options.language,
-              dialectLabel: options.dialectLabel,
-              domainLabel: options.domainLabel,
+              dialect: options.dialect,
+              domain: options.domain,
               registerMode: options.registerMode,
               voiceName: options.voiceName,
             })
@@ -467,8 +463,8 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
           err instanceof DOMException && err.name === 'NotAllowedError'
             ? 'Microphone permission was blocked. Allow mic access in your browser to use Live Voice.'
             : err instanceof Error
-            ? err.message
-            : 'Unable to start live voice session.';
+              ? err.message
+              : 'Unable to start live voice session.';
         setError(message);
         updateStatus('error');
       }

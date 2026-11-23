@@ -28,11 +28,7 @@ import {
 
 const inflightWordLookups = new Map<string, Promise<EnrichedWordLookup>>();
 
-async function postJson<T>(
-  url: string,
-  body: Record<string, unknown>,
-  timeoutMs = 45000
-): Promise<T> {
+async function postJson<T>(url: string, body: Record<string, unknown>, timeoutMs = 45000): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;
@@ -62,9 +58,8 @@ async function postJson<T>(
     }
   }
   if (!response.ok) {
-    const errMsg = typeof data?.error === 'string' && data.error.trim()
-      ? data.error
-      : `Request failed (${response.status})`;
+    const errMsg =
+      typeof data?.error === 'string' && data.error.trim() ? data.error : `Request failed (${response.status})`;
     throw new Error(errMsg);
   }
   if (!data || typeof data !== 'object') {
@@ -75,8 +70,8 @@ async function postJson<T>(
 
 export async function requestOpiTurn(params: {
   language: TargetLanguage;
-  dialectLabel: string;
-  domainLabel: string;
+  dialect: string;
+  domain: MilitaryDomain;
   probeLevel: ProbeLevel;
   elapsedSeconds: number;
   history: Pick<OpiMessage, 'role' | 'text'>[];
@@ -88,7 +83,7 @@ export async function requestOpiTurn(params: {
 
 export async function lookupContextualWord(params: {
   language: TargetLanguage;
-  dialectLabel: string;
+  dialect: string;
   word: string;
   contextSentence: string;
   vocabItems?: VocabItem[];
@@ -118,7 +113,7 @@ export async function lookupContextualWord(params: {
         '/api/vocab/lookup',
         {
           language: params.language,
-          dialectLabel: params.dialectLabel,
+          dialect: params.dialect,
           word: params.word,
           contextSentence: params.contextSentence,
         },
@@ -140,8 +135,8 @@ export async function lookupContextualWord(params: {
 
 export async function requestTotPhrase(params: {
   language: TargetLanguage;
-  dialectLabel: string;
-  domainLabel: string;
+  dialect: string;
+  domain: MilitaryDomain;
   englishQuery: string;
   forceAi?: boolean;
 }): Promise<EnrichedTotResult> {
@@ -157,8 +152,8 @@ export async function requestTotPhrase(params: {
     '/api/vocab/tot',
     {
       language: params.language,
-      dialectLabel: params.dialectLabel,
-      domainLabel: params.domainLabel,
+      dialect: params.dialect,
+      domain: params.domain,
       englishQuery: params.englishQuery,
     },
     15000
@@ -171,15 +166,15 @@ export async function evaluateRecallSentence(params: {
   language: TargetLanguage;
   targetTerm: string;
   userSentence: string;
-  domainLabel: string;
+  domain: MilitaryDomain;
 }): Promise<{isNatural: boolean; feedback: string; polishedVersion: string}> {
   return postJson('/api/vocab/evaluate-sentence', params);
 }
 
 export async function runSessionDebrief(params: {
   language: TargetLanguage;
-  dialectLabel: string;
-  domainLabel: string;
+  dialect: string;
+  domain: MilitaryDomain;
   messages: Pick<OpiMessage, 'role' | 'text'>[];
 }): Promise<DebriefReport> {
   return postJson('/api/debrief/analyze', params);
@@ -187,16 +182,15 @@ export async function runSessionDebrief(params: {
 
 export async function generatePrepPrompt(params: {
   language: TargetLanguage;
-  dialectLabel: string;
+  dialect: string;
   domain: MilitaryDomain;
-  domainLabel: string;
 }): Promise<PrepPromptItem> {
   return postJson('/api/lab/prep-prompt', params);
 }
 
 export async function gradePrepMonologue(params: {
   language: TargetLanguage;
-  dialectLabel: string;
+  dialect: string;
   promptTarget: string;
   transcript: string;
   durationSeconds: number;
@@ -207,9 +201,7 @@ export async function gradePrepMonologue(params: {
 export async function generateInterpBriefing(params: {
   language: TargetLanguage;
   dialect: string;
-  dialectLabel: string;
   domain: MilitaryDomain;
-  domainLabel: string;
 }): Promise<InterpBriefing> {
   return postJson('/api/lab/interp-briefing', params);
 }
@@ -226,8 +218,8 @@ export async function gradeInterpretation(params: {
 
 export async function sendFreeChatTurn(params: {
   language: TargetLanguage;
-  dialectLabel: string;
-  domainLabel: string;
+  dialect: string;
+  domain: MilitaryDomain;
   registerMode: ChatRegisterMode;
   history: Pick<FreeChatMessage, 'role' | 'text'>[];
   userMessage: string;
