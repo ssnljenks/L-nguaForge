@@ -1,13 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  BookMarked,
-  FileBarChart2,
-  HelpCircle,
-  MessageSquare,
-  Mic,
-  Settings,
-  Timer,
-} from 'lucide-react';
+import {BookMarked, FileBarChart2, HelpCircle, MessageSquare, Mic, Settings, Timer} from 'lucide-react';
 import type {
   DebriefReport,
   DrillHistoryEntry,
@@ -19,22 +11,9 @@ import type {
   TargetLanguage,
   VocabItem,
 } from './types';
-import {
-  DEFAULT_MISSION_CONFIG,
-  SEED_SAMPLE_SESSIONS,
-  SEED_VOCAB,
-} from './data/seedData';
-import {
-  DIALECTS_BY_LANGUAGE,
-  filterItemsByLanguage,
-  getDefaultDialect,
-  MILITARY_DOMAINS,
-} from './utils/ilrLogic';
-import {
-  API_SAVED_EVENT,
-  clearLocalLookupCaches,
-  getApiSavedCount,
-} from './utils/localDictionary';
+import {DEFAULT_MISSION_CONFIG, SEED_SAMPLE_SESSIONS, SEED_VOCAB} from './data/seedData';
+import {DIALECTS_BY_LANGUAGE, filterItemsByLanguage, getDefaultDialect, MILITARY_DOMAINS} from './utils/ilrLogic';
+import {API_SAVED_EVENT, clearLocalLookupCaches, getApiSavedCount} from './utils/localDictionary';
 import {useLocalStorage} from './hooks/useLocalStorage';
 import {OpiSimulatorModule} from './components/OpiSimulatorModule';
 import {DebriefModule} from './components/DebriefModule';
@@ -66,13 +45,9 @@ export default function App() {
   const [walkthroughOpen, setWalkthroughOpen] = useState(false);
 
   const isAutostart =
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('autostart') === '1';
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('autostart') === '1';
 
-  const [seenTabs, setSeenTabs] = useLocalStorage<ModuleTab[]>(
-    'linguaforge_seen_tabs_v1',
-    []
-  );
+  const [seenTabs, setSeenTabs] = useLocalStorage<ModuleTab[]>('linguaforge_seen_tabs_v1', []);
   const [tabIntroOpen, setTabIntroOpen] = useState<ModuleTab | null>(() => {
     if (isAutostart) return null;
     if (typeof window !== 'undefined') {
@@ -128,29 +103,12 @@ export default function App() {
     setTabIntroOpen(activeTab);
   };
 
-  const [config, setConfig] = useLocalStorage<MissionConfig>(
-    'linguaforge_config_v1',
-    DEFAULT_MISSION_CONFIG
-  );
-  const [vocabItems, setVocabItems] = useLocalStorage<VocabItem[]>(
-    'linguaforge_vocab_v1',
-    SEED_VOCAB
-  );
-  const [sessions, setSessions] = useLocalStorage<OpiSession[]>(
-    'linguaforge_sessions_v1',
-    SEED_SAMPLE_SESSIONS
-  );
-  const [history, setHistory] = useLocalStorage<DrillHistoryEntry[]>(
-    'linguaforge_history_v1',
-    []
-  );
-  const [chatThreads, setChatThreads] = useLocalStorage<FreeChatThread[]>(
-    'linguaforge_chat_threads_v1',
-    []
-  );
-  const [selectedSessionId, setSelectedSessionId] = useState<string>(
-    () => sessions[0]?.id ?? ''
-  );
+  const [config, setConfig] = useLocalStorage<MissionConfig>('linguaforge_config_v1', DEFAULT_MISSION_CONFIG);
+  const [vocabItems, setVocabItems] = useLocalStorage<VocabItem[]>('linguaforge_vocab_v1', SEED_VOCAB);
+  const [sessions, setSessions] = useLocalStorage<OpiSession[]>('linguaforge_sessions_v1', SEED_SAMPLE_SESSIONS);
+  const [history, setHistory] = useLocalStorage<DrillHistoryEntry[]>('linguaforge_history_v1', []);
+  const [chatThreads, setChatThreads] = useLocalStorage<FreeChatThread[]>('linguaforge_chat_threads_v1', []);
+  const [selectedSessionId, setSelectedSessionId] = useState<string>(() => sessions[0]?.id ?? '');
 
   const updateConfig = (patch: Partial<MissionConfig>) => {
     setConfig((prev) => ({...prev, ...patch}));
@@ -165,15 +123,9 @@ export default function App() {
     });
   };
 
-  const handleSaveVocab = (
-    item: Omit<VocabItem, 'id' | 'createdAt' | 'mastery' | 'reviewCount'>
-  ) => {
+  const handleSaveVocab = (item: Omit<VocabItem, 'id' | 'createdAt' | 'mastery' | 'reviewCount'>) => {
     setVocabItems((prev) => {
-      const exists = prev.some(
-        (v) =>
-          v.language === item.language &&
-          v.term.toLowerCase() === item.term.toLowerCase()
-      );
+      const exists = prev.some((v) => v.language === item.language && v.term.toLowerCase() === item.term.toLowerCase());
       if (exists) return prev;
       const newEntry: VocabItem = {
         ...item,
@@ -191,11 +143,7 @@ export default function App() {
   };
 
   const handleUpdateMastery = (id: string, mastery: VocabItem['mastery']) => {
-    setVocabItems((prev) =>
-      prev.map((v) =>
-        v.id === id ? {...v, mastery, reviewCount: v.reviewCount + 1} : v
-      )
-    );
+    setVocabItems((prev) => prev.map((v) => (v.id === id ? {...v, mastery, reviewCount: v.reviewCount + 1} : v)));
   };
 
   const handleLogHistory = (entry: DrillHistoryEntry) => {
@@ -224,9 +172,7 @@ export default function App() {
   };
 
   const handleSaveDebrief = (sessionId: string, report: DebriefReport) => {
-    setSessions((prev) =>
-      prev.map((s) => (s.id === sessionId ? {...s, debrief: report} : s))
-    );
+    setSessions((prev) => prev.map((s) => (s.id === sessionId ? {...s, debrief: report} : s)));
   };
 
   const handleResetAllData = () => {
@@ -266,23 +212,15 @@ export default function App() {
                 onClick={() => navigateToTab(item.id)}
                 aria-current={active ? 'page' : undefined}
                 className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                  active
-                    ? 'bg-[#192533] text-[#F8FAFC]'
-                    : 'text-[#94A3B8] hover:text-[#E6EDF3] hover:bg-[#131C26]'
+                  active ? 'bg-[#192533] text-[#F8FAFC]' : 'text-[#94A3B8] hover:text-[#E6EDF3] hover:bg-[#131C26]'
                 }`}
               >
                 <span className="flex items-center gap-3 min-w-0">
-                  <Icon
-                    className={`w-4 h-4 shrink-0 ${
-                      active ? 'text-[#D99B26]' : 'text-[#7D8FA3]'
-                    }`}
-                  />
+                  <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-[#D99B26]' : 'text-[#7D8FA3]'}`} />
                   <span className="truncate">{item.label}</span>
                 </span>
                 {item.id === 'vault' && (
-                  <span className="font-mono text-xs text-[#7D8FA3] tabular-nums">
-                    {activeLanguageVocabCount}
-                  </span>
+                  <span className="font-mono text-xs text-[#7D8FA3] tabular-nums">{activeLanguageVocabCount}</span>
                 )}
               </button>
             );
@@ -319,16 +257,18 @@ export default function App() {
           </span>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <div className="flex items-center rounded-md bg-[#111922] p-0.5 border border-[#23303E]" role="group" aria-label="Target language">
+            <div
+              className="flex items-center rounded-md bg-[#111922] p-0.5 border border-[#23303E]"
+              role="group"
+              aria-label="Target language"
+            >
               {(['es', 'pt'] as const).map((lang) => (
                 <button
                   key={lang}
                   type="button"
                   onClick={() => handleLanguageToggle(lang)}
                   className={`px-2 py-1 text-xs font-semibold rounded transition-colors ${
-                    config.language === lang
-                      ? 'bg-[#D99B26] text-[#0B1117]'
-                      : 'text-[#94A3B8]'
+                    config.language === lang ? 'bg-[#D99B26] text-[#0B1117]' : 'text-[#94A3B8]'
                   }`}
                 >
                   {lang.toUpperCase()}
@@ -370,9 +310,7 @@ export default function App() {
                   type="button"
                   onClick={() => handleLanguageToggle('es')}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap ${
-                    config.language === 'es'
-                      ? 'bg-[#D99B26] text-[#0B1117]'
-                      : 'text-[#94A3B8] hover:text-white'
+                    config.language === 'es' ? 'bg-[#D99B26] text-[#0B1117]' : 'text-[#94A3B8] hover:text-white'
                   }`}
                 >
                   Spanish
@@ -381,9 +319,7 @@ export default function App() {
                   type="button"
                   onClick={() => handleLanguageToggle('pt')}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap ${
-                    config.language === 'pt'
-                      ? 'bg-[#D99B26] text-[#0B1117]'
-                      : 'text-[#94A3B8] hover:text-white'
+                    config.language === 'pt' ? 'bg-[#D99B26] text-[#0B1117]' : 'text-[#94A3B8] hover:text-white'
                   }`}
                 >
                   Portuguese
@@ -435,8 +371,7 @@ export default function App() {
               <span>ILR 2 → 2+/3 Progression</span>
               <span aria-hidden="true">·</span>
               <span className="font-mono tabular-nums">
-                {activeLanguageSessionCount}{' '}
-                {activeLanguageSessionCount === 1 ? 'session' : 'sessions'}
+                {activeLanguageSessionCount} {activeLanguageSessionCount === 1 ? 'session' : 'sessions'}
               </span>
             </div>
           </div>
@@ -523,9 +458,7 @@ export default function App() {
                 }`}
               >
                 <Icon className="w-[18px] h-[18px] shrink-0" />
-                <span className="text-[10px] font-medium leading-tight whitespace-nowrap">
-                  {item.shortLabel}
-                </span>
+                <span className="text-[10px] font-medium leading-tight whitespace-nowrap">{item.shortLabel}</span>
               </button>
             );
           })}

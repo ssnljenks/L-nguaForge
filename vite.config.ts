@@ -12,12 +12,19 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'prompt',
-        includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png'],
+        includeAssets: [
+          'icon.svg',
+          'apple-touch-icon.png',
+          'pwa-192x192.png',
+          'pwa-512x512.png',
+          'pwa-maskable-512x512.png',
+        ],
         manifest: {
           id: '/',
           name: 'LinguaForge ILR',
           short_name: 'LinguaForge',
-          description: 'Operational language training platform for military linguists targeting ILR 2 to 2+/3 progression in Spanish and Portuguese.',
+          description:
+            'Operational language training platform for military linguists targeting ILR 2 to 2+/3 progression in Spanish and Portuguese.',
           theme_color: '#0B1117',
           background_color: '#0B1117',
           display: 'standalone',

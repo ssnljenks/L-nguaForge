@@ -28,11 +28,7 @@ import {
 
 const inflightWordLookups = new Map<string, Promise<EnrichedWordLookup>>();
 
-async function postJson<T>(
-  url: string,
-  body: Record<string, unknown>,
-  timeoutMs = 45000
-): Promise<T> {
+async function postJson<T>(url: string, body: Record<string, unknown>, timeoutMs = 45000): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;
@@ -62,9 +58,8 @@ async function postJson<T>(
     }
   }
   if (!response.ok) {
-    const errMsg = typeof data?.error === 'string' && data.error.trim()
-      ? data.error
-      : `Request failed (${response.status})`;
+    const errMsg =
+      typeof data?.error === 'string' && data.error.trim() ? data.error : `Request failed (${response.status})`;
     throw new Error(errMsg);
   }
   if (!data || typeof data !== 'object') {

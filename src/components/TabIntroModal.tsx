@@ -1,14 +1,5 @@
 import React, {useEffect} from 'react';
-import {
-  BookMarked,
-  Check,
-  Compass,
-  FileBarChart2,
-  MessageSquare,
-  Mic,
-  Timer,
-  X,
-} from 'lucide-react';
+import {BookMarked, Check, Compass, FileBarChart2, MessageSquare, Mic, Timer, X} from 'lucide-react';
 import type {ModuleTab} from '../types';
 
 interface TabIntroModalProps {
@@ -94,11 +85,7 @@ const TAB_INTROS: Record<ModuleTab, TabIntroSpec> = {
   },
 };
 
-export const TabIntroModal: React.FC<TabIntroModalProps> = ({
-  tab,
-  onDismiss,
-  onOpenFullTour,
-}) => {
+export const TabIntroModal: React.FC<TabIntroModalProps> = ({tab, onDismiss, onOpenFullTour}) => {
   useEffect(() => {
     if (!tab) return;
     const handleKey = (e: KeyboardEvent) => {

@@ -1,10 +1,4 @@
-import type {
-  InterpBriefing,
-  MissionConfig,
-  OpiSession,
-  PrepPromptItem,
-  VocabItem,
-} from '../types';
+import type {InterpBriefing, MissionConfig, OpiSession, PrepPromptItem, VocabItem} from '../types';
 
 export const DEFAULT_MISSION_CONFIG: MissionConfig = {
   language: 'es',
@@ -35,7 +29,8 @@ export const SEED_VOCAB: VocabItem[] = [
     id: 'v-seed-2',
     term: 'en la medida en que',
     englishConcept: 'to the extent that / insofar as (nuanced conditional framing)',
-    contextSentence: 'La cooperación será sostenible en la medida en que ambos estados compartan costos de mantenimiento.',
+    contextSentence:
+      'La cooperación será sostenible en la medida en que ambos estados compartan costos de mantenimiento.',
     registerTag: 'ILR 3 Analytical',
     category: 'High-Register Connectors',
     language: 'es',
@@ -49,7 +44,8 @@ export const SEED_VOCAB: VocabItem[] = [
     id: 'v-seed-3',
     term: 'conciencia del dominio marítimo',
     englishConcept: 'maritime domain awareness (MDA)',
-    contextSentence: 'El radar costero amplía la conciencia del dominio marítimo frente a embarcaciones semisumergibles.',
+    contextSentence:
+      'El radar costero amplía la conciencia del dominio marítimo frente a embarcaciones semisumergibles.',
     registerTag: 'Operational Military',
     category: 'Operational/Military Terms',
     language: 'es',
@@ -91,7 +87,8 @@ export const SEED_VOCAB: VocabItem[] = [
     id: 'v-seed-6',
     term: 'em contrapartida',
     englishConcept: 'on the other hand / in return (high-register Portuguese pivot)',
-    contextSentence: 'O treinamento conjunto eleva os custos iniciais; em contrapartida, reduz drasticamente o tempo de resposta.',
+    contextSentence:
+      'O treinamento conjunto eleva os custos iniciais; em contrapartida, reduz drasticamente o tempo de resposta.',
     registerTag: 'Formal / Diplomatic',
     category: 'High-Register Connectors',
     language: 'pt',
@@ -105,7 +102,8 @@ export const SEED_VOCAB: VocabItem[] = [
     id: 'v-seed-7',
     term: 'prontidão operacional',
     englishConcept: 'operational readiness (Portuguese military doctrine)',
-    contextSentence: 'A manutenção preventiva dos helicópteros garante a prontidão operacional em missões humanitárias.',
+    contextSentence:
+      'A manutenção preventiva dos helicópteros garante a prontidão operacional em missões humanitárias.',
     registerTag: 'Operational Military',
     category: 'Operational/Military Terms',
     language: 'pt',
@@ -207,19 +205,23 @@ export const SEED_SAMPLE_SESSIONS: OpiSession[] = [
       naturalUpgrades: [
         {
           originalLevel2: 'Creo que sería un problema muy grande para todos los países.',
-          upgradedLevel2Plus: 'A mi juicio, dicha reducción acarrearía repercusiones considerables para la seguridad hemisférica.',
+          upgradedLevel2Plus:
+            'A mi juicio, dicha reducción acarrearía repercusiones considerables para la seguridad hemisférica.',
           connectorsUsed: ['A mi juicio', 'dicha reducción'],
-          whyItUpgrades: 'Replaces generic Level 2 phrasing ("problema muy grande") with natural defense-policy register without sounding robotic.',
+          whyItUpgrades:
+            'Replaces generic Level 2 phrasing ("problema muy grande") with natural defense-policy register without sounding robotic.',
         },
         {
           originalLevel2: 'Si cortan el dinero, las redes criminales van a aprovechar la situación.',
-          upgradedLevel2Plus: 'De recortarse el financiamiento, las redes ilícitas no tardarían en explotar ese vacío operativo.',
+          upgradedLevel2Plus:
+            'De recortarse el financiamiento, las redes ilícitas no tardarían en explotar ese vacío operativo.',
           connectorsUsed: ['De recortarse', 'vacío operativo'],
           whyItUpgrades: 'Demonstrates clean Level 3 hypothetical framing and precise operational terminology.',
         },
         {
           originalLevel2: 'Al final, cada país mantiene control de sus aguas, pero trabajan juntos en la inteligencia.',
-          upgradedLevel2Plus: 'En última instancia, cada nación preserva su soberanía jurisdiccional, al tiempo que consolida el intercambio de inteligencia.',
+          upgradedLevel2Plus:
+            'En última instancia, cada nación preserva su soberanía jurisdiccional, al tiempo que consolida el intercambio de inteligencia.',
           connectorsUsed: ['En última instancia', 'al tiempo que'],
           whyItUpgrades: 'Elevates a compound "pero" clause into balanced, high-register diplomatic subordination.',
         },
@@ -235,32 +237,40 @@ export const SEED_PREP_PROMPTS: PrepPromptItem[] = [
     id: 'prep-es-maritime',
     language: 'es',
     domain: 'maritime_surveillance',
-    promptTarget: '¿En qué medida debería priorizarse la inversión en sensores satelitales y drones marítimos frente a la expansión de flotas tradicionales de patrullaje costero?',
-    promptEnglish: 'To what extent should investment prioritize satellite sensors and maritime UAVs over expanding traditional coastal patrol fleets?',
+    promptTarget:
+      '¿En qué medida debería priorizarse la inversión en sensores satelitales y drones marítimos frente a la expansión de flotas tradicionales de patrullaje costero?',
+    promptEnglish:
+      'To what extent should investment prioritize satellite sensors and maritime UAVs over expanding traditional coastal patrol fleets?',
     recommendedConnectors: ['En primer lugar', 'No obstante', 'Aun cuando', 'En última instancia'],
   },
   {
     id: 'prep-es-c2',
     language: 'es',
     domain: 'c2_comms',
-    promptTarget: 'Si una coalición multinacional enfrentara una degradación severa de comunicaciones satelitales durante una crisis humanitaria, ¿qué principios de mando y control deberían prevalecer?',
-    promptEnglish: 'If a multinational coalition faced severe satellite comms degradation during a humanitarian crisis, which C2 principles should prevail?',
+    promptTarget:
+      'Si una coalición multinacional enfrentara una degradación severa de comunicaciones satelitales durante una crisis humanitaria, ¿qué principios de mando y control deberían prevalecer?',
+    promptEnglish:
+      'If a multinational coalition faced severe satellite comms degradation during a humanitarian crisis, which C2 principles should prevail?',
     recommendedConnectors: ['Partiendo de la base de que', 'Por consiguiente', 'Si bien', 'De ahí que'],
   },
   {
     id: 'prep-pt-policy',
     language: 'pt',
     domain: 'general_policy',
-    promptTarget: 'De que maneira os exercícios militares combinados fortalecem a confiança diplomática regional mesmo diante de divergências políticas entre governos?',
-    promptEnglish: 'In what ways do combined military exercises strengthen regional diplomatic trust even amid political divergences between governments?',
+    promptTarget:
+      'De que maneira os exercícios militares combinados fortalecem a confiança diplomática regional mesmo diante de divergências políticas entre governos?',
+    promptEnglish:
+      'In what ways do combined military exercises strengthen regional diplomatic trust even amid political divergences between governments?',
     recommendedConnectors: ['Sob essa perspectiva', 'Em contrapartida', 'Ainda que', 'Portanto'],
   },
   {
     id: 'prep-pt-logistics',
     language: 'pt',
     domain: 'aviation_logistics',
-    promptTarget: 'Caso fosse necessário estabelecer uma ponte aérea humanitária em menos de 48 horas, quais gargalos logísticos exigiriam solução prioritária?',
-    promptEnglish: 'Were it necessary to establish a humanitarian air bridge in under 48 hours, which logistical bottlenecks would demand priority resolution?',
+    promptTarget:
+      'Caso fosse necessário estabelecer uma ponte aérea humanitária em menos de 48 horas, quais gargalos logísticos exigiriam solução prioritária?',
+    promptEnglish:
+      'Were it necessary to establish a humanitarian air bridge in under 48 hours, which logistical bottlenecks would demand priority resolution?',
     recommendedConnectors: ['Antes de mais nada', 'Além disso', 'Embora', 'Em suma'],
   },
 ];

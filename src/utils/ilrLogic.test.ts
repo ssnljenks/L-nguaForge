@@ -29,13 +29,18 @@ test('PREP 90-second pacing transitions across exact boundaries', () => {
 });
 
 test('OPI probe level stays at Level 2 during initial warm-up, escalates to Level 3, and backs off on breakdown', () => {
-  const warmup = determineProbeLevel({elapsedSeconds: 45, candidateTurnCount: 1, lastCandidateText: 'Mi unidad coordina patrullas marítimas en la zona económica exclusiva.'});
+  const warmup = determineProbeLevel({
+    elapsedSeconds: 45,
+    candidateTurnCount: 1,
+    lastCandidateText: 'Mi unidad coordina patrullas marítimas en la zona económica exclusiva.',
+  });
   assert.equal(warmup.level, 'level_2_baseline');
 
   const escalated = determineProbeLevel({
     elapsedSeconds: 135,
     candidateTurnCount: 3,
-    lastCandidateText: 'Si bien existen desafíos presupuestarios, la cooperación interagencial fortalece la disuasión regional.',
+    lastCandidateText:
+      'Si bien existen desafíos presupuestarios, la cooperación interagencial fortalece la disuasión regional.',
   });
   assert.equal(escalated.level, 'level_3_probe');
 
@@ -54,10 +59,7 @@ test('scorePhraseRecallMatch normalizes accents and computes accurate lexical ma
   );
   assert.equal(exact, 100);
 
-  const partial = scorePhraseRecallMatch(
-    'uno dos tres cuatro',
-    'uno dos cinco seis'
-  );
+  const partial = scorePhraseRecallMatch('uno dos tres cuatro', 'uno dos cinco seis');
   assert.equal(partial, 50);
 
   assert.equal(scorePhraseRecallMatch('hola mundo', ''), 0);
@@ -104,7 +106,10 @@ test('helper formatters and default dialects work cleanly', () => {
 test('Free Chat thread title and vocab category normalization handle edge cases', () => {
   assert.equal(buildChatThreadTitle('   '), 'New Conversation');
   assert.equal(buildChatThreadTitle('Hablemos sobre noticias recientes'), 'Hablemos sobre noticias recientes');
-  const truncated = buildChatThreadTitle('Hola, quiero practicar cómo explicar un proyecto logístico complejo en detalle', 32);
+  const truncated = buildChatThreadTitle(
+    'Hola, quiero practicar cómo explicar un proyecto logístico complejo en detalle',
+    32
+  );
   assert.ok(truncated.endsWith('…'));
   assert.ok(truncated.length <= 32);
 

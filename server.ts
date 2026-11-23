@@ -56,7 +56,11 @@ function validateLanguage(val: unknown): 'es' | 'pt' {
 }
 
 function parseJsonSafe<T>(raw: string | undefined, fallbackError: string): T {
-  const cleaned = (raw ?? '').trim().replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+  const cleaned = (raw ?? '')
+    .trim()
+    .replace(/^```json\s*/i, '')
+    .replace(/```$/i, '')
+    .trim();
   if (!cleaned) {
     throw new Error(fallbackError);
   }
@@ -69,10 +73,10 @@ function formatGeminiError(err: unknown): {status: number; message: string} {
     err instanceof Error
       ? err.message
       : typeof rawObj?.message === 'string'
-      ? rawObj.message
-      : typeof rawObj?.error?.message === 'string'
-      ? rawObj.error.message
-      : 'Unexpected server error';
+        ? rawObj.message
+        : typeof rawObj?.error?.message === 'string'
+          ? rawObj.error.message
+          : 'Unexpected server error';
   if (msg.includes('GEMINI_API_KEY')) {
     return {status: 503, message: msg};
   }
@@ -151,7 +155,10 @@ PROBING PROTOCOL:
 - Return nextProbeLevel ("level_2_baseline" or "level_3_probe") and a brief English probeReason explaining why you stayed at or shifted to that level.`;
 
       const transcriptBlock = history
-        .map((m: {role?: string; text?: string}) => `${m.role === 'examiner' ? 'EXAMINER' : 'CANDIDATE'}: ${sanitizeString(m.text, 1000)}`)
+        .map(
+          (m: {role?: string; text?: string}) =>
+            `${m.role === 'examiner' ? 'EXAMINER' : 'CANDIDATE'}: ${sanitizeString(m.text, 1000)}`
+        )
         .join('\n');
 
       const prompt = isOpening
@@ -254,9 +261,7 @@ Return concise contextual English meaning, crisp registerTag, 1-sentence grammar
         'False Friends',
       ];
       const rawCategory = sanitizeString(data.suggestedCategory, 80);
-      const suggestedCategory = validCategories.includes(rawCategory)
-        ? rawCategory
-        : 'Regional Idioms';
+      const suggestedCategory = validCategories.includes(rawCategory) ? rawCategory : 'Regional Idioms';
 
       res.json({
         word,
@@ -389,7 +394,9 @@ Be concise and tactical.`,
       const messages = Array.isArray(req.body?.messages) ? req.body.messages.slice(-30) : [];
 
       const candidateUtterances = messages
-        .filter((m: {role?: string; text?: string}) => m.role === 'candidate' && typeof m.text === 'string' && m.text.trim())
+        .filter(
+          (m: {role?: string; text?: string}) => m.role === 'candidate' && typeof m.text === 'string' && m.text.trim()
+        )
         .map((m: {text: string}) => sanitizeString(m.text, 1200));
 
       if (candidateUtterances.length === 0) {
@@ -398,7 +405,10 @@ Be concise and tactical.`,
 
       const langName = language === 'es' ? 'Spanish' : 'Portuguese';
       const fullTranscript = messages
-        .map((m: {role?: string; text?: string}) => `${m.role === 'examiner' ? 'EXAMINER' : 'CANDIDATE'}: ${sanitizeString(m.text, 1200)}`)
+        .map(
+          (m: {role?: string; text?: string}) =>
+            `${m.role === 'examiner' ? 'EXAMINER' : 'CANDIDATE'}: ${sanitizeString(m.text, 1200)}`
+        )
         .join('\n');
 
       const ai = getAiClient();
@@ -643,7 +653,8 @@ Example speaker: a Colonel, Naval Attaché, or Joint Staff Deputy addressing a v
       const briefingText = sanitizeString(req.body?.briefingText, 2500);
       const candidateRendition = sanitizeString(req.body?.candidateRendition, 2500);
       const chunkNotes = sanitizeString(req.body?.chunkNotes, 1500);
-      const direction = req.body?.direction === 'en_to_target' ? 'English to Target Language' : 'Target Language to English';
+      const direction =
+        req.body?.direction === 'en_to_target' ? 'English to Target Language' : 'Target Language to English';
 
       if (!briefingText || !candidateRendition) {
         return res.status(400).json({error: 'Briefing source and your interpretation rendition are required.'});
@@ -725,8 +736,8 @@ Score fidelityScore (0–100) and registerScore (0–100), list capturedPoints, 
         registerMode === 'everyday'
           ? 'Keep the tone relaxed, warm, and natural for everyday conversation, using authentic regional idioms.'
           : registerMode === 'debate'
-          ? 'Engage in thoughtful ILR Level 3 discussion with nuanced perspectives, systemic causes, and hypothetical follow-ups.'
-          : 'Keep a natural, collegial ILR 2+ professional conversational tone that feels like chatting with a sharp bilingual partner.';
+            ? 'Engage in thoughtful ILR Level 3 discussion with nuanced perspectives, systemic causes, and hypothetical follow-ups.'
+            : 'Keep a natural, collegial ILR 2+ professional conversational tone that feels like chatting with a sharp bilingual partner.';
 
       const systemInstruction = `You are a natural, engaging native ${langName} (${dialectLabel}) conversation partner inside LinguaForge ILR.
 The user wants an open, free-flowing back-and-forth conversation (just like chatting with an intelligent partner on any topic they choose; their active domain context is "${domainLabel}", which you can reference naturally only if relevant).
@@ -740,7 +751,10 @@ CRITICAL RULES:
    - Each suggestion must include: targetPhrase (${langName}), englishConcept (concise English meaning), contextSentence (natural ${langName} sentence showing usage), reasonTag (short label like "Code-switch fix", "Natural phrasing", "Register upgrade", or "Useful expression"), note (1 brief helpful English tip), and suggestedCategory ("High-Register Connectors" | "Operational/Military Terms" | "Regional Idioms" | "False Friends").`;
 
       const transcriptBlock = history
-        .map((m: {role?: string; text?: string}) => `${m.role === 'assistant' ? 'PARTNER' : 'USER'}: ${sanitizeString(m.text, 1000)}`)
+        .map(
+          (m: {role?: string; text?: string}) =>
+            `${m.role === 'assistant' ? 'PARTNER' : 'USER'}: ${sanitizeString(m.text, 1000)}`
+        )
         .join('\n');
 
       const prompt = transcriptBlock
@@ -894,8 +908,8 @@ CRITICAL RULES:
             registerMode === 'everyday'
               ? 'Keep your speech relaxed, warm, and natural for everyday back-and-forth conversation, using authentic regional phrasing.'
               : registerMode === 'debate'
-              ? 'Engage in natural, thought-provoking ILR Level 3 discussion with nuanced perspectives and hypothetical follow-ups.'
-              : 'Maintain a natural, collegial ILR 2+ professional conversational tone, like talking with a fluent partner.';
+                ? 'Engage in natural, thought-provoking ILR Level 3 discussion with nuanced perspectives and hypothetical follow-ups.'
+                : 'Maintain a natural, collegial ILR 2+ professional conversational tone, like talking with a fluent partner.';
 
           const systemInstruction = `You are a natural, warm, native ${langName} (${dialectLabel}) voice conversation partner inside LinguaForge ILR.
 Speak strictly in ${langName} (${dialectLabel}) in a natural, conversational spoken cadence (2 to 4 crisp sentences per turn) so the back-and-forth flows just like a real phone call or live chat.

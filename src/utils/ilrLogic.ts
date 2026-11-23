@@ -13,20 +13,21 @@ export const LANGUAGE_LABELS: Record<TargetLanguage, string> = {
   pt: 'Portuguese',
 };
 
-export const DIALECTS_BY_LANGUAGE: Record<TargetLanguage, {id: string; label: string; bcp47: string; short: string}[]> = {
-  es: [
-    {id: 'neutral_latam', label: 'Neutral Latin American', bcp47: 'es-MX', short: 'Neutral LatAm'},
-    {id: 'rioplatense', label: 'Rioplatense (Argentine)', bcp47: 'es-AR', short: 'Rioplatense'},
-    {id: 'caribbean', label: 'Caribbean (PR / DR / CU)', bcp47: 'es-PR', short: 'Caribbean'},
-    {id: 'colombian_andean', label: 'Colombian / Andean', bcp47: 'es-CO', short: 'Colombian'},
-  ],
-  pt: [
-    {id: 'br_standard', label: 'Brazilian Standard (Sudeste)', bcp47: 'pt-BR', short: 'BR Standard'},
-    {id: 'br_bahian', label: 'Brazilian Bahian (Nordeste)', bcp47: 'pt-BR', short: 'BR Bahian'},
-    {id: 'br_southern', label: 'Brazilian Southern (Sul)', bcp47: 'pt-BR', short: 'BR Sul'},
-    {id: 'eu_portuguese', label: 'European Portuguese', bcp47: 'pt-PT', short: 'EU Portuguese'},
-  ],
-};
+export const DIALECTS_BY_LANGUAGE: Record<TargetLanguage, {id: string; label: string; bcp47: string; short: string}[]> =
+  {
+    es: [
+      {id: 'neutral_latam', label: 'Neutral Latin American', bcp47: 'es-MX', short: 'Neutral LatAm'},
+      {id: 'rioplatense', label: 'Rioplatense (Argentine)', bcp47: 'es-AR', short: 'Rioplatense'},
+      {id: 'caribbean', label: 'Caribbean (PR / DR / CU)', bcp47: 'es-PR', short: 'Caribbean'},
+      {id: 'colombian_andean', label: 'Colombian / Andean', bcp47: 'es-CO', short: 'Colombian'},
+    ],
+    pt: [
+      {id: 'br_standard', label: 'Brazilian Standard (Sudeste)', bcp47: 'pt-BR', short: 'BR Standard'},
+      {id: 'br_bahian', label: 'Brazilian Bahian (Nordeste)', bcp47: 'pt-BR', short: 'BR Bahian'},
+      {id: 'br_southern', label: 'Brazilian Southern (Sul)', bcp47: 'pt-BR', short: 'BR Sul'},
+      {id: 'eu_portuguese', label: 'European Portuguese', bcp47: 'pt-PT', short: 'EU Portuguese'},
+    ],
+  };
 
 export const MILITARY_DOMAINS: {id: MilitaryDomain; label: string; shortLabel: string; description: string}[] = [
   {
@@ -290,7 +291,9 @@ export function formatSecondsClock(totalSeconds: number): string {
 }
 
 export function buildChatThreadTitle(firstMessage: string, maxLen = 44): string {
-  const cleaned = String(firstMessage ?? '').replace(/\s+/g, ' ').trim();
+  const cleaned = String(firstMessage ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (!cleaned) return 'New Conversation';
   if (cleaned.length <= maxLen) return cleaned;
   return `${cleaned.slice(0, maxLen - 1).trimEnd()}…`;
@@ -305,7 +308,11 @@ const VALID_VOCAB_CATEGORIES = [
 
 export function normalizeVocabCategory(raw: string): (typeof VALID_VOCAB_CATEGORIES)[number] {
   const matched = VALID_VOCAB_CATEGORIES.find(
-    (c) => c.toLowerCase() === String(raw ?? '').trim().toLowerCase()
+    (c) =>
+      c.toLowerCase() ===
+      String(raw ?? '')
+        .trim()
+        .toLowerCase()
   );
   return matched ?? 'Regional Idioms';
 }
@@ -314,10 +321,7 @@ export function normalizeVocabCategory(raw: string): (typeof VALID_VOCAB_CATEGOR
  * Strictly partitions persisted items (chat threads, sessions, vocab, history)
  * to the currently selected target language so Spanish and Portuguese states never bleed.
  */
-export function filterItemsByLanguage<T extends {language: TargetLanguage}>(
-  items: T[],
-  language: TargetLanguage
-): T[] {
+export function filterItemsByLanguage<T extends {language: TargetLanguage}>(items: T[], language: TargetLanguage): T[] {
   return items.filter((item) => item.language === language);
 }
 

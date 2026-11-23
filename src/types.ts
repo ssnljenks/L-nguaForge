@@ -1,19 +1,12 @@
 export type TargetLanguage = 'es' | 'pt';
 
 export type MilitaryDomain =
-  | 'general_policy'
-  | 'maritime_surveillance'
-  | 'aviation_logistics'
-  | 'c2_comms'
-  | 'delegation_hosting';
+  'general_policy' | 'maritime_surveillance' | 'aviation_logistics' | 'c2_comms' | 'delegation_hosting';
 
 export type ProbeLevel = 'level_2_baseline' | 'level_3_probe';
 
 export type VocabCategory =
-  | 'High-Register Connectors'
-  | 'Operational/Military Terms'
-  | 'Regional Idioms'
-  | 'False Friends';
+  'High-Register Connectors' | 'Operational/Military Terms' | 'Regional Idioms' | 'False Friends';
 
 export type ModuleTab = 'chat' | 'opi' | 'debrief' | 'vault' | 'lab';
 

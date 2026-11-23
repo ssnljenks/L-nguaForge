@@ -30,12 +30,7 @@ import {
   LANGUAGE_LABELS,
   PREP_PHASES,
 } from '../utils/ilrLogic';
-import {
-  generateInterpBriefing,
-  generatePrepPrompt,
-  gradeInterpretation,
-  gradePrepMonologue,
-} from '../services/api';
+import {generateInterpBriefing, generatePrepPrompt, gradeInterpretation, gradePrepMonologue} from '../services/api';
 import {
   getCachedInterpBriefing,
   getCachedPrepPrompt,
@@ -374,14 +369,19 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-5 border-b border-[#23303E]">
         <div className="space-y-1.5">
           <p className="text-xs font-medium text-[#94A3B8]">
-            Structured Discourse &amp; Briefing Drills · {LANGUAGE_LABELS[config.language]} ({dialectInfo.short}) · {domainInfo.shortLabel}
+            Structured Discourse &amp; Briefing Drills · {LANGUAGE_LABELS[config.language]} ({dialectInfo.short}) ·{' '}
+            {domainInfo.shortLabel}
           </p>
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#F8FAFC]">
             PREP Monologue &amp; Consecutive Interp Lab
           </h1>
         </div>
 
-        <div className="flex items-center p-1 rounded-lg bg-[#111922] border border-[#23303E] self-start lg:self-auto" role="tablist" aria-label="Lab mode">
+        <div
+          className="flex items-center p-1 rounded-lg bg-[#111922] border border-[#23303E] self-start lg:self-auto"
+          role="tablist"
+          aria-label="Lab mode"
+        >
           <button
             type="button"
             role="tab"
@@ -434,12 +434,11 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
             </div>
 
             <div className="space-y-2">
-              <p className="text-lg sm:text-xl font-medium text-[#F8FAFC] leading-relaxed">
-                {prepPrompt.promptTarget}
-              </p>
+              <p className="text-lg sm:text-xl font-medium text-[#F8FAFC] leading-relaxed">{prepPrompt.promptTarget}</p>
               <p className="text-xs text-[#94A3B8]">{prepPrompt.promptEnglish}</p>
               <p className="text-xs text-[#7D8FA3] pt-1">
-                Target connectors: <span className="text-[#CBD5E1]">{prepPrompt.recommendedConnectors.join(' · ')}</span>
+                Target connectors:{' '}
+                <span className="text-[#CBD5E1]">{prepPrompt.recommendedConnectors.join(' · ')}</span>
               </p>
             </div>
 
@@ -455,7 +454,10 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-xs text-[#7D8FA3]">Elapsed / 1:30</p>
-                  <p data-testid="prep-timer-display" className="font-mono text-3xl font-bold text-[#F8FAFC] tabular-nums">
+                  <p
+                    data-testid="prep-timer-display"
+                    className="font-mono text-3xl font-bold text-[#F8FAFC] tabular-nums"
+                  >
                     {formatSecondsClock(prepElapsed)}
                   </p>
                 </div>
@@ -468,17 +470,17 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
                     phase.id === 'point'
                       ? 'col-span-2'
                       : phase.id === 'reason'
-                      ? 'col-span-3'
-                      : phase.id === 'example'
-                      ? 'col-span-4'
-                      : 'col-span-3';
+                        ? 'col-span-3'
+                        : phase.id === 'example'
+                          ? 'col-span-4'
+                          : 'col-span-3';
                   const spanDur = phase.endSec - phase.startSec;
                   const fillPct =
                     prepElapsed <= phase.startSec
                       ? 0
                       : prepElapsed >= phase.endSec
-                      ? 100
-                      : Math.round(((prepElapsed - phase.startSec) / spanDur) * 100);
+                        ? 100
+                        : Math.round(((prepElapsed - phase.startSec) / spanDur) * 100);
                   const isCurrent = activePhase.id === phase.id && prepRunning;
 
                   return (
@@ -492,7 +494,11 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
                         />
                       </div>
                       <div className="flex items-center justify-between text-[11px] text-[#7D8FA3] font-mono tabular-nums">
-                        <span className={activePhase.id === phase.id ? 'text-[#F8FAFC] font-semibold font-sans' : 'font-sans'}>
+                        <span
+                          className={
+                            activePhase.id === phase.id ? 'text-[#F8FAFC] font-semibold font-sans' : 'font-sans'
+                          }
+                        >
                           {phase.label.split(' ')[0]}
                         </span>
                         <span>{formatSecondsClock(phase.endSec)}</span>
@@ -577,7 +583,9 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
             {!prepEval ? (
               <div className="space-y-4 text-sm text-[#94A3B8]">
                 <p className="leading-relaxed">
-                  Complete your 90-second monologue and click <strong className="text-[#E6EDF3]">Grade PREP Structure</strong> to receive phase-by-phase ILR feedback and a polished closing pivot.
+                  Complete your 90-second monologue and click{' '}
+                  <strong className="text-[#E6EDF3]">Grade PREP Structure</strong> to receive phase-by-phase ILR
+                  feedback and a polished closing pivot.
                 </p>
                 <div className="space-y-2.5 pt-3 border-t border-[#23303E] text-xs">
                   {PREP_PHASES.map((p) => (
@@ -746,7 +754,9 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
                       type="button"
                       title={item.label}
                       aria-label={`Insert ${item.label} symbol`}
-                      onClick={() => setChunkNotes((prev) => `${prev}${prev && !prev.endsWith(' ') ? ' ' : ''}${item.symbol} `)}
+                      onClick={() =>
+                        setChunkNotes((prev) => `${prev}${prev && !prev.endsWith(' ') ? ' ' : ''}${item.symbol} `)
+                      }
                       className="px-2 py-1 rounded border border-[#23303E] bg-[#0B1117] text-xs text-[#CBD5E1] hover:border-[#D99B26] hover:text-[#F3C669] transition-colors"
                     >
                       {item.symbol}
@@ -768,7 +778,8 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
             <div className="space-y-2.5 pt-4 border-t border-[#23303E]">
               <div className="flex items-center justify-between gap-2">
                 <label htmlFor="interp-rendition" className="text-xs font-semibold text-[#E6EDF3]">
-                  Your Consecutive Rendition ({direction === 'target_to_en' ? 'English' : LANGUAGE_LABELS[config.language]})
+                  Your Consecutive Rendition (
+                  {direction === 'target_to_en' ? 'English' : LANGUAGE_LABELS[config.language]})
                 </label>
                 <button
                   type="button"
@@ -814,11 +825,14 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
             {!interpEval ? (
               <div className="space-y-4 text-sm text-[#94A3B8]">
                 <p className="leading-relaxed">
-                  Play the briefing clip in Blind Listen mode, capture numbers and caveats on your idea-chunking scratchpad, and deliver your consecutive rendition.
+                  Play the briefing clip in Blind Listen mode, capture numbers and caveats on your idea-chunking
+                  scratchpad, and deliver your consecutive rendition.
                 </p>
                 <div className="pt-3 border-t border-[#23303E] space-y-1.5 text-xs">
                   <p className="font-semibold text-[#CBD5E1]">Key Fact Count in Clip</p>
-                  <p className="font-mono text-[#E6EDF3] tabular-nums">{briefing.keyFacts.length} operational anchors to capture</p>
+                  <p className="font-mono text-[#E6EDF3] tabular-nums">
+                    {briefing.keyFacts.length} operational anchors to capture
+                  </p>
                 </div>
               </div>
             ) : (

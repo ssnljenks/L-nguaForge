@@ -9,11 +9,7 @@ import {
   LANGUAGE_LABELS,
   MILITARY_DOMAINS,
 } from '../utils/ilrLogic';
-import {
-  clearWordCacheOnly,
-  getLocalCacheStats,
-  WORD_CACHE_EVENT,
-} from '../utils/localDictionary';
+import {clearWordCacheOnly, getLocalCacheStats, WORD_CACHE_EVENT} from '../utils/localDictionary';
 import {useSpeechSynthesis} from '../hooks/useSpeech';
 import {PWAInstallButton} from './PWAControls';
 
@@ -55,9 +51,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const dialectList = DIALECTS_BY_LANGUAGE[config.language];
   const dialectInfo = getDialectInfo(config.language, config.dialect);
-  const matchingVoices = tts.voices.filter((v) =>
-    v.lang.toLowerCase().startsWith(config.language)
-  );
+  const matchingVoices = tts.voices.filter((v) => v.lang.toLowerCase().startsWith(config.language));
   const languageHistory = filterItemsByLanguage(history, config.language);
 
   const handleLanguageChange = (lang: TargetLanguage) => {
@@ -225,7 +219,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="grid grid-cols-3 gap-2.5">
             <div className="rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2">
               <p className="text-[11px] text-[#7D8FA3]">Military Dict ({config.language.toUpperCase()})</p>
-              <p data-testid="settings-military-dict-count" className="font-mono text-sm font-semibold text-[#F8FAFC] tabular-nums">
+              <p
+                data-testid="settings-military-dict-count"
+                className="font-mono text-sm font-semibold text-[#F8FAFC] tabular-nums"
+              >
                 {cacheStats.militaryCount} terms
               </p>
             </div>
@@ -237,7 +234,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <div className="rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2">
               <p className="text-[11px] text-[#7D8FA3]">Cached AI Lookups</p>
-              <p data-testid="settings-cached-word-count" className="font-mono text-sm font-semibold text-[#F3C669] tabular-nums">
+              <p
+                data-testid="settings-cached-word-count"
+                className="font-mono text-sm font-semibold text-[#F3C669] tabular-nums"
+              >
                 {cacheStats.cachedWordCount} saved
               </p>
             </div>
@@ -291,13 +291,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <h3 className="text-sm font-semibold text-[#F8FAFC]">
               Recent {LANGUAGE_LABELS[config.language]} Drill History
             </h3>
-            <span className="font-mono text-xs text-[#94A3B8] tabular-nums">
-              {languageHistory.length} logged
-            </span>
+            <span className="font-mono text-xs text-[#94A3B8] tabular-nums">{languageHistory.length} logged</span>
           </div>
           {languageHistory.length === 0 ? (
             <p className="text-xs text-[#7D8FA3]">
-              Completed {LANGUAGE_LABELS[config.language]} OPIs, PREP monologues, Interp drills, and recall sessions will appear here.
+              Completed {LANGUAGE_LABELS[config.language]} OPIs, PREP monologues, Interp drills, and recall sessions
+              will appear here.
             </p>
           ) : (
             <div className="max-h-36 overflow-y-auto divide-y divide-[#1D2835] border border-[#23303E] rounded-lg bg-[#0B1117]">

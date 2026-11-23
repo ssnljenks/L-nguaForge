@@ -1,20 +1,24 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
-  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-display: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
 }
 
 @layer base {
   html {
     font-family: var(--font-sans);
-    background-color: #0B1117;
-    color: #E6EDF3;
+    background-color: #0b1117;
+    color: #e6edf3;
     letter-spacing: 0.01em;
   }
 
-  h1, h2, h3, h4, .font-display {
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
     font-family: var(--font-display);
     text-wrap: balance;
   }
@@ -41,10 +45,10 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0B1117;
+  background: #0b1117;
 }
 ::-webkit-scrollbar-thumb {
-  background: #23303E;
+  background: #23303e;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -52,7 +56,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
