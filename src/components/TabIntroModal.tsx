@@ -138,8 +138,8 @@ export const TabIntroModal: React.FC<TabIntroModalProps> = ({tab, onDismiss, onO
           </div>
 
           <ul className="space-y-2 rounded-xl border border-[#23303E] bg-[#0B1117] p-3.5">
-            {spec.bullets.map((line, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-[#94A3B8] leading-relaxed">
+            {spec.bullets.map((line) => (
+              <li key={line} className="flex items-start gap-2 text-xs text-[#94A3B8] leading-relaxed">
                 <Check className="w-3.5 h-3.5 text-[#D99B26] shrink-0 mt-0.5" />
                 <span>{line}</span>
               </li>

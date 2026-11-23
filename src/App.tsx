@@ -25,6 +25,7 @@ import {WalkthroughModal} from './components/WalkthroughModal';
 import {TabIntroModal} from './components/TabIntroModal';
 import {OfflineIndicator, PWAInstallButton} from './components/PWAControls';
 import {ErrorBoundary} from './components/ErrorBoundary';
+import {createId} from './utils/ids';
 
 const NAV_ITEMS: {
   id: ModuleTab;
@@ -129,7 +130,7 @@ export default function App() {
       if (exists) return prev;
       const newEntry: VocabItem = {
         ...item,
-        id: `v-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        id: createId('v'),
         createdAt: new Date().toISOString(),
         mastery: 'new',
         reviewCount: 0,
@@ -154,7 +155,7 @@ export default function App() {
     setSessions((prev) => [session, ...prev].slice(0, 25));
     setSelectedSessionId(session.id);
     handleLogHistory({
-      id: `hist-opi-${Date.now()}`,
+      id: createId('hist-opi'),
       module: 'opi',
       language: session.language,
       dialect: session.dialect,

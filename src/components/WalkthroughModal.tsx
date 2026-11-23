@@ -162,8 +162,8 @@ export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({open, onClose
           </div>
 
           <ul className="space-y-2.5 rounded-xl border border-[#23303E] bg-[#0B1117] p-4">
-            {step.highlights.map((bullet, idx) => (
-              <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-[#94A3B8] leading-relaxed">
+            {step.highlights.map((bullet) => (
+              <li key={bullet} className="flex items-start gap-2.5 text-xs sm:text-sm text-[#94A3B8] leading-relaxed">
                 <Check className="w-4 h-4 text-[#D99B26] shrink-0 mt-0.5" />
                 <span>{bullet}</span>
               </li>

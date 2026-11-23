@@ -33,6 +33,7 @@ import {
 } from '../utils/localDictionary';
 import {lookupContextualWord, requestOpiTurn, requestTotPhrase} from '../services/api';
 import {useSpeechRecognition, useSpeechSynthesis} from '../hooks/useSpeech';
+import {createId} from '../utils/ids';
 
 interface OpiSimulatorModuleProps {
   config: MissionConfig;
@@ -229,7 +230,7 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
       if (currentLanguageRef.current !== requestLang) return;
 
       const openingMsg: OpiMessage = {
-        id: `opi-ex-${Date.now()}`,
+        id: createId('opi-ex'),
         role: 'examiner',
         text: turn.examinerText,
         timestamp: new Date().toISOString(),
@@ -263,7 +264,7 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
     if (!sessionActive) setSessionActive(true);
 
     const candidateMsg: OpiMessage = {
-      id: `opi-cand-${Date.now()}`,
+      id: createId('opi-cand'),
       role: 'candidate',
       text: cleanText,
       timestamp: new Date().toISOString(),
@@ -295,7 +296,7 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
       if (currentLanguageRef.current !== requestLang) return;
 
       const examinerMsg: OpiMessage = {
-        id: `opi-ex-${Date.now()}`,
+        id: createId('opi-ex'),
         role: 'examiner',
         text: turn.examinerText,
         timestamp: new Date().toISOString(),
@@ -458,7 +459,7 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
     stt.stopListening();
     setSessionActive(false);
     const session: OpiSession = {
-      id: `opi-${Date.now()}`,
+      id: createId('opi'),
       type: 'opi',
       language: config.language,
       dialect: config.dialect,

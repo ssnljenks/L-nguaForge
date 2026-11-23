@@ -38,6 +38,9 @@ import {
   savePrepPromptCache,
 } from '../utils/localDictionary';
 import {useAudioRecorder, useSpeechRecognition, useSpeechSynthesis} from '../hooks/useSpeech';
+import {createId} from '../utils/ids';
+
+const PREP_DURATION_SECONDS = 90;
 
 const CHUNKING_SYMBOLS = [
   {symbol: '→', label: 'Cause / Result'},
@@ -144,23 +147,25 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
     }
   }, [config.language, tts, stt, recorder]);
 
-  // 90-Second PREP Timer
+  // 90-Second PREP Timer. Elapsed time is derived from the wall clock (background tabs throttle
+  // intervals), and the stop side effects run in the interval callback, not inside a state updater.
+  const {stopListening} = stt;
+  const {stopRecording} = recorder;
   useEffect(() => {
     if (!prepRunning) return;
+    const startedAt = Date.now();
     const id = window.setInterval(() => {
-      setPrepElapsed((prev) => {
-        if (prev >= 89) {
-          setPrepRunning(false);
-          stt.stopListening();
-          recorder.stopRecording();
-          return 90;
-        }
-        return prev + 1;
-      });
-    }, 1000);
+      const elapsed = Math.min(PREP_DURATION_SECONDS, Math.floor((Date.now() - startedAt) / 1000));
+      setPrepElapsed(elapsed);
+      if (elapsed >= PREP_DURATION_SECONDS) {
+        window.clearInterval(id);
+        setPrepRunning(false);
+        stopListening();
+        stopRecording();
+      }
+    }, 250);
     return () => window.clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prepRunning]);
+  }, [prepRunning, stopListening, stopRecording]);
 
   // Sync STT into active subMode field
   useEffect(() => {
@@ -243,7 +248,7 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
 
       // Persist monologue so it is also inspectable inside the ILR Debrief module
       const session: OpiSession = {
-        id: `prep-sess-${Date.now()}`,
+        id: createId('prep-sess'),
         type: 'prep_monologue',
         language: requestLang,
         dialect: config.dialect,
@@ -253,7 +258,7 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
         prepPrompt: prepPrompt.promptTarget,
         messages: [
           {
-            id: `p-ex-${Date.now()}`,
+            id: createId('p-ex'),
             role: 'examiner',
             text: prepPrompt.promptTarget,
             timestamp: new Date().toISOString(),
@@ -270,7 +275,7 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
       };
       onSaveMonologueSession(session);
       onLogHistory({
-        id: `hist-prep-${Date.now()}`,
+        id: createId('hist-prep'),
         module: 'prep',
         language: requestLang,
         dialect: config.dialect,
@@ -344,7 +349,7 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
       });
       setInterpEval(res);
       onLogHistory({
-        id: `hist-interp-${Date.now()}`,
+        id: createId('hist-interp'),
         module: 'interp',
         language: config.language,
         dialect: config.dialect,
@@ -852,6 +857,7 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
                 <div className="space-y-2 text-xs">
                   <p className="font-semibold text-emerald-400">Captured Operational Facts</p>
                   <ul className="space-y-1 text-[#CBD5E1]">
+                    {/* Read-only list replaced wholesale per evaluation; items may repeat, so index keys are safe here. */}
                     {interpEval.capturedPoints.map((pt, i) => (
                       <li key={i}>• {pt}</li>
                     ))}

@@ -44,6 +44,7 @@ import {
 import {lookupContextualWord, requestTotPhrase, sendFreeChatTurn} from '../services/api';
 import {useGeminiLive, type GeminiLiveVoice} from '../hooks/useGeminiLive';
 import {useSpeechSynthesis} from '../hooks/useSpeech';
+import {createId} from '../utils/ids';
 
 interface FreeChatModuleProps {
   config: MissionConfig;
@@ -144,7 +145,7 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     if (!clean) return;
     const nowIso = new Date().toISOString();
     const nextMsg: FreeChatMessage = {
-      id: `live-${role}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      id: createId(`live-${role}`),
       role,
       text: clean,
       timestamp: nowIso,
@@ -152,7 +153,7 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
 
     const currentId = activeThreadIdRef.current;
     if (!currentId) {
-      const newId = `chat-${Date.now()}`;
+      const newId = createId('chat');
       const newThread: FreeChatThread = {
         id: newId,
         title: buildChatThreadTitle(clean),

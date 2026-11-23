@@ -27,6 +27,7 @@ import {
 import {getOfflineMilitaryEntries, normalizeLookupKey} from '../utils/localDictionary';
 import {evaluateRecallSentence} from '../services/api';
 import {useSpeechRecognition, useSpeechSynthesis} from '../hooks/useSpeech';
+import {createId} from '../utils/ids';
 
 const VOCAB_CATEGORIES: VocabCategory[] = [
   'High-Register Connectors',
@@ -270,7 +271,7 @@ export const VocabVaultModule: React.FC<VocabVaultModuleProps> = ({
     setCompletedInSession(nextDone);
     if (nextDone % 3 === 0) {
       onLogHistory({
-        id: `hist-vocab-${Date.now()}`,
+        id: createId('hist-vocab'),
         module: 'vocab_recall',
         language: currentCard.language,
         dialect: currentCard.dialect,

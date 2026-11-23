@@ -254,7 +254,7 @@ export const DebriefModule: React.FC<DebriefModuleProps> = ({
 
             <div className="divide-y divide-[#23303E]">
               {report.naturalUpgrades.map((item, idx) => (
-                <div key={idx} className="py-5 first:pt-1 last:pb-1 space-y-3">
+                <div key={item.originalLevel2} className="py-5 first:pt-1 last:pb-1 space-y-3">
                   <div className="grid grid-cols-1 lg:grid-cols-11 gap-4 items-center">
                     <div className="lg:col-span-5 space-y-1">
                       <span className="text-xs font-medium text-[#7D8FA3]">What You Said (Level 2)</span>
