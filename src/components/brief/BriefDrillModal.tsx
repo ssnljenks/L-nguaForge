@@ -1335,7 +1335,7 @@ export const BriefDrillModal: React.FC<BriefDrillModalProps> = ({
                   }
                   finalizeSession(passageLineup);
                 }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[52px] rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
               >
                 <ClipboardCheck className="w-4 h-4" />
                 <span>Submit test</span>

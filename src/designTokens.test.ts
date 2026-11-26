@@ -39,10 +39,9 @@ const DARK_ON_LIGHT = new Set(['0B1117', '0D141C']);
 
 /** Opening JSX tags (with their attributes) that set a text color. */
 function* taggedTextColors(code: string): Generator<{hex: string; tag: string; line: number}> {
-  const tagRe = /<[A-Za-z][\w.]*\b(?:=>|[^<>])*?>/g;
-  for (const m of code.matchAll(tagRe)) {
-    for (const c of m[0].matchAll(/(?<![\w-])text-\[#([0-9a-fA-F]{6})\]/g)) {
-      yield {hex: c[1].toUpperCase(), tag: m[0], line: code.slice(0, m.index).split('\n').length};
+  for (const {tag, line} of jsxOpeningTags(code, /[A-Za-z][\w.]*/)) {
+    for (const c of tag.matchAll(/(?<![\w-])text-\[#([0-9a-fA-F]{6})\]/g)) {
+      yield {hex: c[1].toUpperCase(), tag, line};
     }
   }
 }
@@ -62,12 +61,34 @@ test('text colors on dark surfaces meet WCAG AA 4.5:1 (REVIEW L-8)', () => {
   assert.deepEqual(failures, []);
 });
 
-const INTERACTIVE_TAG = /<(button|a|select|input|textarea)\b(?:=>|[^<>])*?>/g;
-
-function* interactiveTags(code: string): Generator<{kind: string; tag: string; line: number}> {
-  for (const m of code.matchAll(INTERACTIVE_TAG)) {
-    yield {kind: m[1], tag: m[0], line: code.slice(0, m.index).split('\n').length};
+/**
+ * Opening JSX tags of the given element names, scanned with brace/string nesting so attribute
+ * expressions like `onClick={() => n > 0 && …}` don't end the tag early.
+ */
+function* jsxOpeningTags(code: string, names: RegExp): Generator<{kind: string; tag: string; line: number}> {
+  const start = new RegExp(`<(${names.source})\\b`, 'g');
+  for (const m of code.matchAll(start)) {
+    let depth = 0;
+    let quote: string | null = null;
+    let i = m.index + m[0].length;
+    for (; i < code.length; i++) {
+      const ch = code[i];
+      if (quote) {
+        if (ch === '\\') i++;
+        else if (ch === quote) quote = null;
+        continue;
+      }
+      if (ch === '"' || ch === "'" || ch === '`') quote = ch;
+      else if (ch === '{') depth++;
+      else if (ch === '}') depth--;
+      else if (ch === '>' && depth === 0) break;
+    }
+    yield {kind: m[1], tag: code.slice(m.index, i + 1), line: code.slice(0, m.index).split('\n').length};
   }
+}
+
+function interactiveTags(code: string) {
+  return jsxOpeningTags(code, /button|a|select|input|textarea/);
 }
 
 /** Primary = a solid amber action button (amber in its static classes, or a text-sm amber CTA). */
