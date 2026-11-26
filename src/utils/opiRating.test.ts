@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {
   calculateOpiRating,
   HIGHER_LEVELS_NOT_RATED_NOTE,
+  MIN_ITEMS_FOR_FLOOR,
+  SUSTAINED_SHARE_FOR_FLOOR,
   PRACTICE_RATING_DISCLAIMER,
   resolvePrimaryRetryFunction,
 } from './opiRating.ts';
@@ -21,6 +23,13 @@ test('floor 0 gives 0+ when Level 1 checks fail, with Level 1 function grid', ()
       functionKey: 'l1_daily_travel_questions',
       outcome: 'breakdown',
       evidence: 'Fell back to English on schedule question.',
+      targetLevel: 1,
+      phase: 'level_check',
+    },
+    {
+      functionKey: 'l1_short_conversations',
+      outcome: 'breakdown',
+      evidence: 'Could not keep a short exchange going.',
       targetLevel: 1,
       phase: 'level_check',
     },
@@ -256,3 +265,109 @@ test('resolvePrimaryRetryFunction prioritizes ceilingMoment then not_met then pa
     label: 'Hypothesize',
   });
 });
+
+// REVIEW M-5: borderline cases. A level holds with >= 2 items and >= 75% sustained, and is lost only
+// with >= 2 non-sustained items, so no single turn makes or breaks a level.
+type Outcome = TurnAssessment['outcome'];
+const L1 = ['l1_simple_qa', 'l1_short_conversations', 'l1_daily_travel_questions', 'l1_simple_qa'] as const;
+const L2 = ['l2_facts', 'l2_narration_timeframes', 'l2_resolve_complication', 'l2_casual_conversation'] as const;
+const L3 = ['l3_support_opinions', 'l3_hypothesize', 'l3_unfamiliar_abstract', 'l3_describe_explain_detail'] as const;
+
+function at(level: 1 | 2 | 3, outcomes: readonly Outcome[]): TurnAssessment[] {
+  const keys = level === 1 ? L1 : level === 2 ? L2 : L3;
+  return outcomes.map((outcome, i) => ({
+    functionKey: keys[i % keys.length],
+    outcome,
+    evidence: `${outcome} at L${level}`,
+    targetLevel: level,
+    phase: level === 3 ? 'probe' : 'level_check',
+  }));
+}
+
+test('rating thresholds are explicit (REVIEW M-5)', () => {
+  assert.equal(MIN_ITEMS_FOR_FLOOR, 2);
+  assert.equal(SUSTAINED_SHARE_FOR_FLOOR, 0.75);
+});
+
+const BORDERLINE: {name: string; assessments: TurnAssessment[]; floor: number; display: string}[] = [
+  {
+    name: 'one sustained Level 3 turn on a solid Level 2 is 2+, not 3',
+    assessments: [...at(2, ['sustained', 'sustained']), ...at(3, ['sustained'])],
+    floor: 2,
+    display: '2+',
+  },
+  {
+    name: 'two sustained Level 3 turns on a solid Level 2 are 3',
+    assessments: [...at(2, ['sustained', 'sustained']), ...at(3, ['sustained', 'sustained'])],
+    floor: 3,
+    display: '3',
+  },
+  {
+    name: 'Level 3 at exactly 75% sustained (3 of 4) holds',
+    assessments: [...at(2, ['sustained', 'sustained']), ...at(3, ['sustained', 'sustained', 'sustained', 'partial'])],
+    floor: 3,
+    display: '3',
+  },
+  {
+    name: 'Level 3 at 67% sustained (2 of 3) does not hold',
+    assessments: [...at(2, ['sustained', 'sustained']), ...at(3, ['sustained', 'sustained', 'breakdown'])],
+    floor: 2,
+    display: '2+',
+  },
+  {
+    name: 'one Level 2 partial no longer blocks a Level 2 floor',
+    assessments: [...at(1, ['sustained']), ...at(2, ['sustained', 'sustained', 'sustained', 'partial'])],
+    floor: 2,
+    display: '2',
+  },
+  {
+    name: 'one Level 2 partial no longer blocks a Level 3 floor',
+    assessments: [...at(2, ['sustained', 'partial']), ...at(3, ['sustained', 'sustained', 'sustained'])],
+    floor: 3,
+    display: '3',
+  },
+  {
+    name: 'two Level 2 breakdowns block a Level 3 floor',
+    assessments: [...at(2, ['sustained', 'breakdown', 'breakdown']), ...at(3, ['sustained', 'sustained', 'sustained'])],
+    floor: 1,
+    display: '1',
+  },
+  {
+    name: 'a single sustained Level 2 turn is 1+, not 2',
+    assessments: [...at(1, ['sustained', 'sustained']), ...at(2, ['sustained'])],
+    floor: 1,
+    display: '1+',
+  },
+  {
+    name: 'a single Level 1 breakdown does not drop the floor to 0',
+    assessments: [...at(1, ['sustained', 'sustained', 'breakdown']), ...at(2, ['breakdown'])],
+    floor: 1,
+    display: '1',
+  },
+  {
+    name: 'a single Level 1 partial does not block a Level 2 floor',
+    assessments: [...at(1, ['partial', 'sustained']), ...at(2, ['sustained', 'sustained', 'sustained'])],
+    floor: 2,
+    display: '2',
+  },
+  {
+    name: 'two Level 1 breakdowns give 0+',
+    assessments: [...at(1, ['sustained', 'breakdown', 'breakdown'])],
+    floor: 0,
+    display: '0+',
+  },
+  {
+    name: 'no rated evidence stays at the Level 1 baseline',
+    assessments: [],
+    floor: 1,
+    display: '1',
+  },
+];
+
+for (const c of BORDERLINE) {
+  test(`borderline: ${c.name} (REVIEW M-5)`, () => {
+    const res = calculateOpiRating(c.assessments);
+    assert.equal(res.floor, c.floor);
+    assert.equal(res.displayRating, c.display);
+  });
+}
