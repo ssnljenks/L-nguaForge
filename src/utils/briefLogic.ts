@@ -124,6 +124,14 @@ export function scoreBriefDrill(
  * They were written for LinguaForge: they are NOT real news reports, so they carry no outlet name,
  * no publisher link and no audio, and their orientation lines say so (REVIEW.md C-1).
  */
+/** Minimum length of real source text for a DLPT drill to be meaningful. */
+export const MIN_DRILL_PASSAGE_WORDS = 40;
+
+/** Whether DLPT drills / Gist can be offered for this item (REVIEW C-2). */
+export function isBriefItemDrillable(item: Pick<BriefItem, 'drillable'>): boolean {
+  return item.drillable !== false;
+}
+
 export const PRACTICE_STORY_SOURCE_NAME = 'LinguaForge practice story';
 
 export const SEED_BRIEF_ITEMS: readonly BriefItem[] = [

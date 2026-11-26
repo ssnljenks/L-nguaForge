@@ -8,7 +8,9 @@ import {
   filterBriefItems,
   formatBriefLength,
   isBriefIlrLevel,
+  isBriefItemDrillable,
   isBriefTopic,
+  MIN_DRILL_PASSAGE_WORDS,
   SEED_BRIEF_ITEMS,
 } from '../src/utils/briefLogic.ts';
 import {getMaxQuestionsForPassage, CHOICE_LETTERS, isDlptQuestionType, isDlptTrapType} from '../src/utils/dlptRules.ts';
@@ -374,6 +376,34 @@ export function validateDlptQuestions(
   };
 }
 
+export const NOT_DRILLABLE_MESSAGE =
+  "This item has no source transcript or text to test against yet, so drills aren't available. Listen or read at the source instead.";
+
+function assertDrillable(item: StoredBriefItem): void {
+  if (!isBriefItemDrillable(item)) throw new UserFacingError(409, NOT_DRILLABLE_MESSAGE);
+}
+
+function countWords(text: string): number {
+  return text.split(/\s+/).filter(Boolean).length;
+}
+
+/** Keeps only vocabulary terms that actually occur in the source text (case/accents-insensitive). */
+function vocabularyFromSource(raw: unknown, sourceText: string): {term: string; english: string}[] {
+  if (!Array.isArray(raw)) return [];
+  const haystack = normalizeForSourceMatch(sourceText);
+  return raw
+    .map((v) => ({
+      term: String((v as {term?: unknown})?.term ?? '')
+        .trim()
+        .slice(0, 80),
+      english: String((v as {english?: unknown})?.english ?? '')
+        .trim()
+        .slice(0, 120),
+    }))
+    .filter((v) => v.term && v.english && haystack.includes(normalizeForSourceMatch(v.term)))
+    .slice(0, 4);
+}
+
 export class BriefService {
   private cache = new Map<string, StoredBriefItem>();
   private lastRefreshedAt: string = new Date().toISOString();
@@ -393,6 +423,7 @@ export class BriefService {
         transcript: seed.mediaType === 'audio' ? ext?.studyExcerpt : undefined,
         rawContent: seed.mediaType === 'text' ? ext?.studyExcerpt : undefined,
         keyVocabulary: ext?.keyVocabulary || [],
+        drillable: Boolean(ext?.studyExcerpt),
       };
       this.cache.set(seed.id, stored);
     }
@@ -507,6 +538,7 @@ export class BriefService {
       matchingDomains: item.matchingDomains,
       estimatedMinutes: item.estimatedMinutes,
       lengthLabel: item.lengthLabel,
+      drillable: isBriefItemDrillable(item),
     }));
 
     return {
@@ -552,8 +584,10 @@ export class BriefService {
       throw new UserFacingError(404, `Brief item "${briefId}" not found.`);
     }
 
+    assertDrillable(item);
     const maxQuestions = getMaxQuestionsForPassage(item.language, item.mediaType);
-    const passageText = item.transcript || item.rawContent || item.studyExcerpt || item.summary;
+    // Only real source text: a transcript, the publisher's own text, or an authored practice passage.
+    const passageText = (item.transcript || item.rawContent || item.studyExcerpt) as string;
     const skillLabel = item.mediaType === 'audio' ? 'Listening' : 'Reading';
 
     const prompt = `You are a senior Defense Language Proficiency Test (DLPT5) item writer creating authentic ${skillLabel} comprehension items in English for an ILR Level ${item.ilrLevel} ${item.language === 'es' ? 'Spanish' : 'Portuguese'} passage.
@@ -682,7 +716,11 @@ STRICT DLPT5 ITEM REQUIREMENTS:
       throw new UserFacingError(404, `Brief item "${briefId}" not found.`);
     }
 
-    const transcript = item.transcript || item.studyExcerpt || item.rawContent || item.summary;
+    assertDrillable(item);
+    if (!item.transcript) {
+      throw new UserFacingError(409, NOT_DRILLABLE_MESSAGE);
+    }
+    const transcript = item.transcript;
     const cleanedSummary = summary.trim();
     const fallbackQuote = transcript.split(/(?<=[.!?])\s+/)[0]?.slice(0, 140) || transcript.slice(0, 140);
 
@@ -1012,6 +1050,11 @@ GRADING RULES (STRICT FIDELITY):
     id: string,
     generate?: GenerateStructured
   ): Promise<StoredBriefItem | null> {
+    // REVIEW C-2: the passage is the publisher's own text, never model-written. Audio items have no
+    // transcript (the model never hears the audio), so they are not drillable until one exists.
+    const publisherText = this.capWords(raw.description, 500);
+    const passage = source.mediaType === 'text' ? publisherText : undefined;
+    const drillable = Boolean(passage) && countWords(passage as string) >= MIN_DRILL_PASSAGE_WORDS;
     const isLongAudio =
       source.mediaType === 'audio' && typeof raw.durationSeconds === 'number' && raw.durationSeconds > 150;
     const baseEstimatedMins = isLongAudio
@@ -1039,7 +1082,9 @@ GRADING RULES (STRICT FIDELITY):
         matchingDomains: [],
         estimatedMinutes: baseEstimatedMins,
         lengthLabel: isLongAudio ? 'First ~2 min segment' : formatBriefLength(source.mediaType, baseEstimatedMins),
-        studyExcerpt: raw.description.slice(0, 400),
+        studyExcerpt: publisherText,
+        rawContent: passage,
+        drillable,
       };
     }
 
@@ -1055,9 +1100,8 @@ Produce a structured evaluation:
 3. orientationLine: An authentic DLPT-style English orientation line (e.g. "This passage is from a Chilean radio broadcast discussing environmental regulations.").
 4. summary: A concise English summary of at most 2 sentences.
 5. matchingDomains: Identify any applicable operational domains from: ['maritime_surveillance', 'aviation_logistics', 'c2_comms', 'delegation_hosting', 'general_policy']. If purely general news, return empty array [].
-6. studyExcerpt: A short authentic target-language excerpt of ~150-250 words suitable for vocabulary lookup and reading/listening review.
-7. keyVocabulary: 2 to 4 notable vocabulary items with English translations.
-8. estimatedMinutes: Number of minutes (1 to 3).`;
+6. keyVocabulary: 2 to 4 notable vocabulary items that appear VERBATIM in the Description / Excerpt above, with English translations.
+7. estimatedMinutes: Number of minutes (1 to 3).`;
 
     const schema = {
       type: Type.OBJECT,
@@ -1070,7 +1114,6 @@ Produce a structured evaluation:
           type: Type.ARRAY,
           items: {type: Type.STRING},
         },
-        studyExcerpt: {type: Type.STRING},
         keyVocabulary: {
           type: Type.ARRAY,
           items: {
@@ -1084,7 +1127,7 @@ Produce a structured evaluation:
         },
         estimatedMinutes: {type: Type.INTEGER},
       },
-      required: ['ilrLevel', 'topic', 'orientationLine', 'summary', 'studyExcerpt', 'estimatedMinutes'],
+      required: ['ilrLevel', 'topic', 'orientationLine', 'summary', 'estimatedMinutes'],
     };
 
     try {
@@ -1112,8 +1155,6 @@ Produce a structured evaluation:
           ) as MilitaryDomain[])
         : [];
 
-      const excerptText = this.capWords(String(result.studyExcerpt || raw.description), 250);
-
       return {
         id,
         title: raw.title,
@@ -1131,15 +1172,10 @@ Produce a structured evaluation:
         matchingDomains: domains,
         estimatedMinutes: mins,
         lengthLabel: isLongAudio ? 'First ~2 min segment' : formatBriefLength(source.mediaType, mins),
-        studyExcerpt: excerptText,
-        transcript: source.mediaType === 'audio' ? excerptText : undefined,
-        rawContent: source.mediaType === 'text' ? excerptText : undefined,
-        keyVocabulary: Array.isArray(result.keyVocabulary)
-          ? result.keyVocabulary.map((v: any) => ({
-              term: String(v?.term || ''),
-              english: String(v?.english || ''),
-            }))
-          : [],
+        studyExcerpt: publisherText,
+        rawContent: passage,
+        drillable,
+        keyVocabulary: vocabularyFromSource(result.keyVocabulary, publisherText),
       };
     } catch {
       return null;

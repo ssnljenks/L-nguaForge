@@ -13,7 +13,7 @@ import type {
   TodayPlanStepId,
   VocabItem,
 } from '../types.ts';
-import {SEED_BRIEF_ITEMS} from './briefLogic.ts';
+import {isBriefItemDrillable, SEED_BRIEF_ITEMS} from './briefLogic.ts';
 import {computeDlptSkillEstimates} from './dlptRules.ts';
 import {deriveUserSkillProfile, getTopFix, type RankedErrorPattern} from './errorPatterns.ts';
 import {getDomainInfo} from './ilrLogic.ts';
@@ -398,7 +398,8 @@ function pickBriefStory(params: {
   workDomain?: MilitaryDomain;
 }): BriefItem {
   const {pool, language, mediaType, targetLevel, dayNumber, workDomain} = params;
-  const langItems = pool.filter((item) => item.language === language);
+  // Only items with real source text can be drilled (REVIEW C-2).
+  const langItems = pool.filter((item) => item.language === language && isBriefItemDrillable(item));
   const sourcePool = langItems.length > 0 ? langItems : SEED_BRIEF_ITEMS.filter((item) => item.language === language);
 
   let candidates = sourcePool.filter((item) => item.mediaType === mediaType);

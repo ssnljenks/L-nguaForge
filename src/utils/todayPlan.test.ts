@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import type {DlptDrillResult, ErrorEvent, OpiSession, VocabItem} from '../types.ts';
+import type {BriefItem, DlptDrillResult, ErrorEvent, OpiSession, VocabItem} from '../types.ts';
+import {SEED_BRIEF_ITEMS} from './briefLogic.ts';
 import {computeIlrProfile, formatTestCountdown, generateTodayPlan, getDaysUntilTest} from './todayPlan.ts';
 
 const NOW = Date.parse('2026-11-24T15:00:00.000Z');
@@ -249,4 +250,35 @@ test('generateTodayPlan alternates Work focus add-on every other day between Ite
   assert.equal(workTalkPlan.items[2].kind, 'talk_work');
   assert.equal(workTalkPlan.items[2].isWorkAddon, true);
   assert.equal(workTalkPlan.items[1].isWorkAddon, false);
+});
+
+test('generateTodayPlan never picks a non-drillable item (feed audio without a transcript) for the Brief drill (REVIEW C-2)', () => {
+  const audioNoTranscript: BriefItem = {
+    ...SEED_BRIEF_ITEMS.find((i) => i.language === 'es')!,
+    id: 'es-feed-audio-1',
+    mediaType: 'audio',
+    audioUrl: 'https://audio.example.test/a.mp3',
+    sourceName: 'Test Radio',
+    sourceUrl: 'https://radio.example.test',
+    drillable: false,
+  };
+  for (const dateKey of ['2026-11-25', '2026-11-26', '2026-11-27']) {
+    const {plan} = generateTodayPlan({
+      language: 'es',
+      domain: 'maritime_surveillance',
+      workFocusEnabled: false,
+      vocabItems: [],
+      sessions: [],
+      // Listening is weaker, so the plan wants an audio item.
+      dlptResults: [makeDlptResult('listening', '2', 1), makeDlptResult('reading', '3', 3)],
+      errorEvents: [],
+      briefPool: [audioNoTranscript, ...SEED_BRIEF_ITEMS],
+      dateKey,
+      nowMs: NOW,
+    });
+    const brief = plan.items.find((i) => 'briefItem' in i && i.briefItem) as {briefItem: BriefItem} | undefined;
+    assert.ok(brief, 'plan includes a Brief item');
+    assert.notEqual(brief.briefItem.id, 'es-feed-audio-1');
+    assert.notEqual(brief.briefItem.drillable, false);
+  }
 });

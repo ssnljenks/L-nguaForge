@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'http';
 import type {AddressInfo} from 'net';
 import {createApp, jsonErrorHandler} from './app.ts';
-import {validateDlptQuestions} from './briefService.ts';
+import {globalBriefService, type StoredBriefItem, validateDlptQuestions} from './briefService.ts';
 import {loadConfig, type ServerConfig} from './config.ts';
 import {UserFacingError} from './errors.ts';
 import type {GenerateStructured, StructuredPromptRequest} from './gemini.ts';
@@ -936,6 +936,21 @@ test('/api/brief routes return filtered feeds, DLPT drill questions, and study e
   assert.ok(refreshBody.lastRefreshedAt);
 
   // 5. Phase 7: POST /api/brief/grade-gist
+  // Gist needs an audio item with a real transcript (REVIEW C-2). The text-only practice story is refused...
+  const textOnlyGist = await post(`${h.url}/api/brief/grade-gist`, {briefId: sample.id, summary: 'A gist.'});
+  assert.equal(textOnlyGist.status, 409);
+  // ...so register an audio item whose transcript is known (the case a future transcription step enables).
+  const storedSample = globalBriefService.getItemById(sample.id) as StoredBriefItem;
+  const gistItem: StoredBriefItem = {
+    ...storedSample,
+    id: 'test-audio-with-transcript',
+    mediaType: 'audio',
+    audioUrl: 'https://audio.example.test/clip.mp3',
+    transcript: storedSample.studyExcerpt,
+    rawContent: undefined,
+    drillable: true,
+  };
+  (globalBriefService as unknown as {cache: Map<string, StoredBriefItem>}).cache.set(gistItem.id, gistItem);
   h.setResponse(async () => ({
     mainPoint: 'partial',
     keyDetails: {
@@ -968,13 +983,13 @@ test('/api/brief routes return filtered feeds, DLPT drill questions, and study e
   }));
 
   const gistRes = await post(`${h.url}/api/brief/grade-gist`, {
-    briefId: sample.id,
+    briefId: gistItem.id,
     summary:
       'The Coast Guard intercepted a semi-submersible 180 nautical miles off the coast. The crew later surrendered to customs officers in Panama.',
   });
   assert.equal(gistRes.status, 200);
   const gistBody = await gistRes.json();
-  assert.equal(gistBody.briefId, sample.id);
+  assert.equal(gistBody.briefId, gistItem.id);
   assert.equal(gistBody.mainPoint, 'partial');
   assert.equal(gistBody.keyDetails.found, 2);
   assert.equal(gistBody.keyDetails.total, 4);
@@ -988,7 +1003,7 @@ test('/api/brief routes return filtered feeds, DLPT drill questions, and study e
 
   // Empty auto-submit at 0:00 returns deterministic missed evaluation without failing
   const emptyGistRes = await post(`${h.url}/api/brief/grade-gist`, {
-    briefId: sample.id,
+    briefId: gistItem.id,
     summary: '   ',
   });
   assert.equal(emptyGistRes.status, 200);
@@ -1000,7 +1015,7 @@ test('/api/brief routes return filtered feeds, DLPT drill questions, and study e
 
   // Classification guard returns 422 before calling Gemini
   const classifiedGist = await post(`${h.url}/api/brief/grade-gist`, {
-    briefId: sample.id,
+    briefId: gistItem.id,
     summary: 'SECRET//NOFORN maritime patrol summary.',
   });
   assert.equal(classifiedGist.status, 422);

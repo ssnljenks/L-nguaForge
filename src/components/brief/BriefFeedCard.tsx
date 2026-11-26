@@ -1,7 +1,7 @@
 import React, {useRef, useState} from 'react';
 import {BookOpen, ExternalLink, FileCheck2, MessageSquare, Pause, Play, Sparkles, Volume2} from 'lucide-react';
 import type {BriefItem} from '../../types';
-import {getTopicLabel} from '../../utils/briefLogic';
+import {getTopicLabel, isBriefItemDrillable} from '../../utils/briefLogic';
 import {getMaxQuestionsForPassage} from '../../utils/dlptRules';
 import {getDialectInfo} from '../../utils/ilrLogic';
 
@@ -20,6 +20,7 @@ export const BriefFeedCard: React.FC<BriefFeedCardProps> = ({
   onBriefItBack,
   onOpenStudy,
 }) => {
+  const drillable = isBriefItemDrillable(item);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioError, setAudioError] = useState(false);
@@ -126,15 +127,21 @@ export const BriefFeedCard: React.FC<BriefFeedCardProps> = ({
       {/* 5. Actions: DLPT drill, Brief it back, Gist (Phase 7), Study */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#23303E]">
         <div className="flex flex-wrap items-center gap-2">
-          {/* DLPT Drill */}
-          <button
-            type="button"
-            onClick={() => onOpenDrill(item)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[44px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>DLPT drill · up to {getMaxQuestionsForPassage(item.language, item.mediaType)} Q</span>
-          </button>
+          {/* DLPT Drill: only when there is real source text to test against (REVIEW C-2) */}
+          {drillable ? (
+            <button
+              type="button"
+              onClick={() => onOpenDrill(item)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[44px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>DLPT drill · up to {getMaxQuestionsForPassage(item.language, item.mediaType)} Q</span>
+            </button>
+          ) : (
+            <p className="text-xs text-[#94A3B8]" data-testid={`brief-no-drill-${item.id}`}>
+              No transcript yet: listen at the source. Drills need the real source text.
+            </p>
+          )}
 
           {/* Brief it back (wires to OPI) */}
           <button
@@ -147,7 +154,7 @@ export const BriefFeedCard: React.FC<BriefFeedCardProps> = ({
           </button>
 
           {/* Gist drill (Audio items only) */}
-          {item.mediaType === 'audio' && onOpenGist && (
+          {item.mediaType === 'audio' && drillable && onOpenGist && (
             <button
               type="button"
               data-testid={`brief-gist-btn-${item.id}`}
