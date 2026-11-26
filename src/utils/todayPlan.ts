@@ -10,7 +10,6 @@ import type {
   MilitaryDomain,
   OpiSession,
   TargetLanguage,
-  TodayPlanStepId,
   VocabItem,
 } from '../types.ts';
 import {isBriefItemDrillable, SEED_BRIEF_ITEMS} from './briefLogic.ts';

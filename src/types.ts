@@ -108,7 +108,6 @@ export interface MissionConfig {
   dialect: string;
   domain: MilitaryDomain;
   workFocusEnabled: boolean;
-  workFocus?: boolean;
   speechRate: number;
   autoSpeakExaminer: boolean;
   handsFreeMode: boolean;

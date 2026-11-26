@@ -3,8 +3,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {Type} from '@google/genai';
 import {
-  BRIEF_ILR_LEVELS,
-  BRIEF_TOPICS,
   filterBriefItems,
   formatBriefLength,
   isBriefIlrLevel,

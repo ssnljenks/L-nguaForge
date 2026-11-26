@@ -392,10 +392,6 @@ const KEY_ALIASES: Record<string, ErrorTaxonomyKey> = {
   extended_discourse: 'describe_explain_detail',
 };
 
-export function isErrorTaxonomyKey(value: unknown): value is ErrorTaxonomyKey {
-  return typeof value === 'string' && KEY_SET.has(value);
-}
-
 /**
  * Resolves a raw key (or ILR function alias) to a canonical ErrorTaxonomyKey.
  * Returns null for any unknown key — callers MUST drop unknown keys rather than inventing one.

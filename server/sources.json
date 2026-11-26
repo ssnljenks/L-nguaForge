@@ -24,22 +24,6 @@
     "mediaType": "text"
   },
   {
-    "id": "es-radio-nacional-ar-audio",
-    "name": "Radio Nacional Argentina Panorama",
-    "url": "https://example.com/placeholder-rss-es-ar-radio.xml",
-    "language": "es",
-    "dialectId": "rioplatense",
-    "mediaType": "audio"
-  },
-  {
-    "id": "es-caracol-col-audio",
-    "name": "Caracol Radio Hora 20 Podcast",
-    "url": "https://example.com/placeholder-rss-es-co-caracol.xml",
-    "language": "es",
-    "dialectId": "colombian_andean",
-    "mediaType": "audio"
-  },
-  {
     "id": "es-eltiempo-col-text",
     "name": "El Tiempo Colombia",
     "url": "https://www.eltiempo.com/rss/mundo.xml",
@@ -56,28 +40,12 @@
     "mediaType": "text"
   },
   {
-    "id": "es-radioisla-pr-audio",
-    "name": "Radio Isla 1320 AM Noticiero",
-    "url": "https://example.com/placeholder-rss-es-pr-audio.xml",
-    "language": "es",
-    "dialectId": "caribbean",
-    "mediaType": "audio"
-  },
-  {
     "id": "pt-bbc-brasil-text",
     "name": "BBC News Brasil",
     "url": "https://feeds.bbci.co.uk/portuguese/rss.xml",
     "language": "pt",
     "dialectId": "br_standard",
     "mediaType": "text"
-  },
-  {
-    "id": "pt-cbn-br-audio",
-    "name": "CBN Notícias Brasil",
-    "url": "https://example.com/placeholder-rss-pt-br-cbn.xml",
-    "language": "pt",
-    "dialectId": "br_standard",
-    "mediaType": "audio"
   },
   {
     "id": "pt-rtp-antena1-audio",
@@ -93,30 +61,6 @@
     "url": "https://feeds.feedburner.com/PublicoRSS",
     "language": "pt",
     "dialectId": "eu_portuguese",
-    "mediaType": "text"
-  },
-  {
-    "id": "pt-atarde-bahia-text",
-    "name": "A Tarde Salvador / Bahia",
-    "url": "https://example.com/placeholder-rss-pt-bahia-text.xml",
-    "language": "pt",
-    "dialectId": "br_bahian",
-    "mediaType": "text"
-  },
-  {
-    "id": "pt-radiosociedade-bahia-audio",
-    "name": "Rádio Sociedade da Bahia",
-    "url": "https://example.com/placeholder-rss-pt-bahia-audio.xml",
-    "language": "pt",
-    "dialectId": "br_bahian",
-    "mediaType": "audio"
-  },
-  {
-    "id": "pt-zerohora-sul-text",
-    "name": "GZH Zero Hora Rio Grande do Sul",
-    "url": "https://example.com/placeholder-rss-pt-sul-text.xml",
-    "language": "pt",
-    "dialectId": "br_southern",
     "mediaType": "text"
   }
 ]

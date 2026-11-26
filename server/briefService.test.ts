@@ -7,6 +7,7 @@ import {
   type StoredBriefItem,
   toIsoDateOrNow,
 } from './briefService.ts';
+import {isSafeFeedUrl} from './feedFetch.ts';
 import type {GenerateStructured} from './gemini.ts';
 
 const PUBLISHER_TEXT =
@@ -341,4 +342,15 @@ test('unparseable feed dates fall back to now instead of dropping the feed (REVI
   assert.equal(outcome.newItemsCount, 2);
   const titles = svc.getFeed({language: 'es', mediaType: 'text'}).items.map((i) => i.title);
   assert.ok(titles.includes('Fecha rota') && titles.includes('Fecha buena'));
+});
+
+test('server/sources.json lists only real, fetchable feeds (REVIEW L-7)', () => {
+  const sources = new BriefService().getSources();
+  assert.ok(sources.length >= 6);
+  assert.equal(new Set(sources.map((s) => s.id)).size, sources.length, 'unique ids');
+  for (const source of sources) {
+    assert.ok(!/example\.(com|org|net)|placeholder/i.test(source.url), `placeholder feed ${source.id}`);
+    assert.ok(isSafeFeedUrl(source.url), `${source.id} passes the URL check`);
+    assert.ok(source.url.startsWith('https://'), `${source.id} uses https`);
+  }
 });

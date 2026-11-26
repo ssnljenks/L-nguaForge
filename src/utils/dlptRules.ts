@@ -191,10 +191,6 @@ const ILR_RANK: Record<BriefIlrLevel, number> = {
 
 const RANK_TO_ILR: readonly BriefIlrLevel[] = ['2', '2+', '3', '3+'];
 
-export function ilrLevelToRank(level: BriefIlrLevel): number {
-  return ILR_RANK[level];
-}
-
 /**
  * Computes the next target ILR level for DLPT5-CA adaptive routing.
  * Strong performance (>= 67% correct) steps up by 1 notch; weak performance (< 50%) steps down by 1 notch;
