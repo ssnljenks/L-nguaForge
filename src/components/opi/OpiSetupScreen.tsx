@@ -294,15 +294,21 @@ export const OpiSetupScreen: React.FC<OpiSetupScreenProps> = ({
                   aria-label="Include Role-play scenario in this interview"
                   data-testid="opi-roleplay-toggle"
                   onClick={() => onChangeIncludeRoleplay(!includeRoleplay)}
-                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${
-                    includeRoleplay ? 'bg-[#D99B26] border-[#D99B26]' : 'bg-[#16202B] border-[#35495E]'
-                  }`}
+                  className="relative inline-flex h-11 w-14 shrink-0 items-center justify-center rounded-full"
                 >
+                  {/* 44 px hit area around the visual track (REVIEW M-12). */}
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-[#0B1117] transition-transform ${
-                      includeRoleplay ? 'translate-x-5' : 'translate-x-1 bg-[#94A3B8]'
+                    aria-hidden="true"
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full border transition-colors ${
+                      includeRoleplay ? 'bg-[#D99B26] border-[#D99B26]' : 'bg-[#16202B] border-[#35495E]'
                     }`}
-                  />
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-[#0B1117] transition-transform ${
+                        includeRoleplay ? 'translate-x-5' : 'translate-x-1 bg-[#94A3B8]'
+                      }`}
+                    />
+                  </span>
                 </button>
               </div>
               <p className="text-xs text-[#94A3B8] leading-relaxed">

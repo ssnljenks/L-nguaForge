@@ -165,16 +165,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               role="switch"
               aria-checked={config.workFocusEnabled}
               onClick={() => onUpdateConfig({workFocusEnabled: !config.workFocusEnabled})}
-              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
-                config.workFocusEnabled ? 'border-[#D99B26] bg-[#D99B26]' : 'border-[#35495E] bg-[#16202B]'
-              }`}
+              className="relative inline-flex h-11 w-14 shrink-0 items-center justify-center rounded-full"
             >
               <span className="sr-only">Toggle Work focus</span>
+              {/* 44 px hit area around the visual track (REVIEW M-12). */}
               <span
-                className={`inline-block h-5 w-5 transform rounded-full transition-transform ${
-                  config.workFocusEnabled ? 'translate-x-6 bg-[#0B1117]' : 'translate-x-1 bg-[#94A3B8]'
+                aria-hidden="true"
+                className={`relative inline-flex h-7 w-12 items-center rounded-full border transition-colors ${
+                  config.workFocusEnabled ? 'border-[#D99B26] bg-[#D99B26]' : 'border-[#35495E] bg-[#16202B]'
                 }`}
-              />
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full transition-transform ${
+                    config.workFocusEnabled ? 'translate-x-6 bg-[#0B1117]' : 'translate-x-1 bg-[#94A3B8]'
+                  }`}
+                />
+              </span>
             </button>
           </div>
 
@@ -476,7 +482,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             type="button"
             onClick={onResetAllData}
-            className="flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg border border-red-500/35 text-xs font-medium text-red-300 hover:bg-red-950/30 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-lg border border-red-500/35 text-xs font-medium text-red-300 hover:bg-red-950/30 transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset Local Data</span>
@@ -485,7 +491,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="px-5 py-2 min-h-[40px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42]"
+          className="px-5 py-2 min-h-[52px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42]"
         >
           Done
         </button>

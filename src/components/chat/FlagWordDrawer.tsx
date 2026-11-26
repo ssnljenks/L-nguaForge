@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {BookmarkPlus, Check, Loader2, X} from 'lucide-react';
 import type {MissionConfig, VocabCategory} from '../../types';
 import type {SaveVocabFn} from '../../hooks/useWordLookup';
-import {requestTotPhrase} from '../../services/api';
+import {requestTotPhrase} from '../../services/dictionaryApi';
 import {LANGUAGE_LABELS, normalizeVocabCategory} from '../../utils/ilrLogic';
 import type {EnrichedTotResult} from '../../utils/localDictionary';
 import {totSourceLabel} from '../shared/lookupLabels';
@@ -127,7 +127,7 @@ export const FlagWordDrawer: React.FC<FlagWordDrawerProps> = ({
   };
 
   const inputClass =
-    'min-h-[40px] rounded-lg border border-[#23303E] bg-[#111922] px-3 py-2 text-xs text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]';
+    'min-h-[40px] rounded-lg border border-[#23303E] bg-[#111922] px-3 py-2 text-xs text-[#E6EDF3] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26]';
 
   return (
     <div className="p-4 border-b border-[#23303E] bg-[#0D141C] space-y-3">
@@ -197,7 +197,7 @@ export const FlagWordDrawer: React.FC<FlagWordDrawerProps> = ({
               aria-label="Vocab category"
               value={category}
               onChange={(e) => setCategory(e.target.value as VocabCategory)}
-              className="sm:col-span-2 min-h-[40px] rounded-lg border border-[#23303E] bg-[#111922] px-2 text-xs text-[#E6EDF3]"
+              className="sm:col-span-2 min-h-[44px] rounded-lg border border-[#23303E] bg-[#111922] px-2 text-xs text-[#E6EDF3]"
             >
               {CATEGORY_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -213,7 +213,7 @@ export const FlagWordDrawer: React.FC<FlagWordDrawerProps> = ({
           disabled={loading}
           className={`${
             mode === 'direct' ? 'sm:col-span-2' : 'sm:col-span-3'
-          } min-h-[40px] rounded-lg bg-[#16202B] border border-[#2E4054] text-xs font-semibold text-[#F8FAFC] hover:bg-[#1E2C3A] disabled:opacity-50 flex items-center justify-center gap-1.5`}
+          } min-h-[44px] rounded-lg bg-[#16202B] border border-[#2E4054] text-xs font-semibold text-[#F8FAFC] hover:bg-[#1E2C3A] disabled:opacity-50 flex items-center justify-center gap-1.5`}
         >
           {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin text-[#D99B26]" /> : null}
           <span>{mode === 'lookup' ? 'Look Up' : 'Save'}</span>
@@ -242,7 +242,7 @@ export const FlagWordDrawer: React.FC<FlagWordDrawerProps> = ({
             type="button"
             onClick={saveResult}
             disabled={saved}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-70 shrink-0"
+            className="min-h-[52px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-70 shrink-0"
           >
             {saved ? <Check className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
             <span>{saved ? 'Saved' : 'Save to Vocab'}</span>

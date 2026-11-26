@@ -133,7 +133,7 @@ export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({open, onClose
           type="button"
           onClick={onClose}
           aria-label="Close walkthrough"
-          className="min-h-[38px] min-w-[38px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#192533] transition-colors"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#192533] transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -182,7 +182,7 @@ export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({open, onClose
               onNavigateTab(step.targetTab);
               onClose();
             }}
-            className="inline-flex items-center gap-1 min-h-[36px] text-xs font-medium text-[#F3C669] hover:underline"
+            className="inline-flex items-center gap-1 min-h-[44px] text-xs font-medium text-[#F3C669] hover:underline"
           >
             <Icon className="w-3.5 h-3.5" />
             <span>{step.targetLabel}</span>
@@ -198,7 +198,7 @@ export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({open, onClose
             <button
               type="button"
               onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
-              className="px-3.5 py-2 min-h-[40px] rounded-lg border border-[#23303E] bg-[#111922] text-xs font-medium text-[#CBD5E1] hover:text-white transition-colors"
+              className="px-3.5 py-2 min-h-[44px] rounded-lg border border-[#23303E] bg-[#111922] text-xs font-medium text-[#CBD5E1] hover:text-white transition-colors"
             >
               Back
             </button>
@@ -206,7 +206,7 @@ export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({open, onClose
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-2 min-h-[40px] rounded-lg text-xs font-medium text-[#94A3B8] hover:text-white transition-colors"
+              className="px-3 py-2 min-h-[44px] rounded-lg text-xs font-medium text-[#94A3B8] hover:text-white transition-colors"
             >
               Skip Tour
             </button>
@@ -218,7 +218,7 @@ export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({open, onClose
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-2 min-h-[40px] rounded-lg text-xs font-medium text-[#94A3B8] hover:text-white transition-colors"
+              className="px-3 py-2 min-h-[44px] rounded-lg text-xs font-medium text-[#94A3B8] hover:text-white transition-colors"
             >
               Skip
             </button>
@@ -228,7 +228,7 @@ export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({open, onClose
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center gap-1.5 px-5 py-2 min-h-[40px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+              className="inline-flex items-center gap-1.5 px-5 py-2 min-h-[52px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
             >
               <span>Start Practicing</span>
               <Check className="w-3.5 h-3.5" />
@@ -237,7 +237,7 @@ export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({open, onClose
             <button
               type="button"
               onClick={() => setStepIndex((i) => Math.min(TOUR_STEPS.length - 1, i + 1))}
-              className="inline-flex items-center gap-1.5 px-5 py-2 min-h-[40px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+              className="inline-flex items-center gap-1.5 px-5 py-2 min-h-[52px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
             >
               <span>Next</span>
               <ArrowRight className="w-3.5 h-3.5" />

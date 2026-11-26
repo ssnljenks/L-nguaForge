@@ -3,8 +3,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {Type} from '@google/genai';
 import {
-  BRIEF_ILR_LEVELS,
-  BRIEF_TOPICS,
   filterBriefItems,
   formatBriefLength,
   isBriefIlrLevel,
@@ -35,6 +33,9 @@ import {MODELS} from './config.ts';
 import {extractReportedErrors} from './errorReporting.ts';
 import {UserFacingError} from './errors.ts';
 import {BUDGETS, type GenerateStructured, ThinkingLevel} from './gemini.ts';
+import {fetchFeedXml, type FeedFetchOptions, isSafeFeedUrl} from './feedFetch.ts';
+import {parseFeedXml, type RawFeedItem} from './feedParser.ts';
+import {clampText, createUntrustedFence} from './untrustedContent.ts';
 
 export interface SourceFeedConfig {
   id: string;
@@ -53,7 +54,23 @@ export interface StoredBriefItem extends BriefItem {
 }
 
 const MAX_CACHE_SIZE = 150;
-const MAX_FEED_FETCH_TIMEOUT_MS = 5000;
+/** Output caps for feed-derived and model-written fields (REVIEW M-4). */
+export const BRIEF_FIELD_LIMITS = {
+  title: 200,
+  orientationLine: 220,
+  summary: 400,
+  questionStem: 300,
+  choiceText: 200,
+  justification: 400,
+  sourceQuote: 300,
+  vocabTerm: 80,
+  vocabEnglish: 120,
+  vocabItems: 4,
+  gistFinding: 300,
+  gistFindings: 6,
+  gistMissing: 200,
+  modelGist: 800,
+} as const;
 /** Minimum gap between user-triggered feed refreshes (the background job runs every 3 hours). */
 export const USER_REFRESH_MIN_INTERVAL_MS = 10 * 60 * 1000;
 
@@ -254,7 +271,7 @@ export function validateDlptQuestions(
       continue;
     }
 
-    const stem = String(raw.questionEnglish ?? raw.question ?? '').trim();
+    const stem = clampText(raw.questionEnglish ?? raw.question ?? '', BRIEF_FIELD_LIMITS.questionStem);
     if (stem.length < 8) {
       rejectionReasons.push(`item ${idx}: stem too short`);
       continue;
@@ -278,7 +295,7 @@ export function validateDlptQuestions(
       continue;
     }
 
-    const sourceQuote = String(raw.sourceQuote ?? '').trim();
+    const sourceQuote = clampText(raw.sourceQuote ?? '', BRIEF_FIELD_LIMITS.sourceQuote);
     if (!isQuoteSupportedBySource(sourceQuote, sourceText)) {
       rejectionReasons.push(`item ${idx}: sourceQuote not supported by passage`);
       continue;
@@ -294,8 +311,8 @@ export function validateDlptQuestions(
         choiceError = `choice ${cIdx} is not an object`;
         break;
       }
-      const text = String(c.text ?? '').trim();
-      const justification = String(c.justification ?? '').trim();
+      const text = clampText(c.text ?? '', BRIEF_FIELD_LIMITS.choiceText);
+      const justification = clampText(c.justification ?? '', BRIEF_FIELD_LIMITS.justification);
       if (text.length < 2) {
         choiceError = `choice ${cIdx} text is empty`;
         break;
@@ -347,11 +364,11 @@ export function validateDlptQuestions(
       ? raw.targetVocabulary
           .filter((v): v is {term: unknown; english: unknown} => Boolean(v) && typeof v === 'object')
           .map((v) => ({
-            term: String(v.term ?? '').trim(),
-            english: String(v.english ?? '').trim(),
+            term: clampText(v.term, BRIEF_FIELD_LIMITS.vocabTerm),
+            english: clampText(v.english, BRIEF_FIELD_LIMITS.vocabEnglish),
           }))
           .filter((v) => v.term.length > 0 && v.english.length > 0)
-          .slice(0, 4)
+          .slice(0, BRIEF_FIELD_LIMITS.vocabItems)
       : [];
 
     validQuestions.push({
@@ -385,6 +402,15 @@ function assertDrillable(item: StoredBriefItem): void {
   if (!isBriefItemDrillable(item)) throw new UserFacingError(409, NOT_DRILLABLE_MESSAGE);
 }
 
+/**
+ * Feed dates are free text; an unparseable one falls back to "now" instead of throwing a RangeError
+ * that would drop the whole feed (REVIEW L-1).
+ */
+export function toIsoDateOrNow(raw: string | undefined, nowMs = Date.now()): string {
+  const parsed = raw ? Date.parse(raw.trim()) : Number.NaN;
+  return new Date(Number.isFinite(parsed) ? parsed : nowMs).toISOString();
+}
+
 function countWords(text: string): number {
   return text.split(/\s+/).filter(Boolean).length;
 }
@@ -395,15 +421,11 @@ function vocabularyFromSource(raw: unknown, sourceText: string): {term: string; 
   const haystack = normalizeForSourceMatch(sourceText);
   return raw
     .map((v) => ({
-      term: String((v as {term?: unknown})?.term ?? '')
-        .trim()
-        .slice(0, 80),
-      english: String((v as {english?: unknown})?.english ?? '')
-        .trim()
-        .slice(0, 120),
+      term: clampText((v as {term?: unknown})?.term, BRIEF_FIELD_LIMITS.vocabTerm),
+      english: clampText((v as {english?: unknown})?.english, BRIEF_FIELD_LIMITS.vocabEnglish),
     }))
     .filter((v) => v.term && v.english && haystack.includes(normalizeForSourceMatch(v.term)))
-    .slice(0, 4);
+    .slice(0, BRIEF_FIELD_LIMITS.vocabItems);
 }
 
 export class BriefService {
@@ -414,7 +436,10 @@ export class BriefService {
   private inFlightRefresh: Promise<{fetchedCount: number; newItemsCount: number}> | null = null;
   private lastRefreshCompletedAtMs = 0;
 
-  constructor() {
+  private readonly fetchOptions: Pick<FeedFetchOptions, 'resolveHost' | 'fetchImpl'>;
+
+  constructor(options: Pick<FeedFetchOptions, 'resolveHost' | 'fetchImpl'> = {}) {
+    this.fetchOptions = options;
     this.initSeedData();
     this.loadSourcesConfig();
   }
@@ -464,55 +489,9 @@ export class BriefService {
     return this.lastRefreshedAt;
   }
 
+  /** Synchronous URL check; DNS answers are checked per hop when fetching (REVIEW M-1). */
   public isSafeFeedUrl(urlString: string): boolean {
-    try {
-      const u = new URL(urlString);
-      if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
-
-      const hostname = u.hostname.toLowerCase();
-      // Block localhost, link-local, loopbacks, internal domains
-      if (
-        hostname === 'localhost' ||
-        hostname.endsWith('.localhost') ||
-        hostname.endsWith('.local') ||
-        hostname.endsWith('.internal') ||
-        hostname === '127.0.0.1' ||
-        hostname === '0.0.0.0' ||
-        hostname === '::1' ||
-        hostname === '169.254.169.254' // Cloud instance metadata!
-      ) {
-        return false;
-      }
-
-      // Block placeholder domains explicitly to save network timeouts
-      if (
-        hostname === 'example.com' ||
-        hostname === 'example.org' ||
-        hostname === 'example.net' ||
-        hostname.includes('placeholder')
-      ) {
-        return false;
-      }
-
-      // Check IPv4 private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8)
-      const ipParts = hostname.split('.').map(Number);
-      if (ipParts.length === 4 && ipParts.every((p) => !Number.isNaN(p) && p >= 0 && p <= 255)) {
-        const [a, b] = ipParts;
-        if (
-          a === 127 ||
-          a === 10 ||
-          (a === 172 && b >= 16 && b <= 31) ||
-          (a === 192 && b === 168) ||
-          (a === 169 && b === 254)
-        ) {
-          return false;
-        }
-      }
-
-      return true;
-    } catch {
-      return false;
-    }
+    return isSafeFeedUrl(urlString);
   }
 
   public hashUrl(url: string): string {
@@ -595,13 +574,16 @@ export class BriefService {
     const passageText = (item.transcript || item.rawContent || item.studyExcerpt) as string;
     const skillLabel = item.mediaType === 'audio' ? 'Listening' : 'Reading';
 
+    const fence = createUntrustedFence();
     const prompt = `You are a senior Defense Language Proficiency Test (DLPT5) item writer creating authentic ${skillLabel} comprehension items in English for an ILR Level ${item.ilrLevel} ${item.language === 'es' ? 'Spanish' : 'Portuguese'} passage.
 
+${fence.notice}
+
 ORIENTATION LINE:
-${item.orientationLine}
+${fence.wrap('ORIENTATION', item.orientationLine)}
 
 SOURCE PASSAGE (target language):
-${passageText}
+${fence.wrap('SOURCE_PASSAGE', passageText)}
 
 STRICT DLPT5 ITEM REQUIREMENTS:
 1. Write exactly ${maxQuestions} questions in English (${item.mediaType === 'audio' ? 'listening: up to 3' : item.language === 'es' ? 'Spanish reading: up to 5' : 'Portuguese reading: up to 4'}).
@@ -689,10 +671,8 @@ STRICT DLPT5 ITEM REQUIREMENTS:
       );
     }
 
-    const orientation =
-      typeof response.orientationLine === 'string' && response.orientationLine.trim().length >= 12
-        ? response.orientationLine.trim()
-        : item.orientationLine;
+    const generatedOrientation = clampText(response.orientationLine, BRIEF_FIELD_LIMITS.orientationLine);
+    const orientation = generatedOrientation.length >= 12 ? generatedOrientation : item.orientationLine;
 
     return {
       briefId: item.id,
@@ -753,16 +733,19 @@ STRICT DLPT5 ITEM REQUIREMENTS:
       };
     }
 
+    const fence = createUntrustedFence();
     const prompt = `You are a senior intelligence & foreign-language fidelity grader evaluating a learner's English gist summary against a ${item.language === 'es' ? 'Spanish' : 'Portuguese'} audio broadcast transcript (ILR Level ${item.ilrLevel}).
 
+${fence.notice}
+
 ORIENTATION LINE:
-${item.orientationLine}
+${fence.wrap('ORIENTATION', item.orientationLine)}
 
 SOURCE TRANSCRIPT (ground truth):
-${transcript}
+${fence.wrap('SOURCE_TRANSCRIPT', transcript)}
 
 LEARNER'S ENGLISH SUMMARY:
-${cleanedSummary}
+${fence.wrap('LEARNER_SUMMARY', cleanedSummary)}
 
 GRADING RULES (STRICT FIDELITY):
 1. mainPoint: "captured" if the core message is accurate, "partial" if incomplete or unfocused, "missed" if absent or wrong.
@@ -827,21 +810,21 @@ GRADING RULES (STRICT FIDELITY):
     const found = Math.max(0, Math.min(total, Math.round(Number(rawDetails.found) || 0)));
     const missing = Array.isArray(rawDetails.missing)
       ? rawDetails.missing
-          .map((m) => String(m ?? '').trim())
+          .map((m) => clampText(m, BRIEF_FIELD_LIMITS.gistMissing))
           .filter(Boolean)
-          .slice(0, 6)
+          .slice(0, BRIEF_FIELD_LIMITS.gistFindings)
       : [];
 
     const sanitizeFindings = (rawList: unknown, includeLearnerSpan: boolean): GistFinding[] => {
       if (!Array.isArray(rawList)) return [];
       const out: GistFinding[] = [];
-      for (const entry of rawList.slice(0, 6)) {
+      for (const entry of rawList.slice(0, BRIEF_FIELD_LIMITS.gistFindings)) {
         if (!entry || typeof entry !== 'object') continue;
         const rec = entry as Record<string, unknown>;
-        const description = String(rec.description ?? '').trim();
+        const description = clampText(rec.description, BRIEF_FIELD_LIMITS.gistFinding);
         if (!description) continue;
-        const sourceQuote = String(rec.sourceQuote ?? '').trim() || fallbackQuote;
-        const rawSpan = includeLearnerSpan ? String(rec.learnerSpan ?? '').trim() : '';
+        const sourceQuote = clampText(rec.sourceQuote, BRIEF_FIELD_LIMITS.gistFinding) || fallbackQuote;
+        const rawSpan = includeLearnerSpan ? clampText(rec.learnerSpan, BRIEF_FIELD_LIMITS.gistFinding) : '';
         out.push({
           description,
           sourceQuote,
@@ -854,10 +837,8 @@ GRADING RULES (STRICT FIDELITY):
     const additions = sanitizeFindings(response.additions, true);
     const omissions = sanitizeFindings(response.omissions, false);
     const distortions = sanitizeFindings(response.distortions, true);
-    const modelGist =
-      typeof response.modelGist === 'string' && response.modelGist.trim().length >= 15
-        ? response.modelGist.trim()
-        : item.summary;
+    const generatedGist = clampText(response.modelGist, BRIEF_FIELD_LIMITS.modelGist);
+    const modelGist = generatedGist.length >= 15 ? generatedGist : item.summary;
 
     const rawErrors = [
       ...additions.map((f) => ({
@@ -962,83 +943,13 @@ GRADING RULES (STRICT FIDELITY):
     return {fetchedCount, newItemsCount};
   }
 
-  private async fetchFeedItems(
-    source: SourceFeedConfig
-  ): Promise<{title: string; link: string; description: string; pubDate?: string; audioUrl?: string}[]> {
-    const res = await fetch(source.url, {
-      signal: AbortSignal.timeout(MAX_FEED_FETCH_TIMEOUT_MS),
-      headers: {
-        'User-Agent': 'LinguaForge/1.0 (RSS Aggregator; Educational)',
-        Accept: 'application/rss+xml, application/atom+xml, text/xml, application/xml',
-      },
-    });
-
-    if (!res.ok) return [];
-    const xml = await res.text();
+  private async fetchFeedItems(source: SourceFeedConfig): Promise<RawFeedItem[]> {
+    const xml = await fetchFeedXml(source.url, this.fetchOptions);
     return this.parseXmlFeed(xml, source.mediaType);
   }
 
-  private parseXmlFeed(
-    xml: string,
-    mediaType: BriefMediaType
-  ): {
-    title: string;
-    link: string;
-    description: string;
-    pubDate?: string;
-    audioUrl?: string;
-    durationSeconds?: number;
-  }[] {
-    const results: {
-      title: string;
-      link: string;
-      description: string;
-      pubDate?: string;
-      audioUrl?: string;
-      durationSeconds?: number;
-    }[] = [];
-    const itemRegex = /<(?:item|entry)[\s>]([\s\S]*?)<\/(?:item|entry)>/gi;
-    let match: RegExpExecArray | null;
-
-    while ((match = itemRegex.exec(xml)) !== null) {
-      const block = match[1];
-      const titleMatch = /<title[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i.exec(block);
-      const linkMatch =
-        /<link[^>]*href=["']([^"']+)["']/i.exec(block) ||
-        /<link[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/link>/i.exec(block);
-      const descMatch =
-        /<description[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/i.exec(block) ||
-        /<content[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/content>/i.exec(block);
-      const dateMatch =
-        /<pubDate[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/pubDate>/i.exec(block) ||
-        /<published[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/published>/i.exec(block) ||
-        /<updated[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/updated>/i.exec(block);
-      const encMatch = /<enclosure[^>]*url=["']([^"']+)["'][^>]*type=["']audio\/[^"']+["']/i.exec(block);
-      const durMatch = /<itunes:duration[^>]*>([\s\S]*?)<\/itunes:duration>/i.exec(block);
-
-      const title = this.stripHtml(titleMatch?.[1] || '').trim();
-      const link = (linkMatch?.[1] || '').trim();
-      const rawDescription = this.stripHtml(descMatch?.[1] || '').trim();
-      const description = this.capWords(rawDescription, 500);
-      const audioUrl = encMatch?.[1]?.trim();
-      const durationSeconds = this.parseDurationSeconds(durMatch?.[1]);
-
-      if (title && link) {
-        if (mediaType === 'audio' && !audioUrl) {
-          continue;
-        }
-        results.push({
-          title,
-          link,
-          description,
-          pubDate: dateMatch?.[1],
-          audioUrl: audioUrl || (mediaType === 'audio' ? link : undefined),
-          durationSeconds,
-        });
-      }
-    }
-
-    return results;
+  public parseXmlFeed(xml: string, mediaType: BriefMediaType): RawFeedItem[] {
+    return parseFeedXml(xml, mediaType);
   }
 
   private capWords(text: string, maxWords: number): string {
@@ -1047,38 +958,8 @@ GRADING RULES (STRICT FIDELITY):
     return `${words.slice(0, maxWords).join(' ')}…`;
   }
 
-  private parseDurationSeconds(raw: string | undefined): number | undefined {
-    if (!raw) return undefined;
-    const cleaned = raw.trim();
-    if (/^\d+$/.test(cleaned)) return Number(cleaned);
-    const parts = cleaned.split(':').map(Number);
-    if (parts.some((n) => Number.isNaN(n))) return undefined;
-    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-    if (parts.length === 2) return parts[0] * 60 + parts[1];
-    return undefined;
-  }
-
-  private stripHtml(raw: string): string {
-    return raw
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
   private async analyzeItem(
-    raw: {
-      title: string;
-      link: string;
-      description: string;
-      pubDate?: string;
-      audioUrl?: string;
-      durationSeconds?: number;
-    },
+    raw: RawFeedItem,
     source: SourceFeedConfig,
     id: string,
     generate?: GenerateStructured
@@ -1086,6 +967,8 @@ GRADING RULES (STRICT FIDELITY):
     // REVIEW C-2: the passage is the publisher's own text, never model-written. Audio items have no
     // transcript (the model never hears the audio), so they are not drillable until one exists.
     const publisherText = this.capWords(raw.description, 500);
+    const title = clampText(raw.title, BRIEF_FIELD_LIMITS.title);
+    const fallbackSummary = clampText(raw.description, 200) || title;
     const passage = source.mediaType === 'text' ? publisherText : undefined;
     const drillable = Boolean(passage) && countWords(passage as string) >= MIN_DRILL_PASSAGE_WORDS;
     const isLongAudio =
@@ -1100,18 +983,18 @@ GRADING RULES (STRICT FIDELITY):
       // Offline fallback item creation
       return {
         id,
-        title: raw.title,
+        title,
         sourceName: source.name,
         sourceUrl: raw.link,
         audioUrl: raw.audioUrl,
         mediaType: source.mediaType,
         language: source.language,
         dialectId: source.dialectId,
-        publishedAt: raw.pubDate ? new Date(raw.pubDate).toISOString() : new Date().toISOString(),
+        publishedAt: toIsoDateOrNow(raw.pubDate),
         ilrLevel: '2+',
         topic: 'society',
         orientationLine: `This passage is from a ${source.language === 'es' ? 'Spanish' : 'Portuguese'} news source.`,
-        summary: raw.description ? raw.description.slice(0, 200) : raw.title,
+        summary: fallbackSummary,
         matchingDomains: [],
         estimatedMinutes: baseEstimatedMins,
         lengthLabel: isLongAudio ? 'First ~2 min segment' : formatBriefLength(source.mediaType, baseEstimatedMins),
@@ -1121,17 +1004,22 @@ GRADING RULES (STRICT FIDELITY):
       };
     }
 
+    const fence = createUntrustedFence();
     const prompt = `Analyze this authentic news item in ${source.language === 'es' ? 'Spanish' : 'Portuguese'} for language training.
-Title: ${raw.title}
+${fence.notice}
+
 Source: ${source.name}
-Description / Excerpt: ${raw.description}
 Media Type: ${source.mediaType}${isLongAudio ? ' (longer than 2.5 min: focus only on the opening ~2 min segment)' : ''}
+Title:
+${fence.wrap('FEED_TITLE', title)}
+Description / Excerpt:
+${fence.wrap('FEED_DESCRIPTION', publisherText)}
 
 Produce a structured evaluation:
 1. ilrLevel: Select one of '2', '2+', '3', '3+'. Level 2 = concrete facts & events; Level 3 = hypothesis, opinion, policy, abstract analysis.
 2. topic: Select one of 'society', 'politics', 'economy', 'culture', 'scitech', 'security'.
-3. orientationLine: An authentic DLPT-style English orientation line (e.g. "This passage is from a Chilean radio broadcast discussing environmental regulations.").
-4. summary: A concise English summary of at most 2 sentences.
+3. orientationLine: An authentic DLPT-style English orientation line of one sentence (e.g. "This passage is from a Chilean radio broadcast discussing environmental regulations.").
+4. summary: A concise, neutral English summary of at most 2 sentences describing only what the item reports.
 5. matchingDomains: Identify any applicable operational domains from: ['maritime_surveillance', 'aviation_logistics', 'c2_comms', 'delegation_hosting', 'general_policy']. If purely general news, return empty array [].
 6. keyVocabulary: 2 to 4 notable vocabulary items that appear VERBATIM in the Description / Excerpt above, with English translations.
 7. estimatedMinutes: Number of minutes (1 to 3).`;
@@ -1177,31 +1065,37 @@ Produce a structured evaluation:
       const topic: BriefTopic = isBriefTopic(result.topic) ? result.topic : 'society';
       const mins = isLongAudio ? 2 : Math.max(1, Math.min(3, Number(result.estimatedMinutes) || baseEstimatedMins));
       const domains = Array.isArray(result.matchingDomains)
-        ? (result.matchingDomains.filter((d: unknown) =>
-            [
-              'maritime_surveillance',
-              'aviation_logistics',
-              'c2_comms',
-              'delegation_hosting',
-              'general_policy',
-            ].includes(String(d))
-          ) as MilitaryDomain[])
+        ? ([
+            ...new Set(
+              result.matchingDomains.filter((d: unknown) =>
+                [
+                  'maritime_surveillance',
+                  'aviation_logistics',
+                  'c2_comms',
+                  'delegation_hosting',
+                  'general_policy',
+                ].includes(String(d))
+              )
+            ),
+          ] as MilitaryDomain[])
         : [];
 
       return {
         id,
-        title: raw.title,
+        title,
         sourceName: source.name,
         sourceUrl: raw.link,
         audioUrl: raw.audioUrl,
         mediaType: source.mediaType,
         language: source.language,
         dialectId: source.dialectId,
-        publishedAt: raw.pubDate ? new Date(raw.pubDate).toISOString() : new Date().toISOString(),
+        publishedAt: toIsoDateOrNow(raw.pubDate),
         ilrLevel,
         topic,
-        orientationLine: String(result.orientationLine || `This passage is from a ${source.name} segment.`),
-        summary: String(result.summary || raw.description.slice(0, 200)),
+        orientationLine:
+          clampText(result.orientationLine, BRIEF_FIELD_LIMITS.orientationLine) ||
+          `This passage is from a ${source.name} segment.`,
+        summary: clampText(result.summary, BRIEF_FIELD_LIMITS.summary) || fallbackSummary,
         matchingDomains: domains,
         estimatedMinutes: mins,
         lengthLabel: isLongAudio ? 'First ~2 min segment' : formatBriefLength(source.mediaType, mins),

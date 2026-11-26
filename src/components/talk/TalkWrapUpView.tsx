@@ -143,7 +143,7 @@ export const TalkWrapUpView: React.FC<TalkWrapUpViewProps> = ({
             <button
               type="button"
               onClick={onRetry}
-              className="inline-flex items-center gap-1.5 min-h-[44px] px-4 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+              className="inline-flex items-center gap-1.5 min-h-[52px] px-4 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Try again</span>

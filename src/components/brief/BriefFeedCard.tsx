@@ -101,7 +101,7 @@ export const BriefFeedCard: React.FC<BriefFeedCardProps> = ({
             type="button"
             onClick={toggleAudio}
             aria-label={isPlaying ? 'Pause broadcast stream' : 'Play broadcast stream from source'}
-            className="flex items-center justify-center w-9 h-9 rounded-full bg-[#D99B26] text-[#0B1117] hover:bg-[#E5AE42] transition-colors shrink-0"
+            className="flex items-center justify-center w-11 h-11 rounded-full bg-[#D99B26] text-[#0B1117] hover:bg-[#E5AE42] transition-colors shrink-0"
           >
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
           </button>
@@ -132,7 +132,7 @@ export const BriefFeedCard: React.FC<BriefFeedCardProps> = ({
             <button
               type="button"
               onClick={() => onOpenDrill(item)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[44px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[52px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>DLPT drill · up to {getMaxQuestionsForPassage(item.language, item.mediaType)} Q</span>

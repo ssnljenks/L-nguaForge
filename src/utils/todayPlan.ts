@@ -10,14 +10,16 @@ import type {
   MilitaryDomain,
   OpiSession,
   TargetLanguage,
-  TodayPlanStepId,
   VocabItem,
 } from '../types.ts';
 import {isBriefItemDrillable, SEED_BRIEF_ITEMS} from './briefLogic.ts';
 import {computeDlptSkillEstimates} from './dlptRules.ts';
 import {deriveUserSkillProfile, getTopFix, type RankedErrorPattern, isSampleSession} from './errorPatterns.ts';
 import {getDomainInfo} from './ilrLogic.ts';
-import {getDueVocabCards, sortVocabDeckByFsrs} from './vocabFsrs.ts';
+import {getDueVocabCards, sortVocabDeckByFsrs} from './vocabFsrsCore.ts';
+import {getLocalDateKey} from './planKeys.ts';
+
+export {getLocalDateKey, getPlanCompletionKey} from './planKeys.ts';
 
 export const ILR_GOAL_OPTIONS: readonly IlrGoalLevel[] = ['1', '1+', '2', '2+', '3', '3+'];
 
@@ -40,18 +42,6 @@ export function parseIlrLevelNumber(level: string | null | undefined): number | 
   if (trimmed === '3') return 3.0;
   if (trimmed === '3+') return 3.5;
   return null;
-}
-
-export function getLocalDateKey(nowMs = Date.now()): string {
-  const d = new Date(nowMs);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-export function getPlanCompletionKey(language: TargetLanguage, dateKey: string): string {
-  return `${dateKey}:${language}`;
 }
 
 /**

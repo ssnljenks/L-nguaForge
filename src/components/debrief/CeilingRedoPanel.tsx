@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {CheckCircle2, Loader2, Mic, MicOff, RotateCcw, Send, Volume2, X} from 'lucide-react';
 import type {AppendErrorEventsFn, CeilingMoment, OpiRedoRecord, OpiSession} from '../../types';
 import {getDialectInfo, LANGUAGE_LABELS} from '../../utils/ilrLogic';
@@ -35,12 +35,14 @@ export const CeilingRedoPanel: React.FC<CeilingRedoPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [record, setRecord] = useState<OpiRedoRecord | null>(existingRedo ?? null);
 
-  useEffect(() => {
-    const combined = `${stt.finalTranscript} ${stt.interimTranscript}`.trim();
-    if (combined && stt.isListening) {
-      setRedoText(combined);
-    }
-  }, [stt.finalTranscript, stt.interimTranscript, stt.isListening]);
+  // Mirror the live mic transcript into the answer box. Done while rendering (React's "adjust state
+  // when a value changes" pattern) instead of in an effect, so there is no extra cascading render.
+  const liveTranscript = `${stt.finalTranscript} ${stt.interimTranscript}`.trim();
+  const [mirroredTranscript, setMirroredTranscript] = useState('');
+  if (stt.isListening && liveTranscript && liveTranscript !== mirroredTranscript) {
+    setMirroredTranscript(liveTranscript);
+    setRedoText(liveTranscript);
+  }
 
   const handleListenPrompt = () => {
     tts.speak(ceiling.examinerPrompt, {
@@ -55,6 +57,7 @@ export const CeilingRedoPanel: React.FC<CeilingRedoPanelProps> = ({
     } else {
       tts.stop();
       stt.resetTranscript();
+      setMirroredTranscript('');
       stt.startListening({lang: dialectInfo.bcp47, continuous: true});
     }
   };
@@ -137,7 +140,7 @@ export const CeilingRedoPanel: React.FC<CeilingRedoPanelProps> = ({
           <button
             type="button"
             onClick={handleListenPrompt}
-            className="inline-flex items-center gap-1.5 min-h-[36px] px-2.5 rounded-lg border border-[#23303E] bg-[#0B1117] text-xs font-medium text-[#CBD5E1] hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 min-h-[44px] px-2.5 rounded-lg border border-[#23303E] bg-[#0B1117] text-xs font-medium text-[#CBD5E1] hover:text-white transition-colors"
           >
             <Volume2 className="w-3.5 h-3.5 text-[#D99B26]" />
             <span>Play prompt</span>
@@ -172,7 +175,7 @@ export const CeilingRedoPanel: React.FC<CeilingRedoPanelProps> = ({
           value={redoText}
           onChange={(e) => setRedoText(e.target.value)}
           placeholder={`Speak or type an improved ${LANGUAGE_LABELS[session.language]} response targeting ${ceiling.failedFunctionLabel.toLowerCase()}…`}
-          className="w-full rounded-xl border border-[#23303E] bg-[#111922] px-3.5 py-2.5 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
+          className="w-full rounded-xl border border-[#23303E] bg-[#111922] px-3.5 py-2.5 text-sm text-[#E6EDF3] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26]"
         />
 
         {stt.error && <p className="text-xs text-amber-300">{stt.error}</p>}
@@ -187,7 +190,7 @@ export const CeilingRedoPanel: React.FC<CeilingRedoPanelProps> = ({
             type="submit"
             disabled={!redoText.trim() || isGrading}
             data-testid="redo-submit-btn"
-            className="inline-flex items-center justify-center gap-2 min-h-[48px] px-5 rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-40 transition-colors"
+            className="inline-flex items-center justify-center gap-2 min-h-[52px] px-5 rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-40 transition-colors"
           >
             {isGrading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             <span>{isGrading ? 'Grading comparison…' : record ? 'Re-grade Redo' : 'Grade Redo vs Original'}</span>

@@ -36,9 +36,12 @@ import {SEED_BRIEF_ITEMS} from '../../utils/briefLogic';
 import {deriveUserSkillProfile, rankRecurringErrors} from '../../utils/errorPatterns';
 import {DEFAULT_ILR_GOALS, generateTodayPlan, getLocalDateKey, type TodayPlanSpeakingItem} from '../../utils/todayPlan';
 import type {SaveVocabFn} from '../../hooks/useWordLookup';
-import {FixDrillModal} from './FixDrillModal';
-import {RecurringErrorsView} from './RecurringErrorsModal';
-import {VocabWarmupModal} from './VocabWarmupModal';
+// Opened on demand, so they load as separate chunks (REVIEW M-7).
+const FixDrillModal = lazy(() => import('./FixDrillModal').then((m) => ({default: m.FixDrillModal})));
+const RecurringErrorsView = lazy(() =>
+  import('./RecurringErrorsModal').then((m) => ({default: m.RecurringErrorsView}))
+);
+const VocabWarmupModal = lazy(() => import('./VocabWarmupModal').then((m) => ({default: m.VocabWarmupModal})));
 
 const BriefDrillModal = lazy(() => import('../brief/BriefDrillModal').then((m) => ({default: m.BriefDrillModal})));
 const BriefGistModal = lazy(() => import('../brief/BriefGistModal').then((m) => ({default: m.BriefGistModal})));
@@ -213,7 +216,7 @@ export const TodayModule: React.FC<TodayModuleProps> = ({
 
   if (showRecurringErrors) {
     return (
-      <>
+      <Suspense fallback={null}>
         <RecurringErrorsView
           rankedErrors={rankedErrors}
           currentFloor={skillProfile.currentFloor}
@@ -241,7 +244,7 @@ export const TodayModule: React.FC<TodayModuleProps> = ({
             }}
           />
         )}
-      </>
+      </Suspense>
     );
   }
 
@@ -311,7 +314,7 @@ export const TodayModule: React.FC<TodayModuleProps> = ({
                   ) : (
                     <div className="space-y-0.5">
                       <p className="text-[11px] text-[#CBD5E1] leading-snug">{col.emptyHint}</p>
-                      <p className="text-[11px] text-[#64748B] leading-snug">{col.sourceLabel}</p>
+                      <p className="text-[11px] text-[#94A3B8] leading-snug">{col.sourceLabel}</p>
                     </div>
                   )}
                 </div>
@@ -354,7 +357,7 @@ export const TodayModule: React.FC<TodayModuleProps> = ({
             <button
               type="button"
               onClick={onOpenSettings}
-              className="text-[#7DD3FC] hover:text-white transition-colors min-h-[36px] px-1"
+              className="text-[#7DD3FC] hover:text-white transition-colors min-h-[44px] px-1"
             >
               Edit goals
             </button>
@@ -619,14 +622,16 @@ export const TodayModule: React.FC<TodayModuleProps> = ({
 
       {/* Step 1 Modal: FSRS Vocab Warm-up */}
       {showVocabWarmup && (
-        <VocabWarmupModal
-          cards={vocabItem.warmupCards}
-          config={config}
-          onReviewFsrs={onReviewVocabFsrs}
-          onLogHistory={onLogHistory}
-          onComplete={() => onMarkPlanStepDone('vocab', dateKey)}
-          onClose={() => setShowVocabWarmup(false)}
-        />
+        <Suspense fallback={null}>
+          <VocabWarmupModal
+            cards={vocabItem.warmupCards}
+            config={config}
+            onReviewFsrs={onReviewVocabFsrs}
+            onLogHistory={onLogHistory}
+            onComplete={() => onMarkPlanStepDone('vocab', dateKey)}
+            onClose={() => setShowVocabWarmup(false)}
+          />
+        </Suspense>
       )}
 
       {/* Step 2 Modal: Brief DLPT or Gist Drill */}
@@ -674,20 +679,22 @@ export const TodayModule: React.FC<TodayModuleProps> = ({
 
       {/* Step 3 Modal: 2-Min Fix Drill */}
       {activeFixKey && (
-        <FixDrillModal
-          errorKey={activeFixKey}
-          config={config}
-          onClose={() => {
-            setActiveFixKey(null);
-            setActiveFixIsPlanStep(false);
-          }}
-          onLogHistory={(entry) => {
-            onLogHistory(entry);
-            if (activeFixIsPlanStep) {
-              onMarkPlanStepDone('speaking', dateKey);
-            }
-          }}
-        />
+        <Suspense fallback={null}>
+          <FixDrillModal
+            errorKey={activeFixKey}
+            config={config}
+            onClose={() => {
+              setActiveFixKey(null);
+              setActiveFixIsPlanStep(false);
+            }}
+            onLogHistory={(entry) => {
+              onLogHistory(entry);
+              if (activeFixIsPlanStep) {
+                onMarkPlanStepDone('speaking', dateKey);
+              }
+            }}
+          />
+        </Suspense>
       )}
     </div>
   );

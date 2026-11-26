@@ -153,7 +153,7 @@ export const HowDoLocalsSaySheet: React.FC<HowDoLocalsSaySheetProps> = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="e.g. I’m running late because of traffic"
-            className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
+            className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26]"
           />
           {stt.supported && (
             <button
@@ -174,7 +174,7 @@ export const HowDoLocalsSaySheet: React.FC<HowDoLocalsSaySheetProps> = ({
         <button
           type="submit"
           disabled={!query.trim() || loading}
-          className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-45 transition-colors"
+          className="w-full inline-flex items-center justify-center gap-2 min-h-[52px] px-4 rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-45 transition-colors"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           <span>{loading ? `Asking ${tutor.name}…` : `Ask ${tutor.name}`}</span>

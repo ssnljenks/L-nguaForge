@@ -176,7 +176,7 @@ export const BriefStudySheet: React.FC<BriefStudySheetProps> = ({item, config, v
                             type="button"
                             onClick={() => handleQuickSaveVocab(kv.term, kv.english)}
                             disabled={saved}
-                            className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors shrink-0 ${
+                            className={`min-h-[44px] flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors shrink-0 ${
                               saved
                                 ? 'bg-[#16202B] text-[#7DD3FC] opacity-80 cursor-default'
                                 : 'bg-[#D99B26] text-[#0B1117] hover:bg-[#E5AE42]'

@@ -112,7 +112,7 @@ export const TabIntroModal: React.FC<TabIntroModalProps> = ({tab, onDismiss, onO
           type="button"
           onClick={() => onDismiss(tab)}
           aria-label="Close tab introduction"
-          className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#192533] transition-colors"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#192533] transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -152,7 +152,7 @@ export const TabIntroModal: React.FC<TabIntroModalProps> = ({tab, onDismiss, onO
         <button
           type="button"
           onClick={() => onDismiss(tab)}
-          className="px-4 py-2 min-h-[38px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+          className="px-4 py-2 min-h-[52px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
         >
           {spec.cta}
         </button>

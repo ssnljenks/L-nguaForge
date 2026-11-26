@@ -29,6 +29,27 @@
   summary {
     cursor: pointer;
   }
+
+  /*
+   * REVIEW M-12: every control is at least 44 x 44 px. min-height/min-width don't apply to
+   * display:inline elements, so tappable words inside running text (class "inline") and links in
+   * prose keep their line height, as WCAG 2.5.8 allows. Primary buttons use min-h-[52px].
+   */
+  button,
+  [role='button'],
+  a[href],
+  select,
+  textarea,
+  summary,
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='hidden'], [type='file']),
+  label:has(> input[type='checkbox'], > input[type='radio']) {
+    min-height: 44px;
+  }
+
+  button,
+  [role='button'] {
+    min-width: 44px;
+  }
 }
 
 .tabular-nums {

@@ -160,7 +160,7 @@ export const RecallCard: React.FC<RecallCardProps> = ({card, position, deckSize,
               value={recallGuess}
               onChange={(e) => setRecallGuess(e.target.value)}
               placeholder={`Speak or type the ${LANGUAGE_LABELS[card.language]} phrase from memory…`}
-              className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
+              className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26]"
             />
           </div>
 
@@ -171,13 +171,13 @@ export const RecallCard: React.FC<RecallCardProps> = ({card, position, deckSize,
                 setRecallMatchScore(0);
                 setRevealed(true);
               }}
-              className="px-3.5 py-2 min-h-[42px] rounded-lg text-xs font-medium text-[#94A3B8] hover:text-white"
+              className="px-3.5 py-2 min-h-[44px] rounded-lg text-xs font-medium text-[#94A3B8] hover:text-white"
             >
               Reveal Answer
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 min-h-[44px] rounded-lg bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
+              className="px-5 py-2.5 min-h-[52px] rounded-lg bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
             >
               Check Recall
             </button>
@@ -214,7 +214,7 @@ export const RecallCard: React.FC<RecallCardProps> = ({card, position, deckSize,
             <button
               type="button"
               onClick={() => onSpeak(spokenTerm, bcp47)}
-              className="flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg border border-[#2E4054] bg-[#16202B] text-xs font-medium text-[#E6EDF3] hover:bg-[#1E2C3A]"
+              className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-lg border border-[#2E4054] bg-[#16202B] text-xs font-medium text-[#E6EDF3] hover:bg-[#1E2C3A]"
             >
               <Volume2 className="w-4 h-4 text-[#D99B26]" />
               <span>Listen</span>
@@ -245,7 +245,7 @@ export const RecallCard: React.FC<RecallCardProps> = ({card, position, deckSize,
                 value={usageSentence}
                 onChange={(e) => setUsageSentence(e.target.value)}
                 placeholder={`Produce a complete ${LANGUAGE_LABELS[card.language]} sentence…`}
-                className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
+                className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26]"
               />
               <button
                 type="submit"

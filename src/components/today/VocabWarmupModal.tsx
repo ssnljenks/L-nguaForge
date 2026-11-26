@@ -127,7 +127,7 @@ export const VocabWarmupModal: React.FC<VocabWarmupModalProps> = ({
                 onComplete();
                 onClose();
               }}
-              className="min-h-[48px] px-6 rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
+              className="min-h-[52px] px-6 rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
             >
               Mark done &amp; return to Today
             </button>
@@ -148,7 +148,7 @@ export const VocabWarmupModal: React.FC<VocabWarmupModalProps> = ({
               type="button"
               data-testid="vocab-warmup-return-btn"
               onClick={onClose}
-              className="w-full min-h-[50px] rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
+              className="w-full min-h-[52px] rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
             >
               Return to Today
             </button>
@@ -196,7 +196,7 @@ export const VocabWarmupModal: React.FC<VocabWarmupModalProps> = ({
                 type="button"
                 data-testid="vocab-warmup-reveal"
                 onClick={() => setRevealed(true)}
-                className="w-full min-h-[50px] rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
+                className="w-full min-h-[52px] rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
               >
                 Show answer
               </button>

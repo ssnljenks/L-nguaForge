@@ -36,11 +36,16 @@ export function readStoredValue<T>(
  */
 export function useLocalStorage<T>(
   key: string,
-  initialValue: T,
+  initialValue: T | (() => T),
   sanitize?: Sanitizer<T>,
   legacyKeys: readonly string[] = []
 ): [T, React.Dispatch<React.SetStateAction<T>>] {
-  const [state, setState] = useState<T>(() => readStoredValue(key, initialValue, sanitize, legacyKeys));
+  const [state, setState] = useState<T>(() => {
+    const missing = Symbol('missing');
+    const stored = readStoredValue<T | typeof missing>(key, missing, sanitize, legacyKeys);
+    if (stored !== missing) return stored;
+    return initialValue instanceof Function ? initialValue() : initialValue;
+  });
 
   useEffect(() => {
     try {

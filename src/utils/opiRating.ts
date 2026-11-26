@@ -11,6 +11,10 @@ import type {IlrDisplayRating, IlrFunctionCheck, IlrFunctionRating, OpiAccuracyN
 
 export const PRACTICE_RATING_DISCLAIMER = 'Practice estimate, not an official rating';
 export const HIGHER_LEVELS_NOT_RATED_NOTE = 'Higher levels not rated in practice';
+/** Minimum rated items at a level before it can be awarded (or lost) as the floor. */
+export const MIN_ITEMS_FOR_FLOOR = 2;
+/** Share of a level's rated items that must be sustained for that level to hold. */
+export const SUSTAINED_SHARE_FOR_FLOOR = 0.75;
 
 export interface OpiRatingResult {
   floor: 0 | 1 | 2 | 3;
@@ -50,34 +54,31 @@ export function calculateOpiRating(assessments: readonly TurnAssessment[]): OpiR
     byLevel.get(lvl)?.push(item);
   }
 
-  const isLevelSustained = (lvl: IlrBaseLevel): boolean => {
+  const evidenceAt = (lvl: IlrBaseLevel) => {
     const items = byLevel.get(lvl) ?? [];
-    if (items.length === 0) return false;
-    return items.every((i) => i.outcome === 'sustained');
+    const sustained = items.filter((i) => i.outcome === 'sustained').length;
+    return {count: items.length, sustained, notSustained: items.length - sustained};
   };
-
-  const hasLevelBreakdownsOrPartials = (lvl: IlrBaseLevel): boolean => {
-    const items = byLevel.get(lvl) ?? [];
-    return items.some((i) => i.outcome === 'breakdown' || i.outcome === 'partial');
+  // REVIEW M-5: a level holds only with enough evidence (>= 2 items, >= 75% sustained), and a level is
+  // only lost with at least 2 non-sustained items, so a single turn can't make or break a level.
+  const levelHolds = (lvl: IlrBaseLevel): boolean => {
+    const e = evidenceAt(lvl);
+    return e.count >= MIN_ITEMS_FOR_FLOOR && e.sustained / e.count >= SUSTAINED_SHARE_FOR_FLOOR;
   };
-
-  const l3Sustained = isLevelSustained(3);
-  const l2Sustained = isLevelSustained(2);
-  const l1Assessments = byLevel.get(1) ?? [];
-  const l1Failed = hasLevelBreakdownsOrPartials(1);
+  const levelFails = (lvl: IlrBaseLevel): boolean => {
+    const e = evidenceAt(lvl);
+    return e.notSustained >= MIN_ITEMS_FOR_FLOOR && e.sustained / e.count < SUSTAINED_SHARE_FOR_FLOOR;
+  };
 
   let floor: 0 | 1 | 2 | 3;
-  if (l3Sustained && !hasLevelBreakdownsOrPartials(2) && !l1Failed) {
+  if (levelHolds(3) && !levelFails(2) && !levelFails(1)) {
     floor = 3;
-  } else if (l2Sustained && !l1Failed) {
+  } else if (levelHolds(2) && !levelFails(1)) {
     floor = 2;
-  } else if (l1Assessments.length > 0) {
-    floor = isLevelSustained(1) ? 1 : 0;
-  } else if (!hasEnoughEvidence) {
-    floor = 1;
   } else {
-    // Only Level 2/3 were tested and Level 2 broke down before explicit L1 checks completed.
-    floor = 1;
+    // Level 1 is the baseline: it is assumed unless the Level 1 checks clearly broke down. That
+    // includes sessions with no evidence and sessions that started at Level 2.
+    floor = levelFails(1) ? 0 : 1;
   }
 
   let displayRating: IlrDisplayRating;

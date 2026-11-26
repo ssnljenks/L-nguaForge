@@ -56,7 +56,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
           <button
             type="button"
             onClick={this.handleRecover}
-            className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[40px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[52px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Restore View</span>

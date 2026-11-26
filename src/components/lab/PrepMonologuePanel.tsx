@@ -386,7 +386,7 @@ export const PrepMonologuePanel: React.FC<PrepMonologuePanelProps> = ({
               value={prepTranscript}
               onChange={(e) => setPrepTranscript(e.target.value)}
               placeholder={`Speak your 90-second ${LANGUAGE_LABELS[config.language]} PREP monologue or enter your draft here…`}
-              className="w-full rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-3 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26] leading-relaxed"
+              className="w-full rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-3 text-sm text-[#E6EDF3] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26] leading-relaxed"
             />
           </div>
 

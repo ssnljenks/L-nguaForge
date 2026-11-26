@@ -9,6 +9,7 @@
     "skipLibCheck": true,
     "moduleResolution": "bundler",
     "isolatedModules": true,
+    "erasableSyntaxOnly": true,
     "moduleDetection": "force",
     "allowJs": true,
     "jsx": "react-jsx",

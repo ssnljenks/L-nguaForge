@@ -7,32 +7,9 @@ import type {
   MilitaryDomain,
   TargetLanguage,
 } from '../types.ts';
+import {BRIEF_TOPICS} from './briefLevels.ts';
 
-export const BRIEF_TOPICS: readonly {id: BriefTopic; label: string}[] = [
-  {id: 'society', label: 'Society'},
-  {id: 'politics', label: 'Politics'},
-  {id: 'economy', label: 'Economy'},
-  {id: 'culture', label: 'Culture'},
-  {id: 'scitech', label: 'Sci/Tech'},
-  {id: 'security', label: 'Security'},
-];
-
-export const BRIEF_ILR_LEVELS: readonly BriefIlrLevel[] = ['2', '2+', '3', '3+'];
-
-export function isBriefTopic(val: unknown): val is BriefTopic {
-  return (
-    val === 'society' ||
-    val === 'politics' ||
-    val === 'economy' ||
-    val === 'culture' ||
-    val === 'scitech' ||
-    val === 'security'
-  );
-}
-
-export function isBriefIlrLevel(val: unknown): val is BriefIlrLevel {
-  return val === '2' || val === '2+' || val === '3' || val === '3+';
-}
+export {BRIEF_ILR_LEVELS, BRIEF_TOPICS, isBriefIlrLevel, isBriefTopic} from './briefLevels.ts';
 
 export function getTopicLabel(topic: BriefTopic): string {
   const match = BRIEF_TOPICS.find((t) => t.id === topic);

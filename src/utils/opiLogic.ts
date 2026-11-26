@@ -12,7 +12,6 @@ import type {
   OpiFocusLevel,
   OpiPhase,
   OpiProbeLevel,
-  OpiTopicSource,
   OpiWorkingLevel,
   TurnAssessment,
   TurnOutcome,
@@ -591,10 +590,6 @@ export function buildWaveformBars(audioLevel: number, active: boolean, tick: num
     const height = 0.16 + envelope * (0.18 + clampedLevel * 0.66 * (0.45 + 0.55 * wave));
     return Number(Math.max(0.14, Math.min(1, height)).toFixed(3));
   });
-}
-
-export function isSelectableTopicSource(source: OpiTopicSource): boolean {
-  return source === 'examiner_choice';
 }
 
 export function formatPhaseLabel(phase: OpiPhase): string {

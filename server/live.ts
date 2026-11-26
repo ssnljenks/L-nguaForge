@@ -42,9 +42,72 @@ const LIVE_REGISTER_GUIDANCE: Record<ChatRegisterMode, string> = {
 
 const START_TIMEOUT_MS = 30_000;
 
+/**
+ * Talk notes are an extra `generate` call per tutor turn that the REST rate limiter never sees, so
+ * each connection gets its own budget (REVIEW M-8): a small burst that refills slowly, a hard cap per
+ * session, one note in flight at a time, and no note for very short learner turns ("Sí.", "Ok").
+ */
+export interface TalkNoteLimits {
+  minUserWords: number;
+  burst: number;
+  refillMs: number;
+  maxPerSession: number;
+}
+
+export const TALK_NOTE_LIMITS: Readonly<TalkNoteLimits> = {
+  /** Learner turns with fewer words than this get no note. */
+  minUserWords: 3,
+  /** Notes available at once. */
+  burst: 4,
+  /** One more note becomes available every refillMs. */
+  refillMs: 15_000,
+  /** Hard cap per connection. */
+  maxPerSession: 40,
+};
+
+export class TalkNoteBudget {
+  private readonly limits: Pick<TalkNoteLimits, 'burst' | 'refillMs' | 'maxPerSession'>;
+  private readonly now: () => number;
+  private tokens: number;
+  private used = 0;
+  private lastRefill: number;
+
+  // Plain fields, no parameter properties: production runs `node server.ts` with type stripping only.
+  constructor(
+    limits: Pick<TalkNoteLimits, 'burst' | 'refillMs' | 'maxPerSession'> = TALK_NOTE_LIMITS,
+    now: () => number = Date.now
+  ) {
+    this.limits = limits;
+    this.now = now;
+    this.tokens = limits.burst;
+    this.lastRefill = now();
+  }
+
+  /** Takes one note from the budget; false when none is available. */
+  tryTake(): boolean {
+    if (this.used >= this.limits.maxPerSession) return false;
+    const t = this.now();
+    const refilled = Math.floor((t - this.lastRefill) / this.limits.refillMs);
+    if (refilled > 0) {
+      this.tokens = Math.min(this.limits.burst, this.tokens + refilled);
+      this.lastRefill += refilled * this.limits.refillMs;
+    }
+    if (this.tokens < 1) return false;
+    this.tokens -= 1;
+    this.used += 1;
+    return true;
+  }
+}
+
+function countWords(text: string): number {
+  return text.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
+}
+
 export interface LiveBridgeDeps {
   getClient: () => GoogleGenAI;
   analyzeTalkTurn?: (ctx: TalkSessionContext, userText: string, tutorText: string) => Promise<LiveTalkTurnNote>;
+  /** Per-connection Talk note budget; defaults to TALK_NOTE_LIMITS. */
+  createTalkNoteBudget?: () => TalkNoteBudget;
 }
 
 function buildSessionInstruction(msg: Record<string, unknown>): {
@@ -118,6 +181,8 @@ export function attachLiveBridge(
     let activeTalkContext: TalkSessionContext | null = null;
     let currentUserTranscript = '';
     let currentTutorTranscript = '';
+    const talkNoteBudget = deps.createTalkNoteBudget?.() ?? new TalkNoteBudget();
+    let talkNoteInFlight = false;
 
     const sendJson = (payload: Record<string, unknown>) => {
       if (clientWs.readyState === WebSocket.OPEN) clientWs.send(JSON.stringify(payload));
@@ -196,7 +261,10 @@ export function attachLiveBridge(
       currentUserTranscript = '';
       currentTutorTranscript = '';
       if (!ctx || isClosing) return;
+      if (countWords(userSnap) < TALK_NOTE_LIMITS.minUserWords) return;
+      if (talkNoteInFlight || !talkNoteBudget.tryTake()) return;
 
+      talkNoteInFlight = true;
       void analyzer(ctx, userSnap, tutorSnap)
         .then((note) => {
           if (isClosing || clientWs.readyState !== WebSocket.OPEN) return;
@@ -210,6 +278,9 @@ export function attachLiveBridge(
         })
         .catch(() => {
           // Side-note extraction is best-effort and must never disrupt the voice stream
+        })
+        .finally(() => {
+          talkNoteInFlight = false;
         });
     };
 

@@ -92,7 +92,7 @@ export const DlptTrapCard: React.FC<DlptTrapCardProps> = ({question, userChoiceI
           <button
             type="button"
             onClick={() => setShowAllChoices((prev) => !prev)}
-            className="inline-flex items-center gap-1.5 min-h-[36px] text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition-colors"
+            className="inline-flex items-center gap-1.5 min-h-[44px] text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition-colors"
           >
             {showAllChoices ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             <span>

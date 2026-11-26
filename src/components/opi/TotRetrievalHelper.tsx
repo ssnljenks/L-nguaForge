@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {BookmarkPlus, Check, Loader2, Volume2, X} from 'lucide-react';
 import type {MissionConfig} from '../../types';
 import type {SaveVocabFn} from '../../hooks/useWordLookup';
-import {requestTotPhrase} from '../../services/api';
+import {requestTotPhrase} from '../../services/dictionaryApi';
 import {LANGUAGE_LABELS} from '../../utils/ilrLogic';
 import type {EnrichedTotResult} from '../../utils/localDictionary';
 import {totSourceLabel} from '../shared/lookupLabels';
@@ -127,12 +127,12 @@ export const TotRetrievalHelper: React.FC<TotRetrievalHelperProps> = ({config, o
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder='e.g., "provided that public funding stays steady" or "on the other hand"'
-          className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
+          className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26]"
         />
         <button
           type="submit"
           disabled={!query.trim() || loading}
-          className="px-4 py-2 min-h-[44px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
+          className="px-4 py-2 min-h-[52px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
         >
           Hold 5s for hint
         </button>
@@ -209,7 +209,7 @@ export const TotRetrievalHelper: React.FC<TotRetrievalHelperProps> = ({config, o
                 type="button"
                 onClick={handleSave}
                 disabled={saved}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-70"
+                className="min-h-[52px] flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-70"
               >
                 {saved ? <Check className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
                 <span>{saved ? 'Saved to Vocab' : 'Save to Vocab'}</span>

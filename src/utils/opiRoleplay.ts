@@ -65,8 +65,6 @@ const CHECKLIST_BY_LEVEL: Record<IlrBaseLevel, readonly RoleplayChecklistSpec[]>
   ],
 };
 
-export const ROLEPLAY_REGISTERS: readonly RoleplayRegister[] = ['usted', 'tú', 'vos', 'você', 'tu'];
-
 export function getRoleplayChecklistSpecs(level: IlrBaseLevel): readonly RoleplayChecklistSpec[] {
   return CHECKLIST_BY_LEVEL[level] ?? CHECKLIST_BY_LEVEL[2];
 }

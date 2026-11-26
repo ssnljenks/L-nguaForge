@@ -22,6 +22,7 @@ import {MODELS} from '../config.ts';
 import {buildErrorReportingInstruction, extractReportedErrors, REPORTED_ERRORS_SCHEMA} from '../errorReporting.ts';
 import {handleAsync, UserFacingError} from '../errors.ts';
 import {BUDGETS, ThinkingLevel} from '../gemini.ts';
+import {createUntrustedFence} from '../untrustedContent.ts';
 import {
   asRecord,
   asRecordArray,
@@ -150,10 +151,11 @@ export function registerOpiRoutes(router: Router, {generate}: RouteDeps): void {
       // Client-supplied story text goes into the prompt, so it must pass the guard too (REVIEW H-4).
       assertUnclassifiedText(briefStory?.title, briefStory?.summary, briefStory?.orientationLine, briefStory?.topic);
 
+      const storyFence = createUntrustedFence();
       const briefTopicNote =
         topicSource === 'brief'
           ? briefStory
-            ? `\nTOPIC SOURCE: Today's Brief story ("${briefStory.title}"). Summary: ${briefStory.summary}. In Level 3 probes, ask the candidate to brief back or evaluate this event in ${langName}: solicit their opinion, an analysis of the broader impact, or hypothetical developments.`
+            ? `\nTOPIC SOURCE: Today's Brief story. Its title and summary come from a news feed (REVIEW M-4). ${storyFence.notice}\nTitle:\n${storyFence.wrap('BRIEF_TITLE', briefStory.title)}\nSummary:\n${storyFence.wrap('BRIEF_SUMMARY', briefStory.summary)}\nIn Level 3 probes, ask the candidate to brief back or evaluate this event in ${langName}: solicit their opinion, an analysis of the broader impact, or hypothetical developments.`
             : '\nTOPIC SOURCE: General open-source daily events (available as Level 3 probe material once Level 2 baseline is established).'
           : "\nTOPIC SOURCE: Examiner's choice across general everyday and societal topics appropriate to the active level.";
 

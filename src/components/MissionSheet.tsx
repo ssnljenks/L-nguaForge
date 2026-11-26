@@ -139,16 +139,22 @@ export const MissionSheet: React.FC<MissionSheetProps> = ({open, onClose, config
               role="switch"
               aria-checked={config.workFocusEnabled}
               onClick={() => onUpdateConfig({workFocusEnabled: !config.workFocusEnabled})}
-              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
-                config.workFocusEnabled ? 'border-[#D99B26] bg-[#D99B26]' : 'border-[#35495E] bg-[#16202B]'
-              }`}
+              className="relative inline-flex h-11 w-14 shrink-0 items-center justify-center rounded-full"
             >
               <span className="sr-only">Toggle Work focus</span>
+              {/* 44 px hit area around the visual track (REVIEW M-12). */}
               <span
-                className={`inline-block h-5 w-5 transform rounded-full transition-transform ${
-                  config.workFocusEnabled ? 'translate-x-6 bg-[#0B1117]' : 'translate-x-1 bg-[#94A3B8]'
+                aria-hidden="true"
+                className={`relative inline-flex h-7 w-12 items-center rounded-full border transition-colors ${
+                  config.workFocusEnabled ? 'border-[#D99B26] bg-[#D99B26]' : 'border-[#35495E] bg-[#16202B]'
                 }`}
-              />
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full transition-transform ${
+                    config.workFocusEnabled ? 'translate-x-6 bg-[#0B1117]' : 'translate-x-1 bg-[#94A3B8]'
+                  }`}
+                />
+              </span>
             </button>
           </div>
 

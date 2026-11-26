@@ -3,7 +3,6 @@ import type {
   BriefDrill,
   BriefItem,
   BriefMediaType,
-  ChatRegisterMode,
   ChatStruggleSuggestion,
   DebriefReport,
   ErrorTaxonomyKey,
@@ -31,65 +30,10 @@ import type {
   TalkPickedUpItem,
   TalkWrapUpResponse,
   TargetLanguage,
-  TotResult,
   TurnAssessment,
-  VocabItem,
-  WordLookupResult,
 } from '../types';
 import type {IlrBaseLevel} from '../data/ilrSpeakingLevels';
-import {
-  type EnrichedTotResult,
-  type EnrichedWordLookup,
-  incrementApiSavedCount,
-  lookupLocalTotPhrase,
-  lookupLocalWord,
-  normalizeLookupKey,
-  saveTotToLocalCache,
-  saveWordToLocalCache,
-} from '../utils/localDictionary';
-import {withWorkFocus} from './requestContext';
-
-const inflightWordLookups = new Map<string, Promise<EnrichedWordLookup>>();
-
-async function postJson<T>(url: string, body: Record<string, unknown>, timeoutMs = 45000): Promise<T> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(withWorkFocus(body)),
-      signal: controller.signal,
-    });
-  } catch (err) {
-    if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new Error('Request timed out. Tap Retry to try again.', {cause: err});
-    }
-    throw err;
-  } finally {
-    clearTimeout(timer);
-  }
-
-  const rawText = await response.text();
-  let data: Record<string, unknown> | null = null;
-  if (rawText.trim()) {
-    try {
-      data = JSON.parse(rawText) as Record<string, unknown>;
-    } catch {
-      data = null;
-    }
-  }
-  if (!response.ok) {
-    const errMsg =
-      typeof data?.error === 'string' && data.error.trim() ? data.error : `Request failed (${response.status})`;
-    throw new Error(errMsg);
-  }
-  if (!data || typeof data !== 'object') {
-    throw new Error('Server returned an unexpected empty response. Please try again.');
-  }
-  return data as T;
-}
+import {getJson, postJson} from './http';
 
 export interface RequestOpiTurnResponse {
   examinerText: string;
@@ -196,87 +140,6 @@ export async function gradeRoleplayDebrief(params: {
   return postJson('/api/opi/roleplay/debrief', params);
 }
 
-export async function lookupContextualWord(params: {
-  language: TargetLanguage;
-  dialect: string;
-  word: string;
-  contextSentence: string;
-  vocabItems?: VocabItem[];
-  forceAi?: boolean;
-}): Promise<EnrichedWordLookup> {
-  if (!params.forceAi) {
-    const localHit = lookupLocalWord(params.language, params.word, params.vocabItems ?? []);
-    if (localHit) {
-      incrementApiSavedCount();
-      return localHit;
-    }
-  }
-
-  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-    throw new Error(
-      'Offline — this term is not in the built-in military dictionary or local cache yet. Reconnect to look it up with AI.'
-    );
-  }
-
-  const dedupeKey = `${params.language}:${normalizeLookupKey(params.word)}:${params.forceAi ? 'ai' : 'std'}`;
-  const existing = inflightWordLookups.get(dedupeKey);
-  if (existing) return existing;
-
-  const requestPromise = (async (): Promise<EnrichedWordLookup> => {
-    try {
-      const result = await postJson<WordLookupResult>(
-        '/api/vocab/lookup',
-        {
-          language: params.language,
-          dialect: params.dialect,
-          word: params.word,
-          contextSentence: params.contextSentence,
-        },
-        15000
-      );
-      if (!result || typeof result.contextualMeaning !== 'string' || !result.contextualMeaning.trim()) {
-        throw new Error('Word definition came back empty. Tap Retry to look it up again.');
-      }
-      saveWordToLocalCache(params.language, result, params.word);
-      return {...result, source: 'ai'};
-    } finally {
-      inflightWordLookups.delete(dedupeKey);
-    }
-  })();
-
-  inflightWordLookups.set(dedupeKey, requestPromise);
-  return requestPromise;
-}
-
-export async function requestTotPhrase(params: {
-  language: TargetLanguage;
-  dialect: string;
-  domain: MilitaryDomain;
-  englishQuery: string;
-  forceAi?: boolean;
-}): Promise<EnrichedTotResult> {
-  if (!params.forceAi) {
-    const localHit = lookupLocalTotPhrase(params.language, params.englishQuery);
-    if (localHit) {
-      incrementApiSavedCount();
-      return localHit;
-    }
-  }
-
-  const res = await postJson<TotResult>(
-    '/api/vocab/tot',
-    {
-      language: params.language,
-      dialect: params.dialect,
-      domain: params.domain,
-      englishQuery: params.englishQuery,
-    },
-    15000
-  );
-  saveTotToLocalCache(params.language, params.englishQuery, res);
-  return {...res, source: 'ai'};
-}
-
 export async function evaluateRecallSentence(params: {
   language: TargetLanguage;
   targetTerm: string;
@@ -342,7 +205,6 @@ export async function sendFreeChatTurn(params: {
   workTalk?: boolean;
   slangLevel?: number;
   correctionMode?: TalkCorrectionMode;
-  registerMode?: ChatRegisterMode;
   history: Pick<FreeChatMessage, 'role' | 'text'>[];
   userMessage: string;
 }): Promise<{
@@ -403,11 +265,7 @@ export async function fetchBriefFeed(params: {
   if (params.userDomain) query.set('userDomain', params.userDomain);
   if (params.searchQuery) query.set('q', params.searchQuery);
 
-  const res = await fetch(`/api/brief/feed?${query.toString()}`);
-  if (!res.ok) {
-    throw new Error('Failed to load Brief feed.');
-  }
-  return res.json();
+  return getJson(`/api/brief/feed?${query.toString()}`, 20_000);
 }
 
 export async function fetchBriefDrill(briefId: string): Promise<BriefDrill> {
@@ -426,11 +284,7 @@ export async function fetchBriefStudyExcerpt(briefId: string): Promise<{
   excerpt: string;
   keyVocabulary: {term: string; english: string}[];
 }> {
-  const res = await fetch(`/api/brief/study-excerpt?briefId=${encodeURIComponent(briefId)}`);
-  if (!res.ok) {
-    throw new Error('Failed to load study excerpt.');
-  }
-  return res.json();
+  return getJson(`/api/brief/study-excerpt?briefId=${encodeURIComponent(briefId)}`, 20_000);
 }
 
 export async function triggerBriefRefresh(): Promise<{ok: boolean; lastRefreshedAt: string; newItemsCount?: number}> {

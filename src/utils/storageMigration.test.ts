@@ -15,6 +15,7 @@ import {
   sanitizeSessions,
   sanitizeVocabItems,
 } from './storageSchemas.ts';
+import {prepareVocabFsrsMigration} from './vocabFsrsLoader.ts';
 
 const snapshot = JSON.parse(
   fs.readFileSync(new URL('./__fixtures__/pre-883e95d-storage.json', import.meta.url), 'utf8')
@@ -30,8 +31,10 @@ test('pre-883e95d config keeps user preferences and defaults Work focus to OFF',
   assert.equal(config.workFocusEnabled, false);
 });
 
-test('pre-883e95d vocab keeps every item and migrates legacy mastery into an FSRS schedule', () => {
+test('pre-883e95d vocab keeps every item and migrates legacy mastery into an FSRS schedule', async () => {
   const before = snapshot.linguaforge_vocab_v1 as any[];
+  // What main.tsx does before the first render: ts-fsrs is loaded because the stored deck needs it.
+  await prepareVocabFsrsMigration({getItem: (key) => (key === 'linguaforge_vocab_v1' ? JSON.stringify(before) : null)});
   const after = sanitizeVocabItems(before);
   assert.ok(after);
   assert.equal(after.length, before.length);
@@ -42,6 +45,7 @@ test('pre-883e95d vocab keeps every item and migrates legacy mastery into an FSR
   assert.equal(user.reviewCount, 3);
   assert.ok(user.fsrs, 'legacy item gets an FSRS card');
   assert.ok(Number.isFinite(Date.parse(user.fsrs.dueAt)));
+  assert.ok(user.fsrs.reps >= 3 && user.fsrs.stability > 0, 'scheduled from its review history, not as a new card');
 });
 
 test('pre-883e95d sessions keep all messages and the legacy debrief, mapping old probe labels', () => {
