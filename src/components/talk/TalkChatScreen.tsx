@@ -206,13 +206,16 @@ export const TalkChatScreen: React.FC<TalkChatScreenProps> = ({
     wordLookup.close();
     setColloquialLookup(null);
 
+    // Same guard the server applies (REVIEW H-4), checked before the line joins the conversation: a
+    // rejected line kept in the thread would be resent as history and get every later turn rejected.
+    // The draft stays so it can be edited.
+    if (detectClassificationMarking(clean)) {
+      setTextError(CLASSIFICATION_REJECT_MESSAGE);
+      setTextInput(clean);
+      return;
+    }
+
     if (live.isLive) {
-      // Same guard the server applies to typed live text (REVIEW H-4); keep the draft so it can be edited.
-      if (detectClassificationMarking(clean)) {
-        setTextError(CLASSIFICATION_REJECT_MESSAGE);
-        setTextInput(clean);
-        return;
-      }
       const sent = live.sendLiveText(clean);
       if (!sent) {
         setTextError('Still connecting live audio — try again in a second.');
@@ -405,7 +408,7 @@ export const TalkChatScreen: React.FC<TalkChatScreenProps> = ({
             <button
               type="button"
               onClick={() => setShowKeyboard((prev) => !prev)}
-              aria-label="Toggle text input"
+              aria-pressed={showKeyboard}
               className={`inline-flex items-center gap-2 px-4 py-3 min-h-[52px] rounded-xl border text-xs font-medium transition-colors ${
                 showKeyboard
                   ? 'border-[#D99B26]/60 bg-[#1A2430] text-[#F8FAFC]'
@@ -548,6 +551,7 @@ export const TalkChatScreen: React.FC<TalkChatScreenProps> = ({
             type="button"
             onClick={() => setShowKeyboard((prev) => !prev)}
             aria-label="Toggle text input"
+            aria-pressed={showKeyboard}
             className={`min-h-[52px] min-w-[52px] flex items-center justify-center rounded-xl border transition-colors ${
               showKeyboard
                 ? 'border-[#D99B26]/60 bg-[#1A2430] text-[#F3C669]'
