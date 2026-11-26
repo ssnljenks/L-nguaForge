@@ -34,7 +34,7 @@ import type {
   TurnAssessment,
 } from '../types';
 import type {IlrBaseLevel} from '../data/ilrSpeakingLevels';
-import {postJson} from './http';
+import {getJson, postJson} from './http';
 
 export interface RequestOpiTurnResponse {
   examinerText: string;
@@ -267,11 +267,7 @@ export async function fetchBriefFeed(params: {
   if (params.userDomain) query.set('userDomain', params.userDomain);
   if (params.searchQuery) query.set('q', params.searchQuery);
 
-  const res = await fetch(`/api/brief/feed?${query.toString()}`);
-  if (!res.ok) {
-    throw new Error('Failed to load Brief feed.');
-  }
-  return res.json();
+  return getJson(`/api/brief/feed?${query.toString()}`, 20_000);
 }
 
 export async function fetchBriefDrill(briefId: string): Promise<BriefDrill> {
@@ -290,11 +286,7 @@ export async function fetchBriefStudyExcerpt(briefId: string): Promise<{
   excerpt: string;
   keyVocabulary: {term: string; english: string}[];
 }> {
-  const res = await fetch(`/api/brief/study-excerpt?briefId=${encodeURIComponent(briefId)}`);
-  if (!res.ok) {
-    throw new Error('Failed to load study excerpt.');
-  }
-  return res.json();
+  return getJson(`/api/brief/study-excerpt?briefId=${encodeURIComponent(briefId)}`, 20_000);
 }
 
 export async function triggerBriefRefresh(): Promise<{ok: boolean; lastRefreshedAt: string; newItemsCount?: number}> {
