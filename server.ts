@@ -17,7 +17,8 @@ const BRIEF_REFRESH_INTERVAL_MS = 3 * 60 * 60 * 1000;
 
 async function startServer() {
   const config = loadConfig();
-  const generate = config.geminiFake ? createFakeGenerator() : createGeminiGenerator();
+  const fakeGenerator = config.geminiFake ? createFakeGenerator() : null;
+  const generate = fakeGenerator ?? createGeminiGenerator();
   const app = createApp({config, generate});
   const httpServer = http.createServer(app);
   if (config.geminiFake) {
@@ -27,6 +28,10 @@ async function startServer() {
       JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, 'brief-items.json'), 'utf8'))
     );
     app.use('/__fixtures', express.static(path.join(FIXTURES_DIR, 'media')));
+    app.post('/__fixtures/reset', (_req, res) => {
+      fakeGenerator?.reset();
+      res.json({ok: true});
+    });
     attachLiveBridge(httpServer, config, {
       getClient: createFakeLiveClient(),
       analyzeTalkTurn: (ctx, userText, tutorText) => analyzeLiveTalkTurn({ctx, userText, tutorText, generate}),

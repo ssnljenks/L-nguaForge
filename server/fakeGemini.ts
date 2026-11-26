@@ -106,9 +106,14 @@ export function checkAgainstSchema(value: unknown, schema: Schema, at = '$'): st
   }
 }
 
-export function createFakeGenerator(dir = FIXTURES_DIR): GenerateStructured {
+export type FakeGenerator = GenerateStructured & {
+  /** Starts every fixture sequence over (POST /__fixtures/reset, called before each e2e test). */
+  reset: () => void;
+};
+
+export function createFakeGenerator(dir = FIXTURES_DIR): FakeGenerator {
   const calls = new Map<string, number>();
-  return async (request) => {
+  const generate: GenerateStructured = async (request) => {
     const file = FIXTURE_BY_CALL[request.emptyMessage];
     if (!file) throw new Error(`Fake Gemini: no fixture for call site "${request.emptyMessage}".`);
     const {responses} = loadFixture(file, dir);
@@ -121,6 +126,7 @@ export function createFakeGenerator(dir = FIXTURES_DIR): GenerateStructured {
     }
     return response as Record<string, unknown>;
   };
+  return Object.assign(generate, {reset: () => calls.clear()});
 }
 
 // ---------------------------------------------------------------------------
