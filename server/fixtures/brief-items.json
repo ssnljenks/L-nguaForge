@@ -1,0 +1,83 @@
+[
+  {
+    "id": "e2e-es-audio-1",
+    "title": "Boletín: bibliotecas en los barrios",
+    "sourceName": "LinguaForge test broadcast",
+    "sourceUrl": "",
+    "audioUrl": "/__fixtures/clip-es.wav",
+    "mediaType": "audio",
+    "language": "es",
+    "dialectId": "neutral_latam",
+    "publishedAt": "2026-11-25T09:00:00.000Z",
+    "ilrLevel": "2+",
+    "topic": "culture",
+    "orientationLine": "This passage is from a radio report about public libraries.",
+    "summary": "The government will expand public libraries.",
+    "matchingDomains": [],
+    "estimatedMinutes": 1,
+    "lengthLabel": "~1 min broadcast",
+    "drillable": true,
+    "transcript": "El gobierno anunció este martes un plan para ampliar la red de bibliotecas públicas en los barrios. La medida incluye horarios extendidos los fines de semana, talleres de lectura para niños y acceso gratuito a internet. Según el ministerio, la iniciativa costará doce millones de pesos y comenzará en marzo en cinco ciudades del país.",
+    "studyExcerpt": "El gobierno anunció este martes un plan para ampliar la red de bibliotecas públicas en los barrios. La medida incluye horarios extendidos los fines de semana, talleres de lectura para niños y acceso gratuito a internet. Según el ministerio, la iniciativa costará doce millones de pesos y comenzará en marzo en cinco ciudades del país.",
+    "keyVocabulary": [
+      {
+        "term": "bibliotecas públicas",
+        "english": "public libraries"
+      }
+    ]
+  },
+  {
+    "id": "e2e-es-audio-2",
+    "title": "Boletín: horarios extendidos",
+    "sourceName": "LinguaForge test broadcast",
+    "sourceUrl": "",
+    "audioUrl": "/__fixtures/clip-es.wav",
+    "mediaType": "audio",
+    "language": "es",
+    "dialectId": "neutral_latam",
+    "publishedAt": "2026-11-25T09:00:00.000Z",
+    "ilrLevel": "2",
+    "topic": "society",
+    "orientationLine": "This passage is from a radio report about public libraries.",
+    "summary": "The government will expand public libraries.",
+    "matchingDomains": [],
+    "estimatedMinutes": 1,
+    "lengthLabel": "~1 min broadcast",
+    "drillable": true,
+    "transcript": "El gobierno anunció este martes un plan para ampliar la red de bibliotecas públicas en los barrios. La medida incluye horarios extendidos los fines de semana, talleres de lectura para niños y acceso gratuito a internet. Según el ministerio, la iniciativa costará doce millones de pesos y comenzará en marzo en cinco ciudades del país.",
+    "studyExcerpt": "El gobierno anunció este martes un plan para ampliar la red de bibliotecas públicas en los barrios. La medida incluye horarios extendidos los fines de semana, talleres de lectura para niños y acceso gratuito a internet. Según el ministerio, la iniciativa costará doce millones de pesos y comenzará en marzo en cinco ciudades del país.",
+    "keyVocabulary": [
+      {
+        "term": "bibliotecas públicas",
+        "english": "public libraries"
+      }
+    ]
+  },
+  {
+    "id": "e2e-pt-audio-1",
+    "title": "Boletim: bibliotecas nos bairros",
+    "sourceName": "LinguaForge test broadcast",
+    "sourceUrl": "",
+    "audioUrl": "/__fixtures/clip-pt.wav",
+    "mediaType": "audio",
+    "language": "pt",
+    "dialectId": "br_standard",
+    "publishedAt": "2026-11-25T09:00:00.000Z",
+    "ilrLevel": "2+",
+    "topic": "culture",
+    "orientationLine": "This passage is from a radio report about public libraries.",
+    "summary": "The government will expand public libraries.",
+    "matchingDomains": [],
+    "estimatedMinutes": 1,
+    "lengthLabel": "~1 min broadcast",
+    "drillable": true,
+    "transcript": "O governo anunciou nesta terça-feira um plano para ampliar a rede de bibliotecas públicas nos bairros. A medida inclui horários estendidos nos fins de semana, oficinas de leitura para crianças e acesso gratuito à internet. Segundo o ministério, a iniciativa custará doze milhões de reais e começará em março em cinco cidades do país.",
+    "studyExcerpt": "O governo anunciou nesta terça-feira um plano para ampliar a rede de bibliotecas públicas nos bairros. A medida inclui horários estendidos nos fins de semana, oficinas de leitura para crianças e acesso gratuito à internet. Segundo o ministério, a iniciativa custará doze milhões de reais e começará em março em cinco cidades do país.",
+    "keyVocabulary": [
+      {
+        "term": "bibliotecas públicas",
+        "english": "public libraries"
+      }
+    ]
+  }
+]

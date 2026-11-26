@@ -1,0 +1,32 @@
+{
+  "responses": [
+    {
+      "summary": "You talked with Sofía about your day and weekend plans.",
+      "endNotes": ["Try \"¿te late?\" to invite friends."],
+      "items": [
+        {
+          "term": "ándale",
+          "meaning": "come on / go for it",
+          "exampleFromConversation": "¡Qué chido que me escribas! Yo ando bien, aquí en la colonia.",
+          "regionTag": "Mexico City",
+          "kind": "word"
+        },
+        {
+          "term": "al pastor",
+          "meaning": "spit-roasted pork style",
+          "exampleFromConversation": "Mañana vamos por unos tacos al pastor, ¿te late?",
+          "regionTag": "Mexico City",
+          "kind": "phrase"
+        }
+      ],
+      "errors": [
+        {
+          "key": "ser_estar",
+          "wrong": "Yo soy cansado",
+          "fix": "Yo estoy cansado",
+          "quote": "Yo soy cansado después del trabajo."
+        }
+      ]
+    }
+  ]
+}

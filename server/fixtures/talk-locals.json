@@ -1,0 +1,15 @@
+{
+  "responses": [
+    {
+      "versions": [
+        {
+          "expression": "¡Qué padre!",
+          "literalOrContext": "How great!",
+          "nuance": "Very common in Mexico City.",
+          "example": "¡Qué padre que vinieras!",
+          "kind": "phrase"
+        }
+      ]
+    }
+  ]
+}

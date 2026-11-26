@@ -1,0 +1,69 @@
+{
+  "responses": [
+    {
+      "examinerText": "¡Hola! Gracias por llamar. Para empezar, ¿cómo es un día típico para usted?",
+      "phase": "warmup",
+      "workingLevel": 2,
+      "probeLevel": 3,
+      "targetFunctionKey": "l2_casual_conversation",
+      "lastTurnAssessment": {
+        "functionKey": "l2_casual_conversation",
+        "outcome": "sustained",
+        "evidence": "Warm-up turn."
+      },
+      "nextReason": "Warm-up."
+    },
+    {
+      "examinerText": "Muy bien. Cuénteme qué hizo el fin de semana pasado, con todos los detalles.",
+      "phase": "level_check",
+      "workingLevel": 2,
+      "probeLevel": 3,
+      "targetFunctionKey": "l2_narration_timeframes",
+      "lastTurnAssessment": {
+        "functionKey": "l2_casual_conversation",
+        "outcome": "sustained",
+        "evidence": "Describió su rutina con claridad."
+      },
+      "nextReason": "Check Level 2 narration."
+    },
+    {
+      "examinerText": "Interesante. ¿Y qué planes tiene para las próximas vacaciones?",
+      "phase": "level_check",
+      "workingLevel": 2,
+      "probeLevel": 3,
+      "targetFunctionKey": "l2_narration_timeframes",
+      "lastTurnAssessment": {
+        "functionKey": "l2_narration_timeframes",
+        "outcome": "sustained",
+        "evidence": "Narró en pasado sin errores graves."
+      },
+      "nextReason": "Future time frame."
+    },
+    {
+      "examinerText": "¿Qué pasaría con el transporte público si la mitad de las oficinas cerraran para siempre?",
+      "phase": "probe",
+      "workingLevel": 2,
+      "probeLevel": 3,
+      "targetFunctionKey": "l3_hypothesize",
+      "lastTurnAssessment": {
+        "functionKey": "l2_narration_timeframes",
+        "outcome": "sustained",
+        "evidence": "Usó el futuro correctamente."
+      },
+      "nextReason": "Probe Level 3 hypothesis."
+    },
+    {
+      "examinerText": "Entiendo. Bueno, ya casi terminamos. Muchas gracias por su tiempo.",
+      "phase": "wind_down",
+      "workingLevel": 2,
+      "probeLevel": 3,
+      "targetFunctionKey": "l2_casual_conversation",
+      "lastTurnAssessment": {
+        "functionKey": "l3_hypothesize",
+        "outcome": "breakdown",
+        "evidence": "Si las oficinas cierran, la gente va a usar menos el metro."
+      },
+      "nextReason": "Wind down."
+    }
+  ]
+}

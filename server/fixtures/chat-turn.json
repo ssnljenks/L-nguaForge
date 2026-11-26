@@ -1,0 +1,30 @@
+{
+  "responses": [
+    {
+      "replyText": "¡Qué chido que me escribas! Yo ando bien, aquí en la colonia. ¿Y tú qué hiciste hoy?",
+      "recastNote": "Sofía said \"¿Y tú qué hiciste hoy?\" — in Mexico City \"chido\" is the everyday word for cool.",
+      "pickedUp": [
+        {
+          "term": "chido",
+          "meaning": "cool, great",
+          "regionTag": "Mexico City",
+          "kind": "word"
+        }
+      ],
+      "struggleSuggestions": []
+    },
+    {
+      "replyText": "¡Órale! Suena muy bien. Mañana vamos por unos tacos al pastor, ¿te late?",
+      "recastNote": "",
+      "pickedUp": [
+        {
+          "term": "¿te late?",
+          "meaning": "are you up for it?",
+          "regionTag": "Mexico City",
+          "kind": "phrase"
+        }
+      ],
+      "struggleSuggestions": []
+    }
+  ]
+}

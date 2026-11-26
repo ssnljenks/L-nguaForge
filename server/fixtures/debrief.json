@@ -1,0 +1,110 @@
+{
+  "responses": [
+    {
+      "estimatedIlr": "2+",
+      "floorLevel": 2,
+      "oneLineRationale": "Sustained Level 2 narration across time frames; Level 3 hypothesis broke down.",
+      "summaryAssessment": "Solid Level 2 control with emerging Level 3 abilities.",
+      "ceilingMoment": {
+        "timestampSeconds": 95,
+        "examinerPrompt": "¿Qué pasaría con el transporte público si la mitad de las oficinas cerraran para siempre?",
+        "candidateUtterance": "Si las oficinas cierran, la gente va a usar menos el metro.",
+        "problemSpan": "Si las oficinas cierran",
+        "fix": "Si las oficinas cerraran, la gente usaría menos el metro.",
+        "failedFunction": "l3_hypothesize",
+        "explanation": "A hypothetical needs the imperfect subjunctive and the conditional."
+      },
+      "levelFunctions": [
+        {
+          "functionKey": "l3_support_opinions",
+          "status": "partly",
+          "note": "Gave an opinion with one reason.",
+          "evidence": ["Creo que es mejor trabajar desde casa."]
+        },
+        {
+          "functionKey": "l3_hypothesize",
+          "status": "not_met",
+          "note": "Stayed in the indicative.",
+          "evidence": ["Si las oficinas cierran, la gente va a usar menos el metro."]
+        },
+        {
+          "functionKey": "l3_unfamiliar_abstract",
+          "status": "partly",
+          "note": "Handled the topic briefly.",
+          "evidence": ["El transporte cambia mucho."]
+        },
+        {
+          "functionKey": "l3_describe_explain_detail",
+          "status": "met",
+          "note": "Explained the routine in detail.",
+          "evidence": ["Primero tomo el autobús y después camino."]
+        },
+        {
+          "functionKey": "l3_infer",
+          "status": "partly",
+          "note": "Some inference.",
+          "evidence": ["Supongo que hay menos tráfico."]
+        },
+        {
+          "functionKey": "l3_detect_overtones",
+          "status": "not_met",
+          "note": "Not addressed.",
+          "evidence": ["No clear attempt recorded."]
+        }
+      ],
+      "accuracyNotes": [
+        {
+          "descriptor": "Grammar: time frames",
+          "observation": "Past and future were controlled.",
+          "status": "strength"
+        },
+        {
+          "descriptor": "Grammar: subjunctive",
+          "observation": "Hypotheticals stayed in the indicative.",
+          "status": "gap"
+        }
+      ],
+      "autoAddedVocab": [
+        {
+          "term": "a fin de cuentas",
+          "englishConcept": "after all",
+          "contextSentence": "A fin de cuentas, el metro es más rápido.",
+          "registerTag": "Neutral",
+          "category": "High-Register Connectors"
+        }
+      ],
+      "discourseAudit": {
+        "pointScore": 70,
+        "reasonScore": 60,
+        "exampleScore": 65,
+        "pivotScore": 40,
+        "cohesionNotes": "Ideas connected with simple connectors.",
+        "subjunctiveControl": "Avoids the subjunctive in hypotheticals.",
+        "timeFrameStability": "Stable past and future."
+      },
+      "naturalUpgrades": [
+        {
+          "originalLevel2": "Si las oficinas cierran, la gente va a usar menos el metro.",
+          "upgradedLevel2Plus": "Si las oficinas cerraran, la gente usaría menos el metro; no obstante, el centro se adaptaría.",
+          "connectorsUsed": ["no obstante"],
+          "whyItUpgrades": "Hypothetical structure plus a contrastive connector."
+        }
+      ],
+      "nextDrillRecommendation": "Practice si-clauses with the imperfect subjunctive.",
+      "errors": [
+        {
+          "key": "si_clause_present_for_subjunctive",
+          "wrong": "Si las oficinas cierran, la gente va a usar",
+          "fix": "Si las oficinas cerraran, la gente usaría",
+          "quote": "Si las oficinas cierran, la gente va a usar menos el metro."
+        },
+        {
+          "key": "ser_estar",
+          "wrong": "El metro es lleno",
+          "fix": "El metro está lleno",
+          "quote": "El metro es lleno por la mañana."
+        }
+      ]
+    }
+  ]
+}

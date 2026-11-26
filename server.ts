@@ -6,20 +6,36 @@ import express from 'express';
 import {createApp, jsonErrorHandler} from './server/app.ts';
 import {globalBriefService} from './server/briefService.ts';
 import {loadConfig} from './server/config.ts';
+import fs from 'fs';
+import {createFakeGenerator, createFakeLiveClient, FIXTURES_DIR} from './server/fakeGemini.ts';
 import {createGeminiGenerator} from './server/gemini.ts';
 import {attachLiveBridge} from './server/live.ts';
+import {analyzeLiveTalkTurn} from './server/talkPrompt.ts';
 
 const SERVER_DIR = path.dirname(fileURLToPath(import.meta.url));
 const BRIEF_REFRESH_INTERVAL_MS = 3 * 60 * 60 * 1000;
 
 async function startServer() {
   const config = loadConfig();
-  const generate = createGeminiGenerator();
+  const generate = config.geminiFake ? createFakeGenerator() : createGeminiGenerator();
   const app = createApp({config, generate});
   const httpServer = http.createServer(app);
-  attachLiveBridge(httpServer, config);
+  if (config.geminiFake) {
+    // Test-only: canned Gemini answers, fixed Brief items and their audio (see server/fakeGemini.ts).
+    console.warn('[gemini] GEMINI_FAKE=1: answering every Gemini call from server/fixtures/.');
+    globalBriefService.useFixtureItems(
+      JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, 'brief-items.json'), 'utf8'))
+    );
+    app.use('/__fixtures', express.static(path.join(FIXTURES_DIR, 'media')));
+    attachLiveBridge(httpServer, config, {
+      getClient: createFakeLiveClient(),
+      analyzeTalkTurn: (ctx, userText, tutorText) => analyzeLiveTalkTurn({ctx, userText, tutorText, generate}),
+    });
+  } else {
+    attachLiveBridge(httpServer, config);
+  }
 
-  if (!config.isProduction) {
+  if (!config.serveDist) {
     const {createServer: createViteServer} = await import('vite');
     const vite = await createViteServer({
       server: {
@@ -49,6 +65,7 @@ async function startServer() {
 
     // Non-blocking startup ingest + periodic refresh every 3 hours (only processes new URL hashes once).
     const runBriefIngest = () => {
+      if (config.geminiFake) return;
       void globalBriefService.refreshFeeds(process.env.GEMINI_API_KEY?.trim() ? generate : undefined).catch(() => {
         // Seed items remain available if remote RSS feeds are unreachable.
       });

@@ -1,0 +1,11 @@
+{
+  "responses": [
+    {
+      "targetPhrase": "no obstante",
+      "alternativeFormal": "sin embargo",
+      "registerNote": "Formal connector.",
+      "exampleSentence": "No obstante, el plan sigue vigente.",
+      "category": "High-Register Connectors"
+    }
+  ]
+}

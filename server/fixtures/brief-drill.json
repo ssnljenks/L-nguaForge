@@ -1,0 +1,179 @@
+{
+  "responses": [
+    {
+      "orientationLine": "This passage is from a news report about public libraries.",
+      "questions": [
+        {
+          "questionEnglish": "What is the main idea of the passage?",
+          "questionType": "main_idea",
+          "correctIndex": 0,
+          "sourceQuote": "{{quote:SOURCE_PASSAGE}}",
+          "choices": [
+            {
+              "text": "Alpha 1",
+              "justification": "The passage states this directly.",
+              "trapType": "none"
+            },
+            {
+              "text": "Bravo 1",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "wrong_detail"
+            },
+            {
+              "text": "Charlie 1",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "wrong_detail"
+            },
+            {
+              "text": "Delta 1",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "wrong_detail"
+            }
+          ],
+          "targetVocabulary": [
+            {
+              "term": "bibliotecas",
+              "english": "libraries"
+            }
+          ]
+        },
+        {
+          "questionEnglish": "According to the passage, what will change?",
+          "questionType": "detail",
+          "correctIndex": 1,
+          "sourceQuote": "{{quote:SOURCE_PASSAGE}}",
+          "choices": [
+            {
+              "text": "Alpha 2",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "not_in_passage"
+            },
+            {
+              "text": "Bravo 2",
+              "justification": "The passage states this directly.",
+              "trapType": "none"
+            },
+            {
+              "text": "Charlie 2",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "not_in_passage"
+            },
+            {
+              "text": "Delta 2",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "not_in_passage"
+            }
+          ],
+          "targetVocabulary": [
+            {
+              "term": "bibliotecas",
+              "english": "libraries"
+            }
+          ]
+        },
+        {
+          "questionEnglish": "What can be inferred about the plan?",
+          "questionType": "inference",
+          "correctIndex": 2,
+          "sourceQuote": "{{quote:SOURCE_PASSAGE}}",
+          "choices": [
+            {
+              "text": "Alpha 3",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "over_inference"
+            },
+            {
+              "text": "Bravo 3",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "over_inference"
+            },
+            {
+              "text": "Charlie 3",
+              "justification": "The passage states this directly.",
+              "trapType": "none"
+            },
+            {
+              "text": "Delta 3",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "over_inference"
+            }
+          ],
+          "targetVocabulary": [
+            {
+              "term": "bibliotecas",
+              "english": "libraries"
+            }
+          ]
+        },
+        {
+          "questionEnglish": "What does the key term mean in context?",
+          "questionType": "vocabulary_in_context",
+          "correctIndex": 0,
+          "sourceQuote": "{{quote:SOURCE_PASSAGE}}",
+          "choices": [
+            {
+              "text": "Alpha 4",
+              "justification": "The passage states this directly.",
+              "trapType": "none"
+            },
+            {
+              "text": "Bravo 4",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "mentioned_not_answer"
+            },
+            {
+              "text": "Charlie 4",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "mentioned_not_answer"
+            },
+            {
+              "text": "Delta 4",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "mentioned_not_answer"
+            }
+          ],
+          "targetVocabulary": [
+            {
+              "term": "bibliotecas",
+              "english": "libraries"
+            }
+          ]
+        },
+        {
+          "questionEnglish": "What is the speaker's attitude?",
+          "questionType": "speaker_attitude",
+          "correctIndex": 1,
+          "sourceQuote": "{{quote:SOURCE_PASSAGE}}",
+          "choices": [
+            {
+              "text": "Alpha 5",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "true_not_answer"
+            },
+            {
+              "text": "Bravo 5",
+              "justification": "The passage states this directly.",
+              "trapType": "none"
+            },
+            {
+              "text": "Charlie 5",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "true_not_answer"
+            },
+            {
+              "text": "Delta 5",
+              "justification": "This is a trap: the passage says otherwise.",
+              "trapType": "true_not_answer"
+            }
+          ],
+          "targetVocabulary": [
+            {
+              "term": "bibliotecas",
+              "english": "libraries"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "responses": [
+    {
+      "mainPoint": "partial",
+      "keyDetails": {
+        "found": 1,
+        "total": 3,
+        "missing": ["The cost of the plan", "When it starts"]
+      },
+      "additions": [
+        {
+          "description": "The source never says the plan is because of the war.",
+          "learnerSpan": "because of the war",
+          "sourceQuote": "{{quote:SOURCE_TRANSCRIPT}}"
+        }
+      ],
+      "omissions": [
+        {
+          "description": "You left out the cost.",
+          "sourceQuote": "{{quote:SOURCE_TRANSCRIPT}}"
+        }
+      ],
+      "distortions": [],
+      "modelGist": "The government announced a plan to expand public libraries with longer hours and free internet. It starts in March in five cities."
+    }
+  ]
+}

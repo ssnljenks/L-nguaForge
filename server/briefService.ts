@@ -481,6 +481,14 @@ export class BriefService {
     }
   }
 
+  /**
+   * Test mode (GEMINI_FAKE=1): serve fixed items next to the seeds and never fetch publisher feeds.
+   */
+  public useFixtureItems(items: readonly StoredBriefItem[]): void {
+    this.sources = [];
+    for (const item of items) this.cache.set(item.id, item);
+  }
+
   public getSources(): readonly SourceFeedConfig[] {
     return this.sources;
   }
