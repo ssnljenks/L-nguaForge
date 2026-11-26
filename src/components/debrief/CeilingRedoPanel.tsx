@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {CheckCircle2, Loader2, Mic, MicOff, RotateCcw, Send, Volume2, X} from 'lucide-react';
 import type {AppendErrorEventsFn, CeilingMoment, OpiRedoRecord, OpiSession} from '../../types';
 import {getDialectInfo, LANGUAGE_LABELS} from '../../utils/ilrLogic';
@@ -35,12 +35,14 @@ export const CeilingRedoPanel: React.FC<CeilingRedoPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [record, setRecord] = useState<OpiRedoRecord | null>(existingRedo ?? null);
 
-  useEffect(() => {
-    const combined = `${stt.finalTranscript} ${stt.interimTranscript}`.trim();
-    if (combined && stt.isListening) {
-      setRedoText(combined);
-    }
-  }, [stt.finalTranscript, stt.interimTranscript, stt.isListening]);
+  // Mirror the live mic transcript into the answer box. Done while rendering (React's "adjust state
+  // when a value changes" pattern) instead of in an effect, so there is no extra cascading render.
+  const liveTranscript = `${stt.finalTranscript} ${stt.interimTranscript}`.trim();
+  const [mirroredTranscript, setMirroredTranscript] = useState('');
+  if (stt.isListening && liveTranscript && liveTranscript !== mirroredTranscript) {
+    setMirroredTranscript(liveTranscript);
+    setRedoText(liveTranscript);
+  }
 
   const handleListenPrompt = () => {
     tts.speak(ceiling.examinerPrompt, {
@@ -55,6 +57,7 @@ export const CeilingRedoPanel: React.FC<CeilingRedoPanelProps> = ({
     } else {
       tts.stop();
       stt.resetTranscript();
+      setMirroredTranscript('');
       stt.startListening({lang: dialectInfo.bcp47, continuous: true});
     }
   };
