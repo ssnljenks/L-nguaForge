@@ -54,6 +54,8 @@ export interface StoredBriefItem extends BriefItem {
 
 const MAX_CACHE_SIZE = 150;
 const MAX_FEED_FETCH_TIMEOUT_MS = 5000;
+/** Minimum gap between user-triggered feed refreshes (the background job runs every 3 hours). */
+export const USER_REFRESH_MIN_INTERVAL_MS = 10 * 60 * 1000;
 
 // Study excerpts for the built-in practice stories (written for LinguaForge, not real news reports).
 const SEED_EXTENDED_DATA: Record<string, {studyExcerpt: string; keyVocabulary: {term: string; english: string}[]}> = {
@@ -408,6 +410,9 @@ export class BriefService {
   private cache = new Map<string, StoredBriefItem>();
   private lastRefreshedAt: string = new Date().toISOString();
   private sources: SourceFeedConfig[] = [];
+  /** The refresh currently running, shared by all concurrent callers (REVIEW H-2). */
+  private inFlightRefresh: Promise<{fetchedCount: number; newItemsCount: number}> | null = null;
+  private lastRefreshCompletedAtMs = 0;
 
   constructor() {
     this.initSeedData();
@@ -893,7 +898,35 @@ GRADING RULES (STRICT FIDELITY):
   /**
    * Refreshes feeds from safe open-source RSS/Atom sources.
    */
-  public async refreshFeeds(generate?: GenerateStructured): Promise<{fetchedCount: number; newItemsCount: number}> {
+  public refreshFeeds(generate?: GenerateStructured): Promise<{fetchedCount: number; newItemsCount: number}> {
+    // Single-flight: concurrent callers share one run instead of fetching and analyzing items twice.
+    if (!this.inFlightRefresh) {
+      this.inFlightRefresh = this.runRefresh(generate).finally(() => {
+        this.inFlightRefresh = null;
+        this.lastRefreshCompletedAtMs = Date.now();
+      });
+    }
+    return this.inFlightRefresh;
+  }
+
+  /**
+   * User-triggered refresh (POST /api/brief/refresh): joins a running refresh, and otherwise does
+   * nothing if the last one finished less than `minIntervalMs` ago, so the public endpoint cannot be
+   * used to hammer publishers or multiply Gemini analysis cost (REVIEW H-2).
+   */
+  public requestRefresh(
+    generate: GenerateStructured | undefined,
+    minIntervalMs = USER_REFRESH_MIN_INTERVAL_MS,
+    nowMs = Date.now()
+  ): Promise<{fetchedCount: number; newItemsCount: number; skipped?: boolean}> {
+    if (this.inFlightRefresh) return this.inFlightRefresh;
+    if (this.lastRefreshCompletedAtMs > 0 && nowMs - this.lastRefreshCompletedAtMs < minIntervalMs) {
+      return Promise.resolve({fetchedCount: 0, newItemsCount: 0, skipped: true});
+    }
+    return this.refreshFeeds(generate);
+  }
+
+  private async runRefresh(generate?: GenerateStructured): Promise<{fetchedCount: number; newItemsCount: number}> {
     let fetchedCount = 0;
     let newItemsCount = 0;
 

@@ -117,3 +117,44 @@ test('very short publisher text is not drillable', async () => {
   const item = svc.getFeed({language: 'es', mediaType: 'text'}).items.find((i) => i.title === 'Breve');
   assert.equal(item?.drillable, false);
 });
+
+test('concurrent refreshes share one run, and user refreshes are rate limited (REVIEW H-2)', async () => {
+  const svc = new BriefService();
+  (svc as unknown as {sources: SourceFeedConfig[]}).sources = [textSource, audioSource];
+  let fetches = 0;
+  let modelCalls = 0;
+  globalThis.fetch = (async () => {
+    fetches++;
+    await new Promise((r) => setTimeout(r, 20));
+    return new Response(
+      rss(
+        `<item><title>X</title><link>https://news.test/x${fetches}</link><description>${PUBLISHER_TEXT}</description></item>`
+      ),
+      {status: 200}
+    );
+  }) as typeof fetch;
+  const countingGenerate: GenerateStructured = async (req) => {
+    modelCalls++;
+    return generate(req);
+  };
+
+  // Three simultaneous callers -> one pass over the 2 feeds, one analysis per new item.
+  const results = await Promise.all([
+    svc.requestRefresh(countingGenerate),
+    svc.requestRefresh(countingGenerate),
+    svc.refreshFeeds(countingGenerate),
+  ]);
+  assert.equal(fetches, 2);
+  assert.equal(modelCalls, 1, 'only the text item is new and analyzed (the audio item has no enclosure)');
+  assert.equal(results[0], results[1]);
+
+  // Right after it finished, a user refresh is skipped: no outbound requests.
+  const again = await svc.requestRefresh(countingGenerate);
+  assert.equal(again.skipped, true);
+  assert.equal(fetches, 2);
+
+  // After the cooldown it runs again.
+  const later = await svc.requestRefresh(countingGenerate, 10 * 60 * 1000, Date.now() + 11 * 60 * 1000);
+  assert.notEqual(later.skipped, true);
+  assert.equal(fetches, 4);
+});
