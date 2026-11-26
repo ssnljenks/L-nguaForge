@@ -13,7 +13,7 @@ import {
   pickNextFunctionForLevel,
   splitProblemSpan,
 } from './opiLogic.ts';
-import type {TurnAssessment} from '../types.ts';
+import type {OpiPhase, TurnAssessment} from '../types.ts';
 
 test('migrateLegacyLevels maps legacy baseline and probe labels cleanly', () => {
   assert.deepEqual(migrateLegacyLevels(undefined, 'level_2_baseline'), {workingLevel: 2, probeLevel: 3});
@@ -229,4 +229,69 @@ test('splitProblemSpan, extractClipWindow, and buildWaveformBars behave reliably
   const active = buildWaveformBars(0.85, true, 4, 16);
   assert.equal(active.length, 16);
   assert.ok(active.every((h) => h >= 0.14 && h <= 1));
+});
+
+/** Drives the adaptive flow turn by turn, assessing every turn with `outcomeFor(turn)`. */
+function runAdaptive(
+  turns: number,
+  initial: TurnAssessment[],
+  outcomeFor: (turn: number) => 'sustained' | 'breakdown'
+): {working: number; phase: string; probe: number}[] {
+  const assessments = [...initial];
+  let working: 1 | 2 | 3 = 2;
+  let phase: OpiPhase = 'level_check';
+  const steps = [];
+  for (let turn = 3; turn < 3 + turns; turn++) {
+    const step = determineNextOpiStep({
+      elapsedSeconds: turn * 60,
+      candidateTurnCount: turn,
+      currentPhase: phase,
+      workingLevel: working,
+      includeRoleplay: false,
+      assessments,
+      durationTargetSeconds: 1200,
+      lastOutcome: outcomeFor(turn - 1),
+    });
+    working = step.workingLevel;
+    phase = step.phase;
+    const level = step.phase === 'probe' ? step.probeLevel : step.workingLevel;
+    assessments.push({
+      functionKey: step.targetFunctionKey,
+      outcome: outcomeFor(turn),
+      evidence: 'x',
+      phase: step.phase,
+      targetLevel: level,
+    } as TurnAssessment);
+    steps.push({working: step.workingLevel, phase: step.phase, probe: step.probeLevel});
+  }
+  return steps;
+}
+
+test('adaptive OPI recovers from Level 1 after one early Level 2 breakdown (REVIEW H-6)', () => {
+  const earlyBreakdown = {
+    functionKey: 'l2_facts',
+    outcome: 'breakdown',
+    evidence: 'x',
+    phase: 'level_check',
+    targetLevel: 2,
+  } as TurnAssessment;
+  const steps = runAdaptive(9, [earlyBreakdown], () => 'sustained');
+  assert.equal(steps[0].working, 1, 'first drops to Level 1 after the breakdown');
+  assert.ok(
+    steps.some((s) => s.working === 2),
+    'returns to Level 2 once the floor holds'
+  );
+  assert.ok(
+    steps.some((s) => s.phase === 'probe' && s.probe === 3),
+    'Level 3 is probed again'
+  );
+});
+
+test('adaptive OPI still steps down when the latest Level 2 evidence breaks down (REVIEW H-6)', () => {
+  const steps = runAdaptive(6, [], (turn) => (turn >= 5 ? 'breakdown' : 'sustained'));
+  assert.ok(
+    steps.some((s) => s.working === 1),
+    'drops to Level 1 after repeated Level 2 breakdowns'
+  );
+  assert.equal(steps[steps.length - 1].phase === 'probe' && steps[steps.length - 1].probe === 3, false);
 });
