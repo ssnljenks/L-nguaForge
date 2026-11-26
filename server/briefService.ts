@@ -35,6 +35,7 @@ import {MODELS} from './config.ts';
 import {extractReportedErrors} from './errorReporting.ts';
 import {UserFacingError} from './errors.ts';
 import {BUDGETS, type GenerateStructured, ThinkingLevel} from './gemini.ts';
+import {fetchFeedXml, type FeedFetchOptions, isSafeFeedUrl} from './feedFetch.ts';
 import {clampText, createUntrustedFence} from './untrustedContent.ts';
 
 export interface SourceFeedConfig {
@@ -54,7 +55,6 @@ export interface StoredBriefItem extends BriefItem {
 }
 
 const MAX_CACHE_SIZE = 150;
-const MAX_FEED_FETCH_TIMEOUT_MS = 5000;
 /** Output caps for feed-derived and model-written fields (REVIEW M-4). */
 export const BRIEF_FIELD_LIMITS = {
   title: 200,
@@ -428,7 +428,10 @@ export class BriefService {
   private inFlightRefresh: Promise<{fetchedCount: number; newItemsCount: number}> | null = null;
   private lastRefreshCompletedAtMs = 0;
 
-  constructor() {
+  private readonly fetchOptions: Pick<FeedFetchOptions, 'resolveHost' | 'fetchImpl'>;
+
+  constructor(options: Pick<FeedFetchOptions, 'resolveHost' | 'fetchImpl'> = {}) {
+    this.fetchOptions = options;
     this.initSeedData();
     this.loadSourcesConfig();
   }
@@ -478,55 +481,9 @@ export class BriefService {
     return this.lastRefreshedAt;
   }
 
+  /** Synchronous URL check; DNS answers are checked per hop when fetching (REVIEW M-1). */
   public isSafeFeedUrl(urlString: string): boolean {
-    try {
-      const u = new URL(urlString);
-      if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
-
-      const hostname = u.hostname.toLowerCase();
-      // Block localhost, link-local, loopbacks, internal domains
-      if (
-        hostname === 'localhost' ||
-        hostname.endsWith('.localhost') ||
-        hostname.endsWith('.local') ||
-        hostname.endsWith('.internal') ||
-        hostname === '127.0.0.1' ||
-        hostname === '0.0.0.0' ||
-        hostname === '::1' ||
-        hostname === '169.254.169.254' // Cloud instance metadata!
-      ) {
-        return false;
-      }
-
-      // Block placeholder domains explicitly to save network timeouts
-      if (
-        hostname === 'example.com' ||
-        hostname === 'example.org' ||
-        hostname === 'example.net' ||
-        hostname.includes('placeholder')
-      ) {
-        return false;
-      }
-
-      // Check IPv4 private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8)
-      const ipParts = hostname.split('.').map(Number);
-      if (ipParts.length === 4 && ipParts.every((p) => !Number.isNaN(p) && p >= 0 && p <= 255)) {
-        const [a, b] = ipParts;
-        if (
-          a === 127 ||
-          a === 10 ||
-          (a === 172 && b >= 16 && b <= 31) ||
-          (a === 192 && b === 168) ||
-          (a === 169 && b === 254)
-        ) {
-          return false;
-        }
-      }
-
-      return true;
-    } catch {
-      return false;
-    }
+    return isSafeFeedUrl(urlString);
   }
 
   public hashUrl(url: string): string {
@@ -981,20 +938,11 @@ GRADING RULES (STRICT FIDELITY):
   private async fetchFeedItems(
     source: SourceFeedConfig
   ): Promise<{title: string; link: string; description: string; pubDate?: string; audioUrl?: string}[]> {
-    const res = await fetch(source.url, {
-      signal: AbortSignal.timeout(MAX_FEED_FETCH_TIMEOUT_MS),
-      headers: {
-        'User-Agent': 'LinguaForge/1.0 (RSS Aggregator; Educational)',
-        Accept: 'application/rss+xml, application/atom+xml, text/xml, application/xml',
-      },
-    });
-
-    if (!res.ok) return [];
-    const xml = await res.text();
+    const xml = await fetchFeedXml(source.url, this.fetchOptions);
     return this.parseXmlFeed(xml, source.mediaType);
   }
 
-  private parseXmlFeed(
+  public parseXmlFeed(
     xml: string,
     mediaType: BriefMediaType
   ): {

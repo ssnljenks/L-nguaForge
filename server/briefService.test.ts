@@ -17,8 +17,11 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
 });
 
+/** Test hosts resolve to a public documentation-free address so the per-hop DNS check passes. */
+const publicResolver = async () => ['93.184.216.34'];
+
 function serviceWith(sources: SourceFeedConfig[], xmlBySourceUrl: Record<string, string>): BriefService {
-  const svc = new BriefService();
+  const svc = new BriefService({resolveHost: publicResolver});
   (svc as unknown as {sources: SourceFeedConfig[]}).sources = sources;
   globalThis.fetch = (async (url: string) =>
     new Response(xmlBySourceUrl[String(url)] ?? '', {
@@ -119,7 +122,7 @@ test('very short publisher text is not drillable', async () => {
 });
 
 test('concurrent refreshes share one run, and user refreshes are rate limited (REVIEW H-2)', async () => {
-  const svc = new BriefService();
+  const svc = new BriefService({resolveHost: publicResolver});
   (svc as unknown as {sources: SourceFeedConfig[]}).sources = [textSource, audioSource];
   let fetches = 0;
   let modelCalls = 0;
@@ -130,7 +133,7 @@ test('concurrent refreshes share one run, and user refreshes are rate limited (R
       rss(
         `<item><title>X</title><link>https://news.test/x${fetches}</link><description>${PUBLISHER_TEXT}</description></item>`
       ),
-      {status: 200}
+      {status: 200, headers: {'content-type': 'application/rss+xml'}}
     );
   }) as typeof fetch;
   const countingGenerate: GenerateStructured = async (req) => {
@@ -272,4 +275,46 @@ test('drill and gist prompts fence the passage, and their output fields are clam
     assert.ok(list.every((f) => f.description.length <= 300 && f.sourceQuote.length <= 300));
     assert.ok(list.every((f) => (f.learnerSpan ?? '').length <= 300));
   }
+});
+
+test('parseXmlFeed reads RSS and Atom items (REVIEW M-1)', () => {
+  const svc = new BriefService({resolveHost: publicResolver});
+  const items = svc.parseXmlFeed(
+    rss(
+      `<item><title><![CDATA[Título <b>uno</b>]]></title><link>https://news.test/1</link>` +
+        `<description><![CDATA[<p>Primer párrafo.</p>]]></description><pubDate>Tue, 03 Nov 2026 10:00:00 GMT</pubDate></item>` +
+        `<item><title>Sin enlace</title><description>x</description></item>`
+    ),
+    'text'
+  );
+  assert.deepEqual(
+    items.map((i) => ({title: i.title, link: i.link, description: i.description})),
+    [{title: 'Título uno', link: 'https://news.test/1', description: 'Primer párrafo.'}]
+  );
+  assert.equal(items[0].pubDate, 'Tue, 03 Nov 2026 10:00:00 GMT');
+
+  const atom = svc.parseXmlFeed(
+    `<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>Entrada</title><link href="https://news.test/e"/>` +
+      `<content type="html"><![CDATA[<p>Texto</p>]]></content><updated>2026-11-03T10:00:00Z</updated></entry></feed>`,
+    'text'
+  );
+  assert.equal(atom.length, 1);
+  assert.equal(atom[0].link, 'https://news.test/e');
+  assert.equal(atom[0].description, 'Texto');
+});
+
+test('parseXmlFeed keeps only audio items with an audio enclosure for audio feeds (REVIEW M-1)', () => {
+  const svc = new BriefService({resolveHost: publicResolver});
+  const items = svc.parseXmlFeed(
+    rss(
+      `<item><title>Con audio</title><link>https://radio.test/1</link><enclosure url="https://radio.test/1.mp3" type="audio/mpeg" length="1"/><itunes:duration>02:05</itunes:duration></item>` +
+        `<item><title>Sin audio</title><link>https://radio.test/2</link></item>` +
+        `<item><title>Imagen</title><link>https://radio.test/3</link><enclosure url="https://radio.test/3.jpg" type="image/jpeg"/></item>`
+    ),
+    'audio'
+  );
+  assert.deepEqual(
+    items.map((i) => [i.title, i.audioUrl, i.durationSeconds]),
+    [['Con audio', 'https://radio.test/1.mp3', 125]]
+  );
 });
