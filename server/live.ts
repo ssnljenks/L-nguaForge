@@ -2,6 +2,7 @@ import type {IncomingMessage, Server} from 'http';
 import {type GoogleGenAI, type LiveServerMessage, Modality} from '@google/genai';
 import {type RawData, WebSocket, WebSocketServer} from 'ws';
 import type {ChatRegisterMode} from '../src/types.ts';
+import {CLASSIFICATION_REJECT_MESSAGE, findClassificationMarkingInTexts} from '../src/utils/classificationGuard.ts';
 import {mergeTranscriptChunk} from '../src/utils/liveAudio.ts';
 import {LIVE_WS_MAX_PAYLOAD_BYTES, MODELS, type ServerConfig, VALID_LIVE_VOICES} from './config.ts';
 import {toPublicError} from './errors.ts';
@@ -312,6 +313,12 @@ export function attachLiveBridge(
           return;
         case 'text': {
           const cleanText = sanitizeString(msg.text, 2000);
+          // Typed text goes straight to Gemini, so it gets the same guard as REST (REVIEW H-4).
+          // Rejection is non-fatal: the voice session keeps running.
+          if (cleanText && findClassificationMarkingInTexts([cleanText])) {
+            sendJson({type: 'text_rejected', error: CLASSIFICATION_REJECT_MESSAGE});
+            return;
+          }
           if (cleanText && liveSession) {
             currentUserTranscript = cleanText;
             try {

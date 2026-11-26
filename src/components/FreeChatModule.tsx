@@ -60,6 +60,7 @@ import {TalkSetupScreen} from './talk/TalkSetupScreen';
 import {ColloquialTranscriptText} from './talk/ColloquialTranscriptText';
 import {HowDoLocalsSaySheet} from './talk/HowDoLocalsSaySheet';
 import {TalkWrapUpView} from './talk/TalkWrapUpView';
+import {CLASSIFICATION_REJECT_MESSAGE, detectClassificationMarking} from '../utils/classificationGuard';
 
 export interface TalkWorkRequest {
   domain: MilitaryDomain;
@@ -511,6 +512,12 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
     setColloquialLookup(null);
 
     if (live.isLive) {
+      // Same guard the server applies to typed live text (REVIEW H-4); keep the draft so it can be edited.
+      if (detectClassificationMarking(clean)) {
+        setTextError(CLASSIFICATION_REJECT_MESSAGE);
+        setTextInput(clean);
+        return;
+      }
       const sent = live.sendLiveText(clean);
       if (!sent) {
         setTextError('Still connecting live audio — try again in a second.');

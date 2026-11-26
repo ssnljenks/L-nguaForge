@@ -1232,3 +1232,32 @@ test('Work focus OFF keeps military/work framing out of Lab, Vocab and grader pr
   await post(`${h.url}/api/lab/prep-prompt`, {language: 'es', domain: 'maritime_surveillance', workFocus: true});
   assert.match(String(h.calls[0].contents), /Maritime/);
 });
+
+test('client-supplied briefStory and debrief evidence pass the classification guard (REVIEW H-4)', async () => {
+  const h = await startApp();
+  const opi = await post(`${h.url}/api/opi/turn`, {
+    language: 'es',
+    isOpening: true,
+    topicSource: 'brief',
+    briefStory: {
+      title: 'Noticia',
+      summary: 'Resumen TOP SECRET//SI del operativo',
+      orientationLine: 'x',
+      topic: 'society',
+    },
+  });
+  assert.equal(opi.status, 422);
+
+  const debrief = await post(`${h.url}/api/debrief/analyze`, {
+    language: 'es',
+    messages: [
+      {role: 'examiner', text: '¿Qué hiciste ayer?'},
+      {role: 'candidate', text: 'Fui al mercado con mi familia.'},
+    ],
+    assessments: [
+      {functionKey: 'l2_narrate_past', outcome: 'sustained', evidence: 'Mentioned (S//NF) details', phase: 'probe'},
+    ],
+  });
+  assert.equal(debrief.status, 422);
+  assert.equal(h.calls.length, 0, 'no model call for either request');
+});

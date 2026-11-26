@@ -128,7 +128,8 @@ export function registerDebriefRoutes(router: Router, {generate}: RouteDeps): vo
       }
       const fullTranscript = transcriptLines.join('\n');
 
-      assertUnclassifiedText(fullTranscript);
+      // Client-supplied assessment evidence is also placed in the prompt (REVIEW H-4).
+      assertUnclassifiedText(fullTranscript, ...clientAssessments.map((a) => a.evidence));
 
       const ratedClientAssessments = clientAssessments.filter((a) => a.phase !== 'warmup');
       const ratingEnginePreview = ratedClientAssessments.length > 0 ? calculateOpiRating(ratedClientAssessments) : null;

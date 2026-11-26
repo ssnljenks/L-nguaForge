@@ -85,7 +85,8 @@ export interface TrainingContext {
 }
 
 /** Topic framing used whenever Work focus is OFF: general proficiency first, no military content. */
-export const GENERAL_TOPICS_LABEL = 'everyday and general-interest topics (society, economy, culture, science, public life)';
+export const GENERAL_TOPICS_LABEL =
+  'everyday and general-interest topics (society, economy, culture, science, public life)';
 
 /**
  * Resolves language/dialect/domain from client-supplied IDs into server-owned labels.

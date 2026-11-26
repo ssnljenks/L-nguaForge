@@ -10,6 +10,7 @@ import {attachLiveBridge, type LiveBridgeDeps} from './live.ts';
 interface FakeLive {
   connectCalls: Array<{config: {systemInstruction?: string}}>;
   sentAudio: string[];
+  sentText: string[];
   emit: (message: unknown) => void;
 }
 
@@ -17,7 +18,7 @@ const servers: http.Server[] = [];
 after(() => servers.forEach((s) => s.close()));
 
 async function startBridge(overrides: Partial<ServerConfig> = {}, analyzeTalkTurn?: LiveBridgeDeps['analyzeTalkTurn']) {
-  const fake: FakeLive = {connectCalls: [], sentAudio: [], emit: () => {}};
+  const fake: FakeLive = {connectCalls: [], sentAudio: [], sentText: [], emit: () => {}};
   const client = {
     live: {
       connect: async (params: {config: {systemInstruction?: string}; callbacks: {onmessage: (m: unknown) => void}}) => {
@@ -25,7 +26,7 @@ async function startBridge(overrides: Partial<ServerConfig> = {}, analyzeTalkTur
         fake.emit = params.callbacks.onmessage;
         return {
           sendRealtimeInput: (input: {audio: {data: string}}) => fake.sentAudio.push(input.audio.data),
-          sendClientContent: () => {},
+          sendClientContent: (c: {turns: {parts: {text: string}[]}[]}) => fake.sentText.push(c.turns[0].parts[0].text),
           close: () => {},
         };
       },
@@ -153,5 +154,22 @@ test('Talk live session builds tutor system prompt and emits talk_note on turnCo
   const note = received.json.find((m) => m.type === 'talk_note');
   assert.match(String(note?.recastNote), /laburo/);
   assert.equal((note?.pickedUp as unknown[])?.length, 1);
+  ws.close();
+});
+
+test('typed live text with classification markings is rejected without ending the call (REVIEW H-4)', async () => {
+  const {fake, url, origin} = await startBridge();
+  const {ws, received} = await connect(url, origin);
+  ws.send(JSON.stringify({type: 'start', language: 'es'}));
+  await waitFor(() => received.json.some((m) => m.type === 'ready'), 'ready');
+
+  ws.send(JSON.stringify({type: 'text', text: 'Resumen SECRET//NOFORN del informe'}));
+  await waitFor(() => received.json.some((m) => m.type === 'text_rejected'), 'text_rejected');
+  assert.equal(fake.sentText.length, 0, 'marked text never reaches Gemini');
+  assert.ok(!received.json.some((m) => m.type === 'error' || m.type === 'closed'), 'session stays open');
+
+  ws.send(JSON.stringify({type: 'text', text: 'Hola, ¿qué tal?'}));
+  await waitFor(() => fake.sentText.length === 1, 'clean text forwarded');
+  assert.equal(fake.sentText[0], 'Hola, ¿qué tal?');
   ws.close();
 });
