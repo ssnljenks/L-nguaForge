@@ -1,5 +1,5 @@
 import React from 'react';
-import {BookMarked, Check, Compass, FileBarChart2, MessageSquare, Mic, Timer, X} from 'lucide-react';
+import {Check, Compass, FileText, Layers, MessageSquare, Mic, Sun, X} from 'lucide-react';
 import type {ModuleTab} from '../types';
 import {Dialog} from './shared/Dialog';
 
@@ -19,70 +19,70 @@ interface TabIntroSpec {
 }
 
 const TAB_INTROS: Record<ModuleTab, TabIntroSpec> = {
-  chat: {
-    eyebrow: 'Chat Tab · Home Base',
-    title: 'Live Voice Conversation Partner',
+  today: {
+    eyebrow: 'Today Tab · Daily Plan',
+    title: 'Your Daily ILR Training Hub',
     summary:
-      'Practice natural back-and-forth speech in real time using Gemini Live—or switch to typing anytime you are in a quiet space.',
+      'Track your Listening, Reading, and Speaking estimates against your ILR goals and walk through a focused 25-minute daily plan.',
     bullets: [
-      'Choose Casual, ILR 2+, or ILR 3 tone before starting a voice session.',
-      'Tap any partner word in live captions (or use Flag a Word) to save it straight to your Vocab Vault.',
-      'Built-in Spanish/Portuguese dictionaries handle common word lookups offline at zero API cost.',
+      'Tap the ILR profile card anytime to inspect your recurring errors and launch targeted 2-minute fixes.',
+      'Follow the 3-step plan: FSRS Vocab warm-up, a Brief drill for your weaker receptive skill, and a Speaking drill.',
+      'Adjust your ILR goals (default 3/3/3), Work focus, or optional exam date anytime in Settings.',
     ],
-    cta: 'Start Chatting',
+    cta: 'Start Today',
+    icon: Sun,
+  },
+  talk: {
+    eyebrow: 'Talk Tab · Local Conversation',
+    title: 'Casual Practice with a Local Tutor',
+    summary:
+      'Pick a tutor from a real city, dial in how much local slang you want, and chat naturally by voice or text.',
+    bullets: [
+      'Choose a scene like an asado, taxi ride, or neighborhood café—never exam scores or grades.',
+      'Dotted-underlined local expressions and subtle recast notes help you pick up authentic phrasing as you chat.',
+      'Use "How do locals say…" mid-chat and "Wrap up" anytime to save new words, phrases, and patterns to Vocab.',
+    ],
+    cta: 'Start Talking',
     icon: MessageSquare,
   },
-  opi: {
-    eyebrow: 'OPI Tab · Simulated Evaluation',
-    title: 'Live Voice OPI Simulator',
+  test_prep: {
+    eyebrow: 'Test Prep Tab · Simulated Evaluation',
+    title: 'OPI Simulator, PREP Lab & Past Debriefs',
     summary:
-      'Stress-test your ILR Level 2 to 2+/3 progression with an examiner that adapts dynamically between concrete baselines and abstract policy probes.',
+      'Stress-test your ILR Level 2 to 2+/3 progression with adaptive OPI probes, 90-second PREP monologues, and consecutive interpretation.',
     bullets: [
-      'Starts at Level 2 concrete topics, then pushes into Level 3 hypotheticals requiring the subjunctive.',
-      'Use the 5-Second Tip-of-the-Tongue Helper when stuck mid-thought to train active recall.',
-      'Tap End & Run ILR Debrief afterward for a structured level audit.',
+      'OPI sessions open an automatic practice-estimate Debrief as soon as you finish.',
+      'Open PREP & Interp Lab for timed 90-second monologues and note-chunking drills.',
+      'Review past interviews and Natural 2+ Rewrites anytime under Past sessions.',
     ],
-    cta: 'Enter OPI Room',
+    cta: 'Enter Test Prep',
     icon: Mic,
   },
-  debrief: {
-    eyebrow: 'Debrief Tab · Post-Session Audit',
-    title: 'ILR Performance Debrief',
+  brief: {
+    eyebrow: 'Brief Tab · Authentic News & DLPT Drills',
+    title: 'Authentic Open-Source Feed by ILR Level',
     summary:
-      'Review completed OPI interviews and 90-second monologues for register control, false friends, and concrete upgrades.',
+      'Explore authentic radio broadcasts and news in Spanish and Portuguese rated from ILR Level 2 to 3+, matched to the DLPT range.',
     bullets: [
-      'Generates side-by-side Natural 2+ Rewrites tailored to what you actually said.',
-      'Audits grammar precision, register control, and subjunctive/conditional opportunities.',
-      'Save upgraded phrasing directly into your Vocab Vault with one tap.',
+      'Filter by Listening or Reading, ILR level (2, 2+, 3, 3+), topic, and optional Work focus.',
+      'Test your comprehension with 3-question DLPT drills, instant rationale, and practice estimates.',
+      'Tap "Brief it back" to take any story directly into an Oral Proficiency Interview as Level 3 probe material.',
     ],
-    cta: 'View Debriefs',
-    icon: FileBarChart2,
+    cta: 'Explore Briefs',
+    icon: FileText,
   },
-  vault: {
-    eyebrow: 'Vault Tab · Active Recall',
-    title: 'Personal Vocab Vault',
+  vocab: {
+    eyebrow: 'Vocab Tab · Active Recall',
+    title: 'Personal Vocab & Active Recall',
     summary:
-      'Turn every word you struggled with during Chat or OPI into active-recall drills instead of letting live practice slip away.',
+      'Turn every word you struggled with during Talk or Test prep into active-recall drills instead of letting live practice slip away.',
     bullets: [
       'Filter saved words in your active language by category, search keywords, or mastery status.',
       'Drill terms in original sentences with AI or manual recall checks.',
       'Export your captured vocabulary as an Anki-ready CSV deck anytime.',
     ],
-    cta: 'Open Vault',
-    icon: BookMarked,
-  },
-  lab: {
-    eyebrow: 'Lab Tab · Briefing & Interp Drills',
-    title: '90s PREP & Consecutive Interp Lab',
-    summary:
-      'Train crisp 90-second policy monologues and consecutive interpretation note-chunking for high-stakes briefings.',
-    bullets: [
-      '90s PREP tracks Point → Reason → Example → Pivot on a live visual pacing timeline.',
-      'Consecutive Interp pairs Blind Listen audio clips with a Rozan-style symbol scratchpad.',
-      'Grades structural clarity, numerical fidelity, and diplomatic register.',
-    ],
-    cta: 'Open Lab',
-    icon: Timer,
+    cta: 'Open Vocab',
+    icon: Layers,
   },
 };
 

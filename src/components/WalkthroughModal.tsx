@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {ArrowRight, BookMarked, Check, DatabaseZap, MessageSquare, Mic, Timer, X} from 'lucide-react';
+import {ArrowRight, Check, DatabaseZap, Layers, MessageSquare, Mic, Newspaper, Timer, X} from 'lucide-react';
 import type {ModuleTab} from '../types';
 import {Dialog} from './shared/Dialog';
 
@@ -24,62 +24,77 @@ interface TourStep {
 const TOUR_STEPS: TourStep[] = [
   {
     id: 'live-chat',
-    eyebrow: 'Home Base · Gemini Live',
-    title: 'Real-Time Back-and-Forth Voice Chat',
+    eyebrow: 'Talk · Local Tutors',
+    title: 'Casual Voice & Text Chat with Regional Tutors',
     description:
-      'Start every session right here on the home dashboard. Tap Start Live Voice for a natural, interruptible conversation in your chosen Spanish or Portuguese dialect.',
+      'Pick a tutor from Buenos Aires, Medellín, San Juan, Mexico City, Rio, Salvador, or Lisbon—choose an everyday scene and chat naturally.',
     highlights: [
-      'Choose Casual, ILR 2+, or ILR 3 tone before starting.',
-      'Switch to Type instead anytime you are in a quiet room.',
-      'Live captions transcribe both sides so you can review or replay turns.',
+      'Dial slang from textbook (0) to full street (4) and choose Recast as I go, At the end only, or Off.',
+      'Ask "How do locals say…" anytime, or tap dotted-underlined local expressions in captions.',
+      'Tap "Wrap up" when finished to save new words, phrases, and patterns straight into Vocab.',
     ],
-    targetTab: 'chat',
-    targetLabel: 'Stay on Live Voice Chat',
+    targetTab: 'talk',
+    targetLabel: 'Open Talk',
     icon: MessageSquare,
   },
   {
     id: 'vocab-capture',
-    eyebrow: 'Zero-API Lookups · Quota Saver',
+    eyebrow: 'Vocab · Offline-First Lookups',
     title: 'Tap Words & Save Vocabulary Offline First',
     description:
-      'Never waste study time or live conversation momentum looking up common words. Tap any partner word or open Flag a Word to save phrases straight into your Vocab Vault.',
+      'Tap any partner word or open Flag a Word to save phrases straight into your Vocab without breaking conversation flow.',
     highlights: [
-      'Your Vocab Vault, built-in ES/PT core dictionaries, and local cache answer common lookups in 0 ms with zero API calls.',
+      'Your Vocab, built-in ES/PT core dictionaries, and local cache answer common lookups in 0 ms.',
       'Only unfamiliar or sentence-specific idioms call AI, and every answer is cached locally afterward.',
-      'Full AI quota stays reserved for live voice and real-time speech.',
+      'Export your captured vocabulary as an Anki-ready CSV deck anytime.',
     ],
-    targetTab: 'vault',
-    targetLabel: 'Open Vocab Vault',
-    icon: DatabaseZap,
+    targetTab: 'vocab',
+    targetLabel: 'Open Vocab',
+    icon: Layers,
   },
   {
     id: 'opi-pipeline',
-    eyebrow: 'ILR 2 → 2+/3 Pipeline',
-    title: 'Live Voice OPI & ILR Debrief',
+    eyebrow: 'Test Prep · ILR 2 → 2+/3',
+    title: 'Live Voice OPI & Automatic Debrief',
     description:
-      'When you are ready for formal evaluation drills, run an adaptive OPI interview and review it in the ILR Debrief.',
+      'Run an adaptive OPI practice interview under Test prep; your practice-estimate Debrief opens automatically when you finish.',
     highlights: [
-      'Live Voice OPI: Examiner starts at Level 2 baseline, then probes into Level 3 abstract policy and counterfactuals.',
-      '5-Second Tip-of-the-Tongue Helper: Active recall prompt when you pause mid-thought.',
-      'ILR Debrief: Grades completed transcripts for discourse cohesion and provides Natural 2+ Rewrites.',
+      'Live Voice OPI starts at Level 2 baseline, then probes into Level 3 abstract policy and counterfactuals.',
+      '5-Second Tip-of-the-Tongue Helper trains active recall when you pause mid-thought.',
+      'Past sessions stay accessible right inside Test prep with Natural 2+ Rewrites.',
     ],
-    targetTab: 'opi',
-    targetLabel: 'Try Live Voice OPI',
+    targetTab: 'test_prep',
+    targetLabel: 'Open Test Prep',
     icon: Mic,
   },
   {
-    id: 'lab-vault',
-    eyebrow: 'Targeted Drills & Retention',
-    title: '90-Second PREP, Interp Lab & Active Recall',
-    description: 'Sharpen high-register briefing delivery and lock in words you struggled with during conversation.',
+    id: 'lab-drills',
+    eyebrow: 'Test Prep · PREP & Interp Lab',
+    title: '90-Second PREP & Consecutive Interp',
+    description: 'Sharpen high-register briefing delivery and consecutive note-chunking inside Test prep.',
     highlights: [
-      'PREP Monologue: Visual 90s pacing timeline (Point → Reason → Example → Pivot) with structural grading.',
-      'Consecutive Interp: Blind-listen delegation clips with Rozan-style chunking scratchpad.',
-      'Vocab Vault: Active-recall sentence drills and 1-click Anki CSV export.',
+      'PREP Monologue tracks Point → Reason → Example → Pivot on a live 90-second pacing bar.',
+      'Consecutive Interp pairs Blind Listen audio clips with a Rozan-style symbol scratchpad.',
+      'All AI scores are practice estimates built from original, open-source scenarios.',
     ],
-    targetTab: 'lab',
-    targetLabel: 'Explore PREP & Interp Lab',
+    targetTab: 'test_prep',
+    targetLabel: 'Go to Test Prep',
     icon: Timer,
+  },
+  {
+    id: 'brief-feed',
+    eyebrow: 'Brief · Authentic News & DLPT Drills',
+    title: 'Authentic Open-Source Feed by ILR Level',
+    description:
+      'Practice listening to broadcasts and reading news rated across ILR Levels 2 to 3+, with instant DLPT multiple-choice drills.',
+    highlights: [
+      'Segmented Listening & Reading feeds from Latin America, Spain, and Portugal.',
+      'Test comprehension with 3-question DLPT drills, instant rationales, and practice estimates.',
+      'Tap "Brief it back" to take any story straight into an Oral Proficiency Interview as Level 3 probe material.',
+    ],
+    targetTab: 'brief',
+    targetLabel: 'Open Briefs',
+    icon: Newspaper,
   },
 ];
 
@@ -161,20 +176,18 @@ export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({open, onClose
             </span>
           </span>
 
-          {step.targetTab !== 'chat' && (
-            <button
-              type="button"
-              onClick={() => {
-                onNavigateTab(step.targetTab);
-                onClose();
-              }}
-              className="inline-flex items-center gap-1 text-xs font-medium text-[#F3C669] hover:underline"
-            >
-              <BookMarked className="w-3.5 h-3.5" />
-              <span>{step.targetLabel}</span>
-              <ArrowRight className="w-3 h-3" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              onNavigateTab(step.targetTab);
+              onClose();
+            }}
+            className="inline-flex items-center gap-1 min-h-[36px] text-xs font-medium text-[#F3C669] hover:underline"
+          >
+            <Icon className="w-3.5 h-3.5" />
+            <span>{step.targetLabel}</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
         </div>
       </div>
 

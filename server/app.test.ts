@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'http';
 import type {AddressInfo} from 'net';
 import {createApp, jsonErrorHandler} from './app.ts';
+import {validateDlptQuestions} from './briefService.ts';
 import {loadConfig, type ServerConfig} from './config.ts';
 import {UserFacingError} from './errors.ts';
 import type {GenerateStructured, StructuredPromptRequest} from './gemini.ts';
@@ -68,6 +69,7 @@ test('rejects missing input with 400 without calling the model', async () => {
   for (const [path, body] of [
     ['/api/chat/turn', {}],
     ['/api/opi/turn', {isOpening: false}],
+    ['/api/opi/redo-turn', {examinerPrompt: 'P', originalAnswer: 'A'}],
     ['/api/vocab/lookup', {word: 'hola'}],
     ['/api/vocab/tot', {}],
     ['/api/vocab/evaluate-sentence', {targetTerm: 'x'}],
@@ -78,6 +80,39 @@ test('rejects missing input with 400 without calling the model', async () => {
     const res = await post(`${h.url}${path}`, body);
     assert.equal(res.status, 400, path);
     assert.equal(typeof (await res.json()).error, 'string');
+  }
+  assert.equal(h.calls.length, 0);
+});
+
+test('rejects text containing classification or control markings with 422 without calling the model', async () => {
+  const h = await startApp();
+  for (const [path, body] of [
+    ['/api/chat/turn', {userMessage: 'SECRET//NOFORN summary of patrol routes'}],
+    ['/api/chat/turn', {userMessage: 'Hola', history: [{role: 'user', text: '(S//NF) Prior line'}]}],
+    ['/api/opi/turn', {isOpening: false, userMessage: '(TS) Classified detail'}],
+    [
+      '/api/opi/redo-turn',
+      {
+        examinerPrompt: 'Pregunta',
+        originalAnswer: 'Original',
+        redoAnswer: 'SECRET//NOFORN respuesta nueva',
+        failedFunction: 'hypothesize',
+      },
+    ],
+    ['/api/vocab/lookup', {word: 'patrulla', contextSentence: 'CONFIDENTIAL//ORCON briefing text'}],
+    ['/api/vocab/tot', {englishQuery: 'CUI distribution statement'}],
+    ['/api/vocab/evaluate-sentence', {targetTerm: 'no obstante', userSentence: '(U//FOUO) El informe indicó...'}],
+    ['/api/debrief/analyze', {messages: [{role: 'candidate', text: 'REL TO USA, GBR operational note'}]}],
+    ['/api/lab/grade-prep', {promptTarget: 'Topic', transcript: 'FOR OFFICIAL USE ONLY monologue'}],
+    [
+      '/api/lab/grade-interp',
+      {briefingText: 'Fuente abierta', candidateRendition: 'Clean text', chunkNotes: '(CUI) draft'},
+    ],
+  ] as const) {
+    const res = await post(`${h.url}${path}`, body);
+    assert.equal(res.status, 422, path);
+    const payload = await res.json();
+    assert.match(payload.error, /Unclassified, open-source material only/i);
   }
   assert.equal(h.calls.length, 0);
 });
@@ -186,4 +221,931 @@ test('the model call is cancelled when the client disconnects', async () => {
   await pending;
   await waitUntil(() => receivedSignal?.aborted === true);
   assert.equal(receivedSignal?.aborted, true);
+});
+
+test('OPI turn uses general non-military ILR descriptors, returns lastTurnAssessment, and handles repeat', async () => {
+  const h = await startApp();
+  h.setResponse(async () => ({
+    examinerText: 'Muchas gracias por su tiempo hoy. Antes de despedirnos, ¿qué planes tiene para el fin de semana?',
+    phase: 'wind_down',
+    workingLevel: 2,
+    probeLevel: 3,
+    targetFunctionKey: 'l2_casual_conversation',
+    lastTurnAssessment: {
+      functionKey: 'l3_hypothesize',
+      outcome: 'breakdown',
+      evidence: 'Candidate slipped back to present indicative on counterfactual prompt.',
+    },
+    nextReason: 'Winding down comfortably at Level 2 so candidate finishes on a success.',
+  }));
+  const res = await post(`${h.url}/api/opi/turn`, {
+    language: 'es',
+    dialect: 'neutral_latam',
+    // Even if a client sends a domain field, general OPI must ignore it and NEVER prompt military domain topics
+    domain: 'maritime_surveillance',
+    topicSource: 'examiner_choice',
+    phase: 'wind_down',
+    workingLevel: 2,
+    probeLevel: 3,
+    targetFunctionKey: 'l3_hypothesize',
+    elapsedSeconds: 920,
+    candidateTurnCount: 10,
+    userMessage: 'Creo que la inversión en transporte cambia las ciudades.',
+    history: [{role: 'examiner', text: '¿Cómo ve el futuro del transporte urbano?'}],
+  });
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.phase, 'wind_down');
+  assert.equal(body.workingLevel, 2);
+  assert.equal(body.probeLevel, 3);
+  assert.equal(body.lastTurnAssessment.functionKey, 'l3_hypothesize');
+  assert.equal(body.lastTurnAssessment.outcome, 'breakdown');
+
+  const prompt = `${h.calls[0].systemInstruction ?? ''}\n${h.calls[0].contents ?? ''}`;
+  assert.match(prompt, /GENERAL ILR OPI/i);
+  assert.match(prompt, /NEVER lead with military/i);
+  assert.ok(!prompt.includes('Maritime Surveillance'), 'Must not inject military domain label into general OPI prompt');
+
+  const rep = await post(`${h.url}/api/opi/turn`, {
+    language: 'es',
+    isRepeat: true,
+    lastExaminerText: '¿Qué pasaría si cambiara la política educativa?',
+    history: [],
+  });
+  assert.equal(rep.status, 200);
+  assert.match(h.calls[1].contents, /repeat your last question/i);
+});
+
+test('OPI redo-turn and debrief analyze return 0+..3 rating, 6 levelFunctions with evidence, and accuracyNotes', async () => {
+  const h = await startApp();
+  h.setResponse(async () => ({
+    improved: true,
+    verdictLabel: 'Cleared the breakdown',
+    comparisonSummary: 'Switched cleanly to imperfect subjunctive + conditional.',
+    strengths: ['Used "si se redujera"', 'Maintained formal register'],
+    remainingGap: 'Add a brief counter-perspective pivot.',
+    upgradedModelAnswer: 'Si se redujera la jornada, las empresas tendrían que reorganizar los turnos.',
+  }));
+  const redoRes = await post(`${h.url}/api/opi/redo-turn`, {
+    language: 'es',
+    dialect: 'neutral_latam',
+    examinerPrompt: '¿Qué pasaría si se redujera la jornada laboral?',
+    originalAnswer: 'Si cortan las horas, es difícil.',
+    redoAnswer: 'Si se redujera la jornada, las empresas reorganizarían sus turnos.',
+    failedFunction: 'l3_hypothesize',
+  });
+  assert.equal(redoRes.status, 200);
+  const redoBody = await redoRes.json();
+  assert.equal(redoBody.improved, true);
+  assert.equal(redoBody.verdictLabel, 'Cleared the breakdown');
+  assert.equal(redoBody.strengths.length, 2);
+
+  h.setResponse(async () => ({
+    estimatedIlr: '2+',
+    floorLevel: 2,
+    oneLineRationale: 'Strong Level 2 control; hypotheticals slipped to indicative.',
+    summaryAssessment: 'Detailed summary here.',
+    ceilingMoment: {
+      timestampSeconds: 185,
+      examinerPrompt: '¿Qué pasaría si cambiaran las normas urbanas?',
+      candidateUtterance: 'Si cambian las normas, vamos a tener problemas.',
+      problemSpan: 'Si cambian las normas, vamos a tener',
+      fix: 'Si cambiaran las normas, enfrentaríamos desafíos de adaptación',
+      failedFunction: 'l3_hypothesize',
+      explanation: 'Used present indicative instead of imperfect subjunctive.',
+    },
+    levelFunctions: [
+      {
+        functionKey: 'l3_hypothesize',
+        status: 'not_met',
+        note: 'Dropped to indicative.',
+        evidence: ['"Si cambian las normas, vamos a tener problemas."'],
+      },
+      {
+        functionKey: 'l3_support_opinions',
+        status: 'met',
+        note: 'Clear thesis with two reasons.',
+        evidence: ['Supported position on remote work clearly.'],
+      },
+    ],
+    accuracyNotes: [
+      {
+        descriptor: 'rarely needs paraphrase',
+        observation: 'Understood prompts cleanly without rewording.',
+        status: 'strength',
+      },
+    ],
+    autoAddedVocab: [
+      {
+        term: 'enfrentar desafíos',
+        englishConcept: 'to face challenges',
+        contextSentence: 'Si cambiaran las normas, enfrentaríamos desafíos.',
+        registerTag: 'Formal',
+        category: 'High-Register Connectors',
+      },
+    ],
+    discourseAudit: {
+      pointScore: 80,
+      reasonScore: 75,
+      exampleScore: 70,
+      pivotScore: 65,
+      cohesionNotes: 'Clear.',
+      subjunctiveControl: 'Needs work.',
+      timeFrameStability: 'Stable.',
+    },
+    naturalUpgrades: [],
+    nextDrillRecommendation: 'Practice hypotheticals.',
+  }));
+
+  const debriefRes = await post(`${h.url}/api/debrief/analyze`, {
+    language: 'es',
+    dialect: 'neutral_latam',
+    assessments: [
+      {functionKey: 'l2_facts', outcome: 'sustained', evidence: 'Clear facts.', phase: 'level_check', targetLevel: 2},
+      {
+        functionKey: 'l2_narration_timeframes',
+        outcome: 'sustained',
+        evidence: 'Clean tenses.',
+        phase: 'level_check',
+        targetLevel: 2,
+      },
+      {
+        functionKey: 'l3_support_opinions',
+        outcome: 'sustained',
+        evidence: 'Strong argument.',
+        phase: 'probe',
+        targetLevel: 3,
+      },
+      {
+        functionKey: 'l3_hypothesize',
+        outcome: 'breakdown',
+        evidence: 'Used indicative si-clause.',
+        phase: 'probe',
+        targetLevel: 3,
+      },
+    ],
+    messages: [
+      {role: 'examiner', text: '¿Qué pasaría si cambiaran las normas urbanas?', elapsedSeconds: 150},
+      {role: 'candidate', text: 'Si cambian las normas, vamos a tener problemas.', elapsedSeconds: 185},
+    ],
+  });
+  assert.equal(debriefRes.status, 200);
+  const debriefBody = await debriefRes.json();
+  assert.equal(debriefBody.estimatedIlr, '2+');
+  assert.equal(debriefBody.floorLevel, 2);
+  assert.equal(debriefBody.ceilingLevel, 3);
+  assert.equal(debriefBody.gridLevel, 3);
+  assert.equal(debriefBody.ceilingMoment.timestampSeconds, 185);
+  assert.equal(debriefBody.ceilingMoment.failedFunction, 'l3_hypothesize');
+  assert.equal(debriefBody.ceilingMoment.failedFunctionLabel, 'Hypothesize');
+  assert.equal(debriefBody.levelFunctions.length, 6);
+  assert.equal(debriefBody.levelFunctions[3].evidence?.[0], 'Used indicative si-clause.');
+  assert.equal(debriefBody.accuracyNotes.length, 5);
+  assert.equal(debriefBody.autoAddedVocab.length, 1);
+  assert.match(h.calls[1].contents, /\[3:05 \| 185s\] CANDIDATE:/);
+});
+
+test('roleplay scenario keeps hiddenGoal and complication server-side and ignores domain', async () => {
+  const {getRoleplaySecret, saveRoleplaySecret, clearAllRoleplaySecrets} = await import('./roleplayStore.ts');
+  clearAllRoleplaySecrets();
+
+  const h = await startApp();
+  h.setResponse(async () => ({
+    situationEnglish: 'Your rental car broke down outside Toledo on your way to a family dinner.',
+    learnerGoal: 'Arrange a replacement car cleanly so you can arrive on time.',
+    register: 'usted',
+    characterRole: 'Rental agency agent',
+    complication: 'Only a manual-transmission van is left unless they wait 3 hours.',
+    hiddenGoal: 'Needs the reservation code and flexibility on pickup location to approve an upgrade.',
+  }));
+
+  const res = await post(`${h.url}/api/opi/roleplay/scenario`, {
+    language: 'es',
+    dialect: 'neutral_latam',
+    domain: 'maritime_surveillance',
+    level: 2,
+  });
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.ok(String(body.scenarioId).startsWith('rp-'));
+  assert.equal(body.level, 2);
+  assert.equal(body.register, 'usted');
+  assert.equal('hiddenGoal' in body, false, 'Must NEVER expose hiddenGoal in /scenario response');
+  assert.equal('complication' in body, false, 'Must NEVER expose complication in /scenario response');
+
+  const prompt = `${h.calls[0].contents}`;
+  assert.ok(!prompt.includes('Maritime Surveillance'), 'Roleplay must ignore military domain');
+  assert.match(prompt, /EVERYDAY CIVILIAN/i);
+
+  const stored = getRoleplaySecret(body.scenarioId);
+  assert.ok(stored);
+  assert.match(stored.hiddenGoal, /reservation code/i);
+  assert.match(stored.complication, /manual-transmission/i);
+
+  // Opening turn -> not resolved and no complication yet
+  h.setResponse(async () => ({
+    characterText: 'Buenas tardes, oficina de alquiler. ¿En qué puedo ayudarle?',
+    complicationIntroduced: false,
+    resolved: true, // model tries to resolve too early — server enforces false
+    assessment: {functionKey: 'l2_concrete_descriptions', outcome: 'sustained', evidence: 'Opening'},
+  }));
+  const openRes = await post(`${h.url}/api/opi/roleplay/turn`, {
+    scenarioId: body.scenarioId,
+    language: 'es',
+    dialect: 'neutral_latam',
+    level: 2,
+    isOpening: true,
+    candidateTurnCount: 0,
+    elapsedSeconds: 0,
+    history: [],
+  });
+  assert.equal(openRes.status, 200);
+  const openBody = await openRes.json();
+  assert.equal(openBody.resolved, false);
+  assert.equal(openBody.complicationIntroduced, false);
+
+  // Roughly 1/3 in (~85s, turn 1) -> complication introduced
+  h.setResponse(async () => ({
+    characterText: 'Entiendo su prisa, pero solo nos queda una camioneta manual salvo que espere tres horas.',
+    complicationIntroduced: true,
+    resolved: false,
+    assessment: {
+      functionKey: 'l2_narration_timeframes',
+      outcome: 'sustained',
+      evidence: 'Explained what happened when the car stopped.',
+    },
+  }));
+  const twistRes = await post(`${h.url}/api/opi/roleplay/turn`, {
+    scenarioId: body.scenarioId,
+    language: 'es',
+    dialect: 'neutral_latam',
+    level: 2,
+    candidateTurnCount: 1,
+    elapsedSeconds: 85,
+    complicationIntroduced: false,
+    userMessage: 'El coche se apagó en la autopista y necesito llegar esta noche.',
+    history: [{role: 'examiner', text: openBody.characterText}],
+  });
+  assert.equal(twistRes.status, 200);
+  const twistBody = await twistRes.json();
+  assert.equal(twistBody.stage, 'complication');
+  assert.equal(twistBody.complicationIntroduced, true);
+  assert.match(h.calls[2].systemInstruction ?? '', /COMPLICATION TRIGGER NOW/);
+
+  // Debrief reveals hiddenGoal & complication and returns 3 checklist items
+  h.setResponse(async () => ({
+    resolvedOutcome: 'resolved',
+    summary: 'Explained the breakdown clearly and negotiated an acceptable replacement plan.',
+    checklist: [
+      {itemKey: 'rp_l2_explain', label: 'Explained the situation', status: 'met', evidence: '"El coche se apagó"'},
+      {
+        itemKey: 'rp_l2_resolve',
+        label: 'Resolved the complication',
+        status: 'met',
+        evidence: '"Puedo recoger otro auto en la estación."',
+      },
+      {
+        itemKey: 'rp_l2_narrate',
+        label: 'Narrated what happened',
+        status: 'partly',
+        evidence: '"Salí temprano pero falló."',
+      },
+    ],
+  }));
+  const debriefRes = await post(`${h.url}/api/opi/roleplay/debrief`, {
+    scenarioId: body.scenarioId,
+    language: 'es',
+    dialect: 'neutral_latam',
+    level: 2,
+    messages: [
+      {role: 'examiner', text: openBody.characterText},
+      {role: 'candidate', text: 'El coche se apagó en la autopista y tengo mi código.'},
+    ],
+  });
+  assert.equal(debriefRes.status, 200);
+  const debriefBody = await debriefRes.json();
+  assert.match(debriefBody.hiddenGoal, /reservation code/i);
+  assert.match(debriefBody.complication, /manual-transmission/i);
+  assert.equal(debriefBody.checklist.length, 3);
+  assert.equal(debriefBody.resolvedOutcome, 'resolved');
+
+  // Classification guard returns 422
+  const classifiedTurn = await post(`${h.url}/api/opi/roleplay/turn`, {
+    scenarioId: body.scenarioId,
+    language: 'es',
+    level: 2,
+    userMessage: 'SECRET//NOFORN details here',
+    history: [],
+  });
+  assert.equal(classifiedTurn.status, 422);
+
+  // TTL store expiration
+  saveRoleplaySecret(
+    {
+      scenarioId: 'rp-ttl-test',
+      level: 1,
+      language: 'es',
+      dialect: 'neutral_latam',
+      situationEnglish: 'Order lunch.',
+      learnerGoal: 'Order politely.',
+      register: 'usted',
+      characterRole: 'Waiter',
+      hiddenGoal: 'Ask beverage.',
+      complication: 'None',
+    },
+    1000,
+    10_000
+  );
+  assert.ok(getRoleplaySecret('rp-ttl-test', 10_500));
+  assert.equal(getRoleplaySecret('rp-ttl-test', 11_001), null);
+});
+
+test('Phase 4 Talk enforces everyday isolation outside Work talk, honors slang/corrections, and supports how-do-locals-say + wrap-up', async () => {
+  const h = await startApp();
+  h.setResponse(async () => ({
+    replyText: '¡Che, qué hacés! Todo bárbaro acá, laburando tranqui desde temprano.',
+    recastNote: 'Mateo recast you: porteños say laburando for working.',
+    pickedUp: [
+      {term: 'che', meaning: 'hey', regionTag: 'Rioplatense', kind: 'word'},
+      {term: 'laburando', meaning: 'working', regionTag: 'Rioplatense', kind: 'word'},
+    ],
+    struggleSuggestions: [],
+  }));
+
+  // Even if client passes domain, casual scene ('just_chatting', workTalk=false) must NOT inject domain
+  const casualRes = await post(`${h.url}/api/chat/turn`, {
+    language: 'es',
+    dialect: 'rioplatense',
+    tutorId: 'es-ba-mateo',
+    sceneId: 'asado',
+    workTalk: false,
+    domain: 'maritime_surveillance',
+    slangLevel: 3,
+    correctionMode: 'recast',
+    userMessage: 'Estoy trabajando mucho hoy.',
+  });
+  assert.equal(casualRes.status, 200);
+  const casualBody = await casualRes.json();
+  assert.match(casualBody.recastNote, /porteños/i);
+  assert.equal(casualBody.pickedUp.length, 2);
+
+  const casualPrompt = `${h.calls[0].systemInstruction ?? ''}`;
+  assert.match(casualPrompt, /Mateo/);
+  assert.match(casualPrompt, /Buenos Aires/);
+  assert.match(casualPrompt, /NEVER bring up or steer toward military/i);
+  assert.match(casualPrompt, /NO-EXAM/i);
+  assert.ok(!casualPrompt.includes('Maritime Surveillance'));
+
+  // With workTalk: true, Work focus domain IS injected
+  const workRes = await post(`${h.url}/api/chat/turn`, {
+    language: 'es',
+    dialect: 'rioplatense',
+    tutorId: 'es-ba-mateo',
+    sceneId: 'work_talk',
+    workTalk: true,
+    domain: 'maritime_surveillance',
+    slangLevel: 1,
+    correctionMode: 'off',
+    userMessage: 'Coordinemos la guardia del puerto.',
+  });
+  assert.equal(workRes.status, 200);
+  const workBody = await workRes.json();
+  assert.equal('recastNote' in workBody, false, 'Must omit recastNote when correctionMode=off');
+  const workPrompt = `${h.calls[1].systemInstruction ?? ''}`;
+  assert.match(workPrompt, /Maritime Surveillance/i);
+
+  // /api/talk/how-do-locals-say
+  h.setResponse(async () => ({
+    versions: [
+      {
+        expression: 'juntarse con la banda',
+        literalOrContext: 'hang out with the crew',
+        nuance: 'Natural Buenos Aires phrasing with friends',
+        example: 'El viernes me junto con la banda en Palermo.',
+        kind: 'phrase',
+      },
+      {
+        expression: 'salir a tomar algo',
+        literalOrContext: 'go grab a drink together',
+        nuance: 'Slightly tamer everyday option',
+        example: '¿Salimos a tomar algo después?',
+        kind: 'phrase',
+      },
+    ],
+  }));
+  const localsRes = await post(`${h.url}/api/talk/how-do-locals-say`, {
+    language: 'es',
+    dialect: 'rioplatense',
+    tutorId: 'es-ba-mateo',
+    slangLevel: 3,
+    englishQuery: 'hang out with friends',
+  });
+  assert.equal(localsRes.status, 200);
+  const localsBody = await localsRes.json();
+  assert.equal(localsBody.tutorName, 'Mateo');
+  assert.equal(localsBody.city, 'Buenos Aires');
+  assert.equal(localsBody.versions.length, 2);
+
+  // /api/talk/wrap-up caps at 8, handles end_only notes and pattern items
+  h.setResponse(async () => ({
+    summary: 'Relaxed chat about your week and weekend plans in Buenos Aires.',
+    endNotes: ['Notice how Mateo used vos tenés — try switching from tú when talking to Porteños.'],
+    items: [
+      {
+        term: 'vos tenés · vos andás',
+        meaning: 'you used tú 4 times — Buenos Aires locals use vos',
+        exampleFromConversation: '¿Vos tenés planes para el sábado?',
+        regionTag: 'Rioplatense',
+        kind: 'pattern',
+      },
+      ...Array.from({length: 10}, (_, i) => ({
+        term: `modismo ${i}`,
+        meaning: `meaning ${i}`,
+        exampleFromConversation: `ejemplo ${i}`,
+        regionTag: 'Rioplatense',
+        kind: 'word',
+      })),
+    ],
+  }));
+  const wrapRes = await post(`${h.url}/api/talk/wrap-up`, {
+    language: 'es',
+    dialect: 'rioplatense',
+    tutorId: 'es-ba-mateo',
+    correctionMode: 'end_only',
+    messages: [
+      {role: 'user', text: '¿Cómo estás tú?'},
+      {role: 'assistant', text: '¡Todo bárbaro, che! ¿Vos tenés planes?'},
+    ],
+  });
+  assert.equal(wrapRes.status, 200);
+  const wrapBody = await wrapRes.json();
+  assert.equal(wrapBody.items.length, 8);
+  assert.equal(wrapBody.items[0].kind, 'pattern');
+  assert.equal(wrapBody.endNotes.length, 1);
+
+  // 422 guard on /api/talk/*
+  const badLocals = await post(`${h.url}/api/talk/how-do-locals-say`, {
+    englishQuery: 'SECRET//NOFORN brief term',
+  });
+  assert.equal(badLocals.status, 422);
+
+  const badWrap = await post(`${h.url}/api/talk/wrap-up`, {
+    messages: [{role: 'user', text: '(S//NF) operational note'}],
+  });
+  assert.equal(badWrap.status, 422);
+});
+
+test('/api/brief routes return filtered feeds, DLPT drill questions, and study excerpts', async () => {
+  const h = await startApp();
+
+  // 1. GET /api/brief/feed
+  const feedRes = await fetch(`${h.url}/api/brief/feed?language=es&mediaType=audio`);
+  assert.equal(feedRes.status, 200);
+  const feedBody = await feedRes.json();
+  assert.ok(Array.isArray(feedBody.items));
+  assert.ok(feedBody.items.length >= 1);
+  assert.ok(feedBody.lastRefreshedAt);
+
+  const sample = feedBody.items[0];
+  assert.equal(sample.language, 'es');
+  assert.equal(sample.mediaType, 'audio');
+  assert.ok(sample.orientationLine.startsWith('This passage is'));
+  assert.ok(sample.audioUrl);
+  // Legal safeguard: client items must not have raw full text/transcripts
+  assert.equal(sample.rawContent, undefined);
+  assert.equal(sample.transcript, undefined);
+
+  // Filter by work domain
+  const workRes = await fetch(
+    `${h.url}/api/brief/feed?language=es&mediaType=audio&workFilter=true&userDomain=maritime_surveillance`
+  );
+  assert.equal(workRes.status, 200);
+  const workBody = await workRes.json();
+  assert.ok(workBody.items.length >= 1);
+  assert.ok(workBody.items[0].matchingDomains.includes('maritime_surveillance'));
+
+  // 2. GET /api/brief/study-excerpt
+  const studyRes = await fetch(`${h.url}/api/brief/study-excerpt?briefId=${sample.id}`);
+  assert.equal(studyRes.status, 200);
+  const studyBody = await studyRes.json();
+  assert.equal(studyBody.briefId, sample.id);
+  assert.ok(studyBody.excerpt.length > 50);
+  assert.ok(Array.isArray(studyBody.keyVocabulary));
+
+  const missingStudy = await fetch(`${h.url}/api/brief/study-excerpt?briefId=nonexistent`);
+  assert.equal(missingStudy.status, 404);
+
+  // 3. POST /api/brief/drill (Phase 6 strict DLPT format with choices, justifications, trap types & source quotes)
+  h.setResponse(async () => ({
+    orientationLine:
+      'This passage is from a Colombian broadcast reporting on a naval interdiction operation in the Pacific.',
+    questions: [
+      {
+        questionEnglish: 'What type of vessel was intercepted during the operation?',
+        questionType: 'detail',
+        correctIndex: 0,
+        sourceQuote: 'lograron la interdicción de un artefacto naval tipo semisumergible',
+        choices: [
+          {
+            text: 'An unflagged semi-submersible craft',
+            justification:
+              'The passage explicitly describes intercepting an "artefacto naval tipo semisumergible" without a visible flag.',
+            trapType: 'none',
+          },
+          {
+            text: 'A commercial cargo freighter heading to Buenaventura',
+            justification:
+              'Buenaventura is mentioned as the port where the craft was towed, not the origin of a cargo freighter.',
+            trapType: 'mentioned_not_answer',
+          },
+          {
+            text: 'A registered fishing vessel conducting coastal patrols',
+            justification: 'Patrols were conducted by maritime aircraft, not a fishing vessel.',
+            trapType: 'wrong_detail',
+          },
+          {
+            text: 'A luxury yacht carrying international tourists',
+            justification: 'Tourists and yachts are never mentioned anywhere in the report.',
+            trapType: 'not_in_passage',
+          },
+        ],
+        targetVocabulary: [{term: 'semisumergible', english: 'semi-submersible'}],
+      },
+      {
+        questionEnglish: 'According to the report, the crewed craft was discovered...',
+        questionType: 'detail',
+        correctIndex: 1,
+        sourceQuote: 'transportaba un cargamento ilícito a unas ochenta millas náuticas de la costa',
+        choices: [
+          {
+            text: 'docked inside the port of Buenaventura',
+            justification: 'The craft was towed to Buenaventura afterward; it was intercepted at sea.',
+            trapType: 'wrong_detail',
+          },
+          {
+            text: 'roughly eighty nautical miles off the Pacific coast',
+            justification: 'The passage states it carried illicit cargo "a unas ochenta millas náuticas de la costa."',
+            trapType: 'none',
+          },
+          {
+            text: 'sailing with three Coast Guard officers aboard',
+            justification: 'Three people crewed the vessel, but they were suspects rather than Coast Guard officers.',
+            trapType: 'wrong_detail',
+          },
+          {
+            text: 'trying to evade a tropical storm in the Caribbean',
+            justification: 'No storm or Caribbean location is mentioned in the passage.',
+            trapType: 'not_in_passage',
+          },
+        ],
+        targetVocabulary: [{term: 'millas náuticas', english: 'nautical miles'}],
+      },
+      {
+        questionEnglish: 'What can be inferred about the craft’s construction from the initial inspection?',
+        questionType: 'inference',
+        correctIndex: 2,
+        sourceQuote: 'presencia de compartimentos estancos sellados y sistemas rudimentarios de navegación satelital',
+        choices: [
+          {
+            text: 'It was built in a state-owned shipyard using military-grade radar.',
+            justification: 'The report calls the navigation systems rudimentary and mentions no shipyard.',
+            trapType: 'over_inference',
+          },
+          {
+            text: 'It was designed primarily for deep-sea scientific research.',
+            justification: 'The passage clearly identifies the shipment as illicit cargo, not research.',
+            trapType: 'not_in_passage',
+          },
+          {
+            text: 'It was purposefully outfitted to keep cargo dry across open water despite basic electronics.',
+            justification:
+              'Sealed watertight compartments and basic satellite navigation imply ocean-crossing smuggling design.',
+            trapType: 'none',
+          },
+          {
+            text: 'International aircraft inspected the compartments mid-flight.',
+            justification: 'Aircraft aided coordination, while the physical inspection took place on the vessel.',
+            trapType: 'true_not_answer',
+          },
+        ],
+        targetVocabulary: [{term: 'compartimentos estancos', english: 'watertight compartments'}],
+      },
+      // 4th item with unsupported hallucinated quote -> MUST be rejected (and Listening is capped at 3 anyway)
+      {
+        questionEnglish: 'What diplomatic treaty did the minister sign?',
+        questionType: 'main_idea',
+        correctIndex: 0,
+        sourceQuote: 'el ministro firmó un tratado comercial en Ginebra ayer',
+        choices: [
+          {text: 'A Geneva trade pact', justification: 'Not actually in source passage.', trapType: 'none'},
+          {text: 'An aviation accord', justification: 'Not mentioned in the text.', trapType: 'not_in_passage'},
+          {text: 'A tariff freeze', justification: 'Not mentioned in the text.', trapType: 'not_in_passage'},
+          {text: 'A fishery quota', justification: 'Not mentioned in the text.', trapType: 'not_in_passage'},
+        ],
+        targetVocabulary: [],
+      },
+    ],
+  }));
+
+  const drillRes = await post(`${h.url}/api/brief/drill`, {
+    briefId: sample.id,
+  });
+  assert.equal(drillRes.status, 200);
+  const drillBody = await drillRes.json();
+  assert.equal(drillBody.briefId, sample.id);
+  assert.equal(drillBody.questions.length, 3);
+  assert.equal(drillBody.questions[0].correctIndex, 0);
+  assert.equal(drillBody.questions[0].questionType, 'detail');
+  assert.equal(drillBody.questions[0].choices.length, 4);
+  assert.equal(drillBody.questions[0].choices[0].trapType, null);
+  assert.equal(drillBody.questions[0].choices[1].trapType, 'mentioned_not_answer');
+  assert.equal(drillBody.questions[0].targetVocabulary[0].term, 'semisumergible');
+
+  // Strict rejection when ALL generated items fail source-support validation
+  h.setResponse(async () => ({
+    questions: [
+      {
+        questionEnglish: 'Which lunar mission did the passage cover?',
+        questionType: 'main_idea',
+        correctIndex: 0,
+        sourceQuote: 'los astronautas aterrizaron en la luna durante la madrugada',
+        choices: [
+          {text: 'A lunar landing mission', justification: 'Unsupported claim invented by model.', trapType: 'none'},
+          {text: 'A Mars rover', justification: 'Not mentioned in the passage.', trapType: 'not_in_passage'},
+          {text: 'A solar probe', justification: 'Not mentioned in the passage.', trapType: 'not_in_passage'},
+          {text: 'A comet flyby', justification: 'Not mentioned in the passage.', trapType: 'not_in_passage'},
+        ],
+        targetVocabulary: [],
+      },
+    ],
+  }));
+  const rejectedRes = await post(`${h.url}/api/brief/drill`, {briefId: sample.id});
+  assert.equal(rejectedRes.status, 502);
+
+  // Unit verification of validateDlptQuestions caps (ES reading <= 5, PT reading <= 4) & missing trapType rejection
+  const sampleSource =
+    'La provincia de Jujuy consolida la expansión de parques solares fotovoltaicos integrados a sistemas de almacenamiento.';
+  const validItem = {
+    questionEnglish: 'What is expanding in Jujuy according to the article?',
+    questionType: 'main_idea',
+    correctIndex: 0,
+    sourceQuote: 'expansión de parques solares fotovoltaicos',
+    choices: [
+      {
+        text: 'Solar photovoltaic parks',
+        justification: 'Directly stated as "parques solares fotovoltaicos."',
+        trapType: 'none',
+      },
+      {text: 'Nuclear plants', justification: 'Not mentioned anywhere in the source text.', trapType: 'not_in_passage'},
+      {text: 'Coal terminals', justification: 'Not mentioned anywhere in the source text.', trapType: 'not_in_passage'},
+      {text: 'Wind turbines', justification: 'Not mentioned anywhere in the source text.', trapType: 'not_in_passage'},
+    ],
+  };
+  const missingTrapItem = {
+    ...validItem,
+    choices: validItem.choices.map((c, idx) => (idx === 1 ? {...c, trapType: 'invalid_trap'} : c)),
+  };
+  const valOut = validateDlptQuestions(
+    [validItem, missingTrapItem, validItem, validItem, validItem, validItem],
+    sampleSource,
+    4,
+    'pt-read'
+  );
+  assert.equal(valOut.validQuestions.length, 4);
+  assert.equal(valOut.rejectedCount, 1);
+
+  // Drill validation errors
+  const noBriefId = await post(`${h.url}/api/brief/drill`, {});
+  assert.equal(noBriefId.status, 400);
+
+  const unknownDrill = await post(`${h.url}/api/brief/drill`, {briefId: 'unknown-id'});
+  assert.equal(unknownDrill.status, 404);
+
+  // 4. POST /api/brief/refresh
+  const refreshRes = await post(`${h.url}/api/brief/refresh`, {});
+  assert.equal(refreshRes.status, 200);
+  const refreshBody = await refreshRes.json();
+  assert.equal(refreshBody.ok, true);
+  assert.ok(refreshBody.lastRefreshedAt);
+
+  // 5. Phase 7: POST /api/brief/grade-gist
+  h.setResponse(async () => ({
+    mainPoint: 'partial',
+    keyDetails: {
+      found: 2,
+      total: 4,
+      missing: ['Three crew members aboard', 'Towed to Buenaventura'],
+    },
+    additions: [
+      {
+        description: 'Claimed the crew surrendered to customs officers in Panama, which is not in the report.',
+        learnerSpan: 'surrendered to customs officers in Panama',
+        sourceQuote: 'La nave fue remolcada al puerto de Buenaventura',
+      },
+    ],
+    omissions: [
+      {
+        description: 'Omitted that three crew members were operating the unflagged craft.',
+        sourceQuote: 'tripulada por tres personas y sin bandera visible',
+      },
+    ],
+    distortions: [
+      {
+        description: 'Stated 180 nautical miles offshore instead of 80 nautical miles.',
+        learnerSpan: '180 nautical miles',
+        sourceQuote: 'a unas ochenta millas náuticas de la costa',
+      },
+    ],
+    modelGist:
+      'Colombian Coast Guard units and partner aircraft intercepted an unflagged semi-submersible in Pacific waters 80 nautical miles offshore. Inspectors found sealed watertight compartments and rudimentary satellite navigation aboard the three-person vessel. Authorities towed the craft to Buenaventura for judicial proceedings.',
+  }));
+
+  const gistRes = await post(`${h.url}/api/brief/grade-gist`, {
+    briefId: sample.id,
+    summary:
+      'The Coast Guard intercepted a semi-submersible 180 nautical miles off the coast. The crew later surrendered to customs officers in Panama.',
+  });
+  assert.equal(gistRes.status, 200);
+  const gistBody = await gistRes.json();
+  assert.equal(gistBody.briefId, sample.id);
+  assert.equal(gistBody.mainPoint, 'partial');
+  assert.equal(gistBody.keyDetails.found, 2);
+  assert.equal(gistBody.keyDetails.total, 4);
+  assert.equal(gistBody.additions.length, 1);
+  assert.equal(gistBody.additions[0].learnerSpan, 'surrendered to customs officers in Panama');
+  assert.ok(gistBody.additions[0].sourceQuote.length > 0);
+  assert.equal(gistBody.omissions.length, 1);
+  assert.equal(gistBody.distortions.length, 1);
+  assert.ok(gistBody.modelGist.length > 20);
+  assert.ok(gistBody.studyExcerpt.length > 20);
+
+  // Empty auto-submit at 0:00 returns deterministic missed evaluation without failing
+  const emptyGistRes = await post(`${h.url}/api/brief/grade-gist`, {
+    briefId: sample.id,
+    summary: '   ',
+  });
+  assert.equal(emptyGistRes.status, 200);
+  const emptyGistBody = await emptyGistRes.json();
+  assert.equal(emptyGistBody.mainPoint, 'missed');
+  assert.equal(emptyGistBody.keyDetails.found, 0);
+  assert.equal(emptyGistBody.additions.length, 0);
+  assert.equal(emptyGistBody.omissions.length, 1);
+
+  // Classification guard returns 422 before calling Gemini
+  const classifiedGist = await post(`${h.url}/api/brief/grade-gist`, {
+    briefId: sample.id,
+    summary: 'SECRET//NOFORN maritime patrol summary.',
+  });
+  assert.equal(classifiedGist.status, 422);
+
+  // Missing or unknown briefId validation
+  const badGistReq = await post(`${h.url}/api/brief/grade-gist`, {summary: 'Short gist.'});
+  assert.equal(badGistReq.status, 400);
+
+  const unknownGistReq = await post(`${h.url}/api/brief/grade-gist`, {briefId: 'nope', summary: 'Short gist.'});
+  assert.equal(unknownGistReq.status, 404);
+  assert.ok(Array.isArray(gistBody.errors));
+  assert.equal(gistBody.errors.length, 3);
+  assert.deepEqual(
+    gistBody.errors.map((e: {key: string}) => e.key),
+    ['addition', 'omission', 'distortion']
+  );
+});
+
+test('Phase 8: grading endpoints drop unknown error keys and /api/fix routes generate 8 prompts and grade target structure', async () => {
+  const h = await startApp();
+
+  // 1. Talk wrap-up drops unknown/wrong-language keys while preserving valid taxonomy keys
+  h.setResponse(async () => ({
+    summary: 'Fun chat about weekend plans.',
+    endNotes: [],
+    items: [],
+    errors: [
+      {key: 'tu_for_vos', wrong: '¿Cómo estás tú?', fix: '¿Cómo estás vos?', quote: '¿Cómo estás tú hoy?'},
+      {key: 'totally_invented_error', wrong: 'abc', fix: 'def', quote: 'abc'},
+      {key: 'futuro_do_subjuntivo', wrong: 'quando eu vou', fix: 'quando eu for', quote: 'quando eu vou'},
+    ],
+  }));
+  const talkRes = await post(`${h.url}/api/talk/wrap-up`, {
+    language: 'es',
+    dialect: 'rioplatense',
+    messages: [{role: 'user', text: '¿Cómo estás tú hoy?'}],
+  });
+  assert.equal(talkRes.status, 200);
+  const talkBody = await talkRes.json();
+  assert.equal(talkBody.errors.length, 1);
+  assert.equal(talkBody.errors[0].key, 'tu_for_vos');
+
+  // 2. OPI redo-turn normalizes ILR function aliases and drops unknown keys
+  h.setResponse(async () => ({
+    improved: true,
+    verdictLabel: 'Cleared',
+    comparisonSummary: 'Much better conditional control.',
+    strengths: ['Used conditional cleanly'],
+    remainingGap: 'Watch por vs para.',
+    upgradedModelAnswer: 'Si tuviera más tiempo, viajaría por todo el sur.',
+    errors: [
+      {key: 'l3_hypothesize', wrong: 'si tengo tiempo', fix: 'si tuviera tiempo', quote: 'si tengo tiempo iría'},
+      {key: 'bogus_key_123', wrong: 'bad', fix: 'good', quote: 'bad'},
+    ],
+  }));
+  const redoRes = await post(`${h.url}/api/opi/redo-turn`, {
+    language: 'es',
+    dialect: 'mexico',
+    examinerPrompt: '¿Qué harías si tuvieras un año libre?',
+    originalAnswer: 'Si tengo tiempo, voy a viajar.',
+    redoAnswer: 'Si tuviera tiempo, viajaría por la costa.',
+    failedFunction: 'l3_hypothesize',
+  });
+  assert.equal(redoRes.status, 200);
+  const redoBody = await redoRes.json();
+  assert.equal(redoBody.errors.length, 1);
+  assert.equal(redoBody.errors[0].key, 'hypothesize');
+
+  // 3. Interp grading drops unknown keys
+  h.setResponse(async () => ({
+    fidelityScore: 84,
+    registerScore: 88,
+    capturedPoints: ['Captured date'],
+    missedOrDistorted: ['Missed port name'],
+    terminologyFeedback: 'Solid register.',
+    modelRendition: 'The delegation arrives Tuesday.',
+    errors: [
+      {key: 'omission', wrong: 'Omitted port name', fix: 'Include Valparaíso', quote: 'puerto de Valparaíso'},
+      {key: 'unknown_interp_err', wrong: 'x', fix: 'y', quote: 'z'},
+    ],
+  }));
+  const interpRes = await post(`${h.url}/api/lab/grade-interp`, {
+    language: 'es',
+    briefingText: 'La delegación llegará el martes al puerto de Valparaíso.',
+    candidateRendition: 'The delegation will arrive Tuesday.',
+    chunkNotes: 'mar',
+    direction: 'target_to_en',
+  });
+  assert.equal(interpRes.status, 200);
+  const interpBody = await interpRes.json();
+  assert.equal(interpBody.errors.length, 1);
+  assert.equal(interpBody.errors[0].key, 'omission');
+
+  // 4. POST /api/fix/generate returns 8 prompts and rejects unknown or wrong-language errorKey with 400
+  h.setResponse(async () => ({
+    prompts: Array.from({length: 8}, (_, i) => ({
+      promptTarget: `¿Qué harías si ganaras la lotería #${i + 1}?`,
+      promptEnglishHint: `What would you do if you won the lottery #${i + 1}?`,
+      targetStructureHint: 'si + imperfect subjunctive, conditional',
+    })),
+  }));
+  const fixGenRes = await post(`${h.url}/api/fix/generate`, {
+    language: 'es',
+    dialect: 'mexico',
+    errorKey: 'si_clause_present_for_subjunctive',
+  });
+  assert.equal(fixGenRes.status, 200);
+  const fixGenBody = await fixGenRes.json();
+  assert.equal(fixGenBody.errorKey, 'si_clause_present_for_subjunctive');
+  assert.equal(fixGenBody.prompts.length, 8);
+
+  const badFixGen = await post(`${h.url}/api/fix/generate`, {
+    language: 'es',
+    dialect: 'mexico',
+    errorKey: 'made_up_key',
+  });
+  assert.equal(badFixGen.status, 400);
+
+  const wrongLangFixGen = await post(`${h.url}/api/fix/generate`, {
+    language: 'es',
+    dialect: 'mexico',
+    errorKey: 'futuro_do_subjuntivo',
+  });
+  assert.equal(wrongLangFixGen.status, 400);
+
+  // 5. POST /api/fix/grade returns instant feedback and enforces 422 classification guard
+  h.setResponse(async () => ({
+    passed: true,
+    matchedSpan: '…habría escasez',
+    feedback: 'conditional used cleanly',
+    correction: '',
+  }));
+  const fixGradeRes = await post(`${h.url}/api/fix/grade`, {
+    language: 'es',
+    dialect: 'mexico',
+    errorKey: 'si_clause_present_for_subjunctive',
+    promptTarget: '¿Qué pasaría si subieran los precios del agua?',
+    userAnswer: 'Si subieran los precios, habría escasez en varios barrios.',
+  });
+  assert.equal(fixGradeRes.status, 200);
+  const fixGradeBody = await fixGradeRes.json();
+  assert.equal(fixGradeBody.passed, true);
+  assert.equal(fixGradeBody.matchedSpan, '…habría escasez');
+  assert.equal(fixGradeBody.feedback, 'conditional used cleanly');
+  assert.equal(fixGradeBody.correction, undefined);
+
+  const classifiedFixGrade = await post(`${h.url}/api/fix/grade`, {
+    language: 'es',
+    dialect: 'mexico',
+    errorKey: 'si_clause_present_for_subjunctive',
+    promptTarget: '¿Qué harías si...?',
+    userAnswer: 'SECRET//NOFORN test answer',
+  });
+  assert.equal(classifiedFixGrade.status, 422);
 });

@@ -1,22 +1,40 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import type {ChatRegisterMode, MilitaryDomain, TargetLanguage} from '../types';
+import type {
+  ChatRegisterMode,
+  GeminiLiveVoice,
+  MilitaryDomain,
+  TalkCorrectionMode,
+  TalkPickedUpItem,
+  TargetLanguage,
+} from '../types';
 import {base64PcmToFloat32, computeRmsLevel, mergeTranscriptChunk, pcm16BytesToFloat32} from '../utils/liveAudio';
 import {type MicCapture, startMicCapture} from '../audio/micCapture';
 
-export type GeminiLiveVoice = 'Zephyr' | 'Puck' | 'Kore' | 'Fenrir' | 'Charon';
+export type {GeminiLiveVoice};
 
 export type GeminiLiveStatus = 'idle' | 'connecting' | 'listening' | 'speaking' | 'error';
 
 export interface LiveSessionStartOptions {
   language: TargetLanguage;
   dialect: string;
-  domain: MilitaryDomain;
-  registerMode: ChatRegisterMode;
+  domain?: MilitaryDomain;
+  registerMode?: ChatRegisterMode;
   voiceName: GeminiLiveVoice;
+  tutorId?: string;
+  sceneId?: string;
+  workTalk?: boolean;
+  slangLevel?: number;
+  correctionMode?: TalkCorrectionMode;
+}
+
+export interface TalkNotePayload {
+  recastNote?: string;
+  pickedUp: TalkPickedUpItem[];
 }
 
 export interface UseGeminiLiveCallbacks {
   onTurnComplete?: (role: 'user' | 'assistant', text: string) => void;
+  onTalkNote?: (note: TalkNotePayload) => void;
 }
 
 function createResilientAudioContext(AudioCtxCtor: typeof AudioContext, preferredSampleRate: number): AudioContext {
@@ -292,9 +310,14 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
               type: 'start',
               language: options.language,
               dialect: options.dialect,
-              domain: options.domain,
-              registerMode: options.registerMode,
+              ...(options.domain ? {domain: options.domain} : {}),
+              ...(options.registerMode ? {registerMode: options.registerMode} : {}),
               voiceName: options.voiceName,
+              ...(options.tutorId ? {tutorId: options.tutorId} : {}),
+              ...(options.sceneId ? {sceneId: options.sceneId} : {}),
+              ...(typeof options.workTalk === 'boolean' ? {workTalk: options.workTalk} : {}),
+              ...(typeof options.slangLevel === 'number' ? {slangLevel: options.slangLevel} : {}),
+              ...(options.correctionMode ? {correctionMode: options.correctionMode} : {}),
               // Ask the server for raw binary PCM frames instead of base64-in-JSON (~33% smaller).
               binaryAudio: true,
             })
@@ -354,6 +377,18 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
             flushPartnerDraft();
             if (activeSourcesRef.current.size === 0) {
               updateStatus('listening');
+            }
+            return;
+          }
+
+          if (payload.type === 'talk_note') {
+            const recastNote = typeof payload.recastNote === 'string' ? payload.recastNote.trim() : '';
+            const pickedUp = Array.isArray(payload.pickedUp) ? (payload.pickedUp as TalkPickedUpItem[]) : [];
+            if (recastNote || pickedUp.length > 0) {
+              callbacksRef.current?.onTalkNote?.({
+                ...(recastNote ? {recastNote} : {}),
+                pickedUp,
+              });
             }
             return;
           }

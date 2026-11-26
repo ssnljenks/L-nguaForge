@@ -2,10 +2,12 @@ import {randomUUID} from 'crypto';
 import {Type} from '@google/genai';
 import type {Router} from 'express';
 import {MODELS} from '../config.ts';
+import {buildErrorReportingInstruction, extractReportedErrors, REPORTED_ERRORS_SCHEMA} from '../errorReporting.ts';
 import {handleAsync, UserFacingError} from '../errors.ts';
 import {BUDGETS, ThinkingLevel} from '../gemini.ts';
 import {
   asRecord,
+  assertUnclassifiedText,
   clampNumber,
   clampScore,
   resolveTrainingContext,
@@ -68,6 +70,7 @@ Provide the prompt in ${langName}, an English summary, and 4 recommended high-re
       if (!transcript) {
         throw new UserFacingError(400, 'Record or enter your monologue transcript before grading.');
       }
+      assertUnclassifiedText(promptTarget, transcript);
 
       const data = await generate({
         model: MODELS.standard,
@@ -167,7 +170,7 @@ Example speaker: a Colonel, Naval Attaché, or Joint Staff Deputy addressing a v
   router.post(
     '/lab/grade-interp',
     handleAsync(async (req, res, signal) => {
-      const {langName} = resolveTrainingContext(req.body);
+      const {language, langName} = resolveTrainingContext(req.body);
       const briefingText = sanitizeString(req.body?.briefingText, 2500);
       const candidateRendition = sanitizeString(req.body?.candidateRendition, 2500);
       const chunkNotes = sanitizeString(req.body?.chunkNotes, 1500);
@@ -177,6 +180,7 @@ Example speaker: a Colonel, Naval Attaché, or Joint Staff Deputy addressing a v
       if (!briefingText || !candidateRendition) {
         throw new UserFacingError(400, 'Briefing source and your interpretation rendition are required.');
       }
+      assertUnclassifiedText(briefingText, candidateRendition, chunkNotes);
 
       const data = await generate({
         model: MODELS.standard,
@@ -191,7 +195,8 @@ ${chunkNotes || '(None entered)'}
 CANDIDATE RENDITION:
 ${candidateRendition}
 
-Score fidelityScore (0–100) and registerScore (0–100), list capturedPoints, list any missedOrDistorted numbers/caveats/facts, give concise terminologyFeedback, and supply a crisp diplomatic modelRendition.`,
+Score fidelityScore (0–100) and registerScore (0–100), list capturedPoints, list any missedOrDistorted numbers/caveats/facts, give concise terminologyFeedback, supply a crisp diplomatic modelRendition, and report any specific errors:
+${buildErrorReportingInstruction(language, ['grammar', 'register', 'gist'])}`,
         thinkingLevel: ThinkingLevel.MEDIUM,
         responseSchema: {
           type: Type.OBJECT,
@@ -202,6 +207,7 @@ Score fidelityScore (0–100) and registerScore (0–100), list capturedPoints, 
             missedOrDistorted: {type: Type.ARRAY, items: {type: Type.STRING}},
             terminologyFeedback: {type: Type.STRING},
             modelRendition: {type: Type.STRING},
+            errors: REPORTED_ERRORS_SCHEMA,
           },
           required: [
             'fidelityScore',
@@ -210,6 +216,7 @@ Score fidelityScore (0–100) and registerScore (0–100), list capturedPoints, 
             'missedOrDistorted',
             'terminologyFeedback',
             'modelRendition',
+            'errors',
           ],
         },
         emptyMessage: 'Empty response from interpretation grader.',
@@ -224,6 +231,7 @@ Score fidelityScore (0–100) and registerScore (0–100), list capturedPoints, 
         missedOrDistorted: sanitizeStringArray(data.missedOrDistorted, 10, 400),
         terminologyFeedback: sanitizeString(data.terminologyFeedback, 1500),
         modelRendition: sanitizeString(data.modelRendition, 3000),
+        errors: extractReportedErrors(data.errors, language),
       });
     })
   );

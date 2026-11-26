@@ -18,6 +18,8 @@ interface DialogProps {
   onClose: () => void;
   /** Close when the dimmed backdrop is clicked. */
   closeOnBackdrop?: boolean;
+  /** 'modal' centers the dialog; 'sheet' docks it to the bottom on mobile and centers on sm+. */
+  variant?: 'modal' | 'sheet';
   /** Classes for the dialog card itself. */
   className?: string;
   overlayClassName?: string;
@@ -33,6 +35,7 @@ export const Dialog: React.FC<DialogProps> = ({
   labelledBy,
   onClose,
   closeOnBackdrop = false,
+  variant = 'modal',
   className = '',
   overlayClassName = 'bg-black/75',
   children,
@@ -88,8 +91,11 @@ export const Dialog: React.FC<DialogProps> = ({
     };
   }, []);
 
+  const layoutClass =
+    variant === 'sheet' ? 'items-end sm:items-center justify-center p-0 sm:p-4' : 'items-center justify-center p-4';
+
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4 ${overlayClassName}`}>
+    <div className={`fixed inset-0 z-50 flex backdrop-blur-sm ${layoutClass} ${overlayClassName}`}>
       {closeOnBackdrop && <div aria-hidden="true" className="absolute inset-0" onClick={onClose} />}
       <div
         ref={dialogRef}

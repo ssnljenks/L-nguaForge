@@ -4,15 +4,18 @@ import path from 'path';
 import {fileURLToPath} from 'url';
 import express from 'express';
 import {createApp, jsonErrorHandler} from './server/app.ts';
+import {globalBriefService} from './server/briefService.ts';
 import {loadConfig} from './server/config.ts';
 import {createGeminiGenerator} from './server/gemini.ts';
 import {attachLiveBridge} from './server/live.ts';
 
 const SERVER_DIR = path.dirname(fileURLToPath(import.meta.url));
+const BRIEF_REFRESH_INTERVAL_MS = 3 * 60 * 60 * 1000;
 
 async function startServer() {
   const config = loadConfig();
-  const app = createApp({config, generate: createGeminiGenerator()});
+  const generate = createGeminiGenerator();
+  const app = createApp({config, generate});
   const httpServer = http.createServer(app);
   attachLiveBridge(httpServer, config);
 
@@ -39,13 +42,26 @@ async function startServer() {
   }
   app.use(jsonErrorHandler);
 
+  let briefRefreshTimer: ReturnType<typeof setInterval> | null = null;
+
   httpServer.listen(config.port, '0.0.0.0', () => {
     console.log(`LinguaForge ILR server listening on http://0.0.0.0:${config.port}`);
+
+    // Non-blocking startup ingest + periodic refresh every 3 hours (only processes new URL hashes once).
+    const runBriefIngest = () => {
+      void globalBriefService.refreshFeeds(process.env.GEMINI_API_KEY?.trim() ? generate : undefined).catch(() => {
+        // Seed items remain available if remote RSS feeds are unreachable.
+      });
+    };
+    runBriefIngest();
+    briefRefreshTimer = setInterval(runBriefIngest, BRIEF_REFRESH_INTERVAL_MS);
+    briefRefreshTimer.unref();
   });
 
   // Cloud Run sends SIGTERM before stopping an instance: stop accepting connections and drain.
   const shutdown = (signal: string) => {
     console.log(`${signal} received, shutting down.`);
+    if (briefRefreshTimer) clearInterval(briefRefreshTimer);
     httpServer.close(() => process.exit(0));
     httpServer.closeIdleConnections();
     setTimeout(() => process.exit(0), 10_000).unref();

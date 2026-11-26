@@ -1,7 +1,7 @@
 import React from 'react';
 import {Trash2, Volume2} from 'lucide-react';
 import type {TargetLanguage, VocabItem} from '../../types';
-import {getDialectInfo, LANGUAGE_LABELS} from '../../utils/ilrLogic';
+import {getDialectInfo, getDomainInfo, LANGUAGE_LABELS} from '../../utils/ilrLogic';
 
 interface VaultItemListProps {
   language: TargetLanguage;
@@ -16,6 +16,13 @@ const MASTERY_LABELS: Record<VocabItem['mastery'], {label: string; className: st
   new: {label: 'New', className: 'text-[#94A3B8]'},
 };
 
+const SOURCE_LABELS: Record<NonNullable<VocabItem['source']>, string> = {
+  talk: 'Talk',
+  opi: 'OPI',
+  brief: 'Brief',
+  manual: 'Manual',
+};
+
 /** The user's saved vocabulary for the current language and filters. */
 export const VaultItemList: React.FC<VaultItemListProps> = ({language, items, onDeleteVocab, onSpeak}) =>
   items.length === 0 ? (
@@ -24,7 +31,7 @@ export const VaultItemList: React.FC<VaultItemListProps> = ({language, items, on
         No {LANGUAGE_LABELS[language]} vocabulary entries match this filter.
       </p>
       <p className="text-xs text-[#94A3B8]">
-        Tap words in Live Voice Chat or OPI Transcript, save upgrades from ILR Debrief, or add a new{' '}
+        Tap words in Talk or OPI Transcript, wrap up a chat with your tutor, save upgrades from Debrief, or add a new{' '}
         {LANGUAGE_LABELS[language]} entry above.
       </p>
     </div>
@@ -32,6 +39,7 @@ export const VaultItemList: React.FC<VaultItemListProps> = ({language, items, on
     <div className="rounded-xl border border-[#23303E] bg-[#111922] divide-y divide-[#1D2835]">
       {items.map((item) => {
         const dialect = getDialectInfo(item.language, item.dialect);
+        const domainShort = item.domain ? getDomainInfo(item.domain).shortLabel : null;
         return (
           <div
             key={item.id}
@@ -44,15 +52,31 @@ export const VaultItemList: React.FC<VaultItemListProps> = ({language, items, on
               </div>
               <p className="text-xs text-[#94A3B8] leading-relaxed italic">&ldquo;{item.contextSentence}&rdquo;</p>
               <p className="text-xs text-[#7D8FA3]">
-                {item.category}
+                {domainShort ?? item.category}
+                {item.kind ? (
+                  <>
+                    <span className="mx-1.5" aria-hidden="true">
+                      ·
+                    </span>
+                    <span className="text-[#CBD5E1]">{item.kind}</span>
+                  </>
+                ) : null}
                 <span className="mx-1.5" aria-hidden="true">
                   ·
                 </span>
-                {LANGUAGE_LABELS[item.language]} ({dialect.short})
+                {item.regionTag ? item.regionTag : `${LANGUAGE_LABELS[item.language]} (${dialect.short})`}
                 <span className="mx-1.5" aria-hidden="true">
                   ·
                 </span>
                 {item.registerTag}
+                {item.source ? (
+                  <>
+                    <span className="mx-1.5" aria-hidden="true">
+                      ·
+                    </span>
+                    <span>{SOURCE_LABELS[item.source]}</span>
+                  </>
+                ) : null}
                 <span className="mx-1.5" aria-hidden="true">
                   ·
                 </span>
@@ -65,7 +89,7 @@ export const VaultItemList: React.FC<VaultItemListProps> = ({language, items, on
                 type="button"
                 onClick={() => onSpeak(item.term.replace(/\s*\(.*?\)\s*/g, ''), dialect.bcp47)}
                 aria-label={`Listen to ${item.term}`}
-                className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg border border-[#23303E] text-[#CBD5E1] hover:text-[#F3C669] hover:border-[#35495E] transition-colors"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[#23303E] text-[#CBD5E1] hover:text-[#F3C669] hover:border-[#35495E] transition-colors"
               >
                 <Volume2 className="w-4 h-4" />
               </button>
@@ -73,7 +97,7 @@ export const VaultItemList: React.FC<VaultItemListProps> = ({language, items, on
                 type="button"
                 onClick={() => onDeleteVocab(item.id)}
                 aria-label={`Delete ${item.term}`}
-                className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg border border-[#23303E] text-[#94A3B8] hover:text-red-400 hover:border-red-500/40 transition-colors"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[#23303E] text-[#94A3B8] hover:text-red-400 hover:border-red-500/40 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
               </button>

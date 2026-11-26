@@ -2,10 +2,14 @@ import express, {type ErrorRequestHandler, type Express} from 'express';
 import type {ServerConfig} from './config.ts';
 import {toPublicError} from './errors.ts';
 import type {GenerateStructured} from './gemini.ts';
+import {registerBriefRoutes} from './routes/brief.ts';
 import {registerChatRoutes} from './routes/chat.ts';
 import {registerDebriefRoutes} from './routes/debrief.ts';
+import {registerFixRoutes} from './routes/fix.ts';
 import {registerLabRoutes} from './routes/lab.ts';
 import {registerOpiRoutes} from './routes/opi.ts';
+import {registerRoleplayRoutes} from './routes/roleplay.ts';
+import {registerTalkRoutes} from './routes/talk.ts';
 import {registerVocabRoutes} from './routes/vocab.ts';
 import {createApiRateLimiter, createSecurityHeaders} from './security.ts';
 
@@ -29,10 +33,14 @@ export function createApp({config, generate}: AppOptions): Express {
   api.use(express.json({limit: '1mb'}));
   const deps = {generate};
   registerOpiRoutes(api, deps);
+  registerRoleplayRoutes(api, deps);
+  registerTalkRoutes(api, deps);
   registerVocabRoutes(api, deps);
+  registerBriefRoutes(api, deps);
   registerDebriefRoutes(api, deps);
   registerLabRoutes(api, deps);
   registerChatRoutes(api, deps);
+  registerFixRoutes(api, deps);
   api.use((_req, res) => {
     res.status(404).json({error: 'Not found.'});
   });

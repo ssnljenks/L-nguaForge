@@ -1,41 +1,72 @@
-import React, {lazy, Suspense, useEffect, useState} from 'react';
-import {BookMarked, FileBarChart2, HelpCircle, MessageSquare, Mic, Settings, Timer} from 'lucide-react';
+import React, {lazy, Suspense, useCallback, useEffect, useState} from 'react';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  ChevronDown,
+  FileText,
+  HelpCircle,
+  Layers,
+  MessageSquare,
+  Mic,
+  Settings,
+  Sun,
+} from 'lucide-react';
 import type {
+  AppendErrorEventsFn,
+  BriefItem,
   DebriefReport,
+  DlptDrillResult,
   DrillHistoryEntry,
+  ErrorEvent,
+  ErrorLogEntry,
   FreeChatThread,
-  MilitaryDomain,
   MissionConfig,
   ModuleTab,
+  OpiRedoRecord,
   OpiSession,
-  TargetLanguage,
+  RecordErrorLogFn,
+  RoleplayDebriefResult,
+  TodayPlanCompletionStore,
+  TodayPlanStepId,
+  VocabFsrsRating,
   VocabItem,
 } from './types';
 import {DEFAULT_MISSION_CONFIG, SEED_SAMPLE_SESSIONS, SEED_VOCAB} from './data/seedData';
-import {DIALECTS_BY_LANGUAGE, filterItemsByLanguage, getDefaultDialect, MILITARY_DOMAINS} from './utils/ilrLogic';
+import {appendErrorEventsToStore} from './utils/errorPatterns';
+import {filterItemsByLanguage, getDialectInfo, getDomainInfo} from './utils/ilrLogic';
 import {API_SAVED_EVENT, clearLocalLookupCaches, getApiSavedCount} from './utils/lookupCacheStore';
+import {clearLastOpiAudio} from './utils/opiAudioStore';
+import {getLocalDateKey, getPlanCompletionKey, type TodayPlanSpeakingItem} from './utils/todayPlan';
+import {createInitialVocabFsrs, legacyMasteryToFsrsRating, reviewVocabCardWithFsrs} from './utils/vocabFsrs';
 import {useLocalStorage} from './hooks/useLocalStorage';
 import {
+  sanitizeActiveTab,
   sanitizeChatThreads,
+  sanitizeDlptResults,
+  sanitizeErrorEvents,
+  sanitizeErrorLogEntries,
   sanitizeHistory,
   sanitizeMissionConfig,
   sanitizeSeenTabs,
   sanitizeSessions,
+  sanitizeTodayPlanCompletion,
   sanitizeVocabItems,
 } from './utils/storageSchemas';
+import type {RoleplayLevelRequest, TestPrepView} from './components/TestPrepModule';
+import type {TalkWorkRequest} from './components/FreeChatModule';
+import {TodayModule} from './components/today/TodayModule';
+import {OfflineIndicator, PWAInstallButton} from './components/PWAControls';
+import {ErrorBoundary} from './components/ErrorBoundary';
+import {createId} from './utils/ids';
+
 // Tab modules and modals are code-split: each loads on first use, keeping the initial bundle small.
 // (All chunks are still precached by the service worker, so tabs work offline after the first visit.)
 const FreeChatModule = lazy(() => import('./components/FreeChatModule').then((m) => ({default: m.FreeChatModule})));
-const OpiSimulatorModule = lazy(() =>
-  import('./components/OpiSimulatorModule').then((m) => ({default: m.OpiSimulatorModule}))
-);
-const DebriefModule = lazy(() => import('./components/DebriefModule').then((m) => ({default: m.DebriefModule})));
-const VocabVaultModule = lazy(() =>
-  import('./components/VocabVaultModule').then((m) => ({default: m.VocabVaultModule}))
-);
-const PrepInterpLabModule = lazy(() =>
-  import('./components/PrepInterpLabModule').then((m) => ({default: m.PrepInterpLabModule}))
-);
+const TestPrepModule = lazy(() => import('./components/TestPrepModule').then((m) => ({default: m.TestPrepModule})));
+const BriefModule = lazy(() => import('./components/brief/BriefModule').then((m) => ({default: m.BriefModule})));
+const VocabModule = lazy(() => import('./components/VocabModule').then((m) => ({default: m.VocabModule})));
+const MissionSheet = lazy(() => import('./components/MissionSheet').then((m) => ({default: m.MissionSheet})));
+const DataSafetyModal = lazy(() => import('./components/DataSafetyModal').then((m) => ({default: m.DataSafetyModal})));
 const SettingsModal = lazy(() => import('./components/SettingsModal').then((m) => ({default: m.SettingsModal})));
 const WalkthroughModal = lazy(() =>
   import('./components/WalkthroughModal').then((m) => ({default: m.WalkthroughModal}))
@@ -48,9 +79,6 @@ const ModuleLoading: React.FC = () => (
     Loading module…
   </div>
 );
-import {OfflineIndicator, PWAInstallButton} from './components/PWAControls';
-import {ErrorBoundary} from './components/ErrorBoundary';
-import {createId} from './utils/ids';
 
 const NAV_ITEMS: {
   id: ModuleTab;
@@ -58,27 +86,34 @@ const NAV_ITEMS: {
   shortLabel: string;
   icon: React.FC<{className?: string}>;
 }[] = [
-  {id: 'chat', label: 'Live Voice Chat', shortLabel: 'Chat', icon: MessageSquare},
-  {id: 'opi', label: 'Live Voice OPI', shortLabel: 'OPI', icon: Mic},
-  {id: 'debrief', label: 'ILR Debrief', shortLabel: 'Debrief', icon: FileBarChart2},
-  {id: 'vault', label: 'Vocab Vault', shortLabel: 'Vault', icon: BookMarked},
-  {id: 'lab', label: 'PREP & Interp Lab', shortLabel: 'Lab', icon: Timer},
+  {id: 'today', label: 'Today', shortLabel: 'Today', icon: Sun},
+  {id: 'talk', label: 'Talk', shortLabel: 'Talk', icon: MessageSquare},
+  {id: 'test_prep', label: 'Test prep', shortLabel: 'Test prep', icon: Mic},
+  {id: 'brief', label: 'Brief', shortLabel: 'Brief', icon: FileText},
+  {id: 'vocab', label: 'Vocab', shortLabel: 'Vocab', icon: Layers},
 ];
 
 const sanitizeStoredConfig = sanitizeMissionConfig(DEFAULT_MISSION_CONFIG);
+const sanitizeBool = (raw: unknown): boolean | undefined => (typeof raw === 'boolean' ? raw : undefined);
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<ModuleTab>('chat');
+  const [activeTab, setActiveTab] = useLocalStorage<ModuleTab>('linguaforge_active_tab_v3', 'today', sanitizeActiveTab);
+  const [testPrepView, setTestPrepView] = useState<TestPrepView>('opi');
+  const [opiCallActive, setOpiCallActive] = useState(false);
+  const [missionSheetOpen, setMissionSheetOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [walkthroughOpen, setWalkthroughOpen] = useState(false);
 
   const isAutostart =
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('autostart') === '1';
 
-  const [seenTabs, setSeenTabs] = useLocalStorage<ModuleTab[]>('linguaforge_seen_tabs_v1', [], sanitizeSeenTabs);
-  const [tabIntroOpen, setTabIntroOpen] = useState<ModuleTab | null>(() =>
-    isAutostart || seenTabs.includes('chat') ? null : 'chat'
-  );
+  const [dataSafetyAck, setDataSafetyAck] = useLocalStorage<boolean>('linguaforge_data_safety_v1', false, sanitizeBool);
+  const [seenTabs, setSeenTabs] = useLocalStorage<ModuleTab[]>('linguaforge_seen_tabs_v2', [], sanitizeSeenTabs, [
+    'linguaforge_seen_tabs_v1',
+  ]);
+  const [tabIntroOpen, setTabIntroOpen] = useState<ModuleTab | null>(null);
+
+  const showDataSafetyModal = !isAutostart && !dataSafetyAck;
 
   const [apiSavedCount, setApiSavedCount] = useState<number>(() => getApiSavedCount());
 
@@ -99,14 +134,21 @@ export default function App() {
     scrollViewportToTop();
     const rafId = window.requestAnimationFrame(scrollViewportToTop);
     return () => window.cancelAnimationFrame(rafId);
-  }, [activeTab]);
+  }, [activeTab, testPrepView]);
 
-  const navigateToTab = (tab: ModuleTab) => {
+  const navigateToTab = (tab: ModuleTab, nextTestPrepView?: TestPrepView) => {
+    if (tab === 'test_prep') {
+      setTestPrepView(nextTestPrepView ?? 'opi');
+    }
     setActiveTab(tab);
     scrollViewportToTop();
-    if (!isAutostart && !seenTabs.includes(tab)) {
+    if (!isAutostart && dataSafetyAck && !seenTabs.includes(tab)) {
       setTabIntroOpen(tab);
     }
+  };
+
+  const handleAcknowledgeDataSafety = () => {
+    setDataSafetyAck(true);
   };
 
   const handleDismissTabIntro = (tab: ModuleTab) => {
@@ -127,9 +169,10 @@ export default function App() {
     sanitizeStoredConfig
   );
   const [vocabItems, setVocabItems] = useLocalStorage<VocabItem[]>(
-    'linguaforge_vocab_v1',
+    'linguaforge_vocab_v2',
     SEED_VOCAB,
-    sanitizeVocabItems
+    sanitizeVocabItems,
+    ['linguaforge_vocab_v1']
   );
   const [sessions, setSessions] = useLocalStorage<OpiSession[]>(
     'linguaforge_sessions_v1',
@@ -137,36 +180,106 @@ export default function App() {
     sanitizeSessions
   );
   const [history, setHistory] = useLocalStorage<DrillHistoryEntry[]>('linguaforge_history_v1', [], sanitizeHistory);
-  const [chatThreads, setChatThreads] = useLocalStorage<FreeChatThread[]>(
-    'linguaforge_chat_threads_v1',
+  const [dlptResults, setDlptResults] = useLocalStorage<DlptDrillResult[]>(
+    'linguaforge_dlpt_results_v1',
     [],
-    sanitizeChatThreads
+    sanitizeDlptResults
+  );
+  // Legacy gist hook kept for backward compatibility + Phase 8 unified append-only error log (60-day window)
+  const [, setErrorLog] = useLocalStorage<ErrorLogEntry[]>('linguaforge_error_log_v1', [], sanitizeErrorLogEntries);
+  const [errorEvents, setErrorEvents] = useLocalStorage<ErrorEvent[]>(
+    'linguaforge_error_events_v1',
+    [],
+    sanitizeErrorEvents
+  );
+  const [chatThreads, setChatThreads] = useLocalStorage<FreeChatThread[]>(
+    'linguaforge_chat_threads_v2',
+    [],
+    sanitizeChatThreads,
+    ['linguaforge_chat_threads_v1']
+  );
+  const [todayPlanCompletion, setTodayPlanCompletion] = useLocalStorage<TodayPlanCompletionStore>(
+    'linguaforge_today_plan_done_v1',
+    {},
+    sanitizeTodayPlanCompletion
   );
   const [selectedSessionId, setSelectedSessionId] = useState<string>(() => sessions[0]?.id ?? '');
+  const [activeBriefStory, setActiveBriefStory] = useState<BriefItem | null>(null);
+  const [requestedRoleplayLevel, setRequestedRoleplayLevel] = useState<RoleplayLevelRequest | null>(null);
+  const [workTalkRequest, setWorkTalkRequest] = useState<TalkWorkRequest | null>(null);
+  const [activePlanReturn, setActivePlanReturn] = useState<{
+    step: TodayPlanStepId;
+    dateKey: string;
+    label: string;
+  } | null>(null);
+
+  const handleMarkPlanStepDone = useCallback(
+    (step: TodayPlanStepId, dateKey: string) => {
+      const key = getPlanCompletionKey(config.language, dateKey);
+      setTodayPlanCompletion((prev) => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          [step]: true,
+        },
+      }));
+    },
+    [config.language, setTodayPlanCompletion]
+  );
+
+  const handleLaunchSpeakingPlanStep = useCallback(
+    (item: TodayPlanSpeakingItem, dateKey: string) => {
+      setActivePlanReturn({step: 'speaking', dateKey, label: item.title});
+      if (item.kind === 'opi_brief_back' && item.briefItem) {
+        setActiveBriefStory(item.briefItem);
+        setTestPrepView('opi');
+        navigateToTab('test_prep', 'opi');
+        return;
+      }
+      if (item.kind === 'roleplay') {
+        setRequestedRoleplayLevel({level: item.probeLevel ?? 2, token: Date.now()});
+        setTestPrepView('roleplay');
+        navigateToTab('test_prep', 'roleplay');
+        return;
+      }
+      if (item.kind === 'talk_work') {
+        setWorkTalkRequest({domain: item.workDomain ?? config.domain, token: Date.now()});
+        navigateToTab('talk');
+      }
+    },
+    [config.domain]
+  );
+
+  const handleCompleteActivePlanReturn = useCallback(() => {
+    if (activePlanReturn) {
+      handleMarkPlanStepDone(activePlanReturn.step, activePlanReturn.dateKey);
+      setActivePlanReturn(null);
+    }
+    navigateToTab('today');
+  }, [activePlanReturn, handleMarkPlanStepDone]);
+
+  const handleBriefItBack = useCallback((story: BriefItem) => {
+    setActiveBriefStory(story);
+    setTestPrepView('opi');
+    navigateToTab('test_prep', 'opi');
+  }, []);
 
   const updateConfig = (patch: Partial<MissionConfig>) => {
     setConfig((prev) => ({...prev, ...patch}));
-  };
-
-  const handleLanguageToggle = (lang: TargetLanguage) => {
-    if (lang === config.language) return;
-    updateConfig({
-      language: lang,
-      dialect: getDefaultDialect(lang),
-      voiceURI: '',
-    });
   };
 
   const handleSaveVocab = (item: Omit<VocabItem, 'id' | 'createdAt' | 'mastery' | 'reviewCount'>) => {
     setVocabItems((prev) => {
       const exists = prev.some((v) => v.language === item.language && v.term.toLowerCase() === item.term.toLowerCase());
       if (exists) return prev;
+      const nowMs = Date.now();
       const newEntry: VocabItem = {
         ...item,
         id: createId('v'),
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(nowMs).toISOString(),
         mastery: 'new',
         reviewCount: 0,
+        fsrs: createInitialVocabFsrs(nowMs),
       };
       return [newEntry, ...prev];
     });
@@ -176,28 +289,78 @@ export default function App() {
     setVocabItems((prev) => prev.filter((v) => v.id !== id));
   };
 
+  const handleReviewVocabFsrs = useCallback(
+    (id: string, rating: VocabFsrsRating) => {
+      const nowMs = Date.now();
+      setVocabItems((prev) => prev.map((v) => (v.id === id ? reviewVocabCardWithFsrs(v, rating, nowMs) : v)));
+    },
+    [setVocabItems]
+  );
+
   const handleUpdateMastery = (id: string, mastery: VocabItem['mastery']) => {
-    setVocabItems((prev) => prev.map((v) => (v.id === id ? {...v, mastery, reviewCount: v.reviewCount + 1} : v)));
+    handleReviewVocabFsrs(id, legacyMasteryToFsrsRating(mastery));
   };
 
   const handleLogHistory = (entry: DrillHistoryEntry) => {
     setHistory((prev) => [entry, ...prev].slice(0, 60));
   };
 
+  const handleSaveDlptResult = (result: DlptDrillResult) => {
+    setDlptResults((prev) => [result, ...prev].slice(0, 60));
+  };
+
+  const handleRecordErrorLog: RecordErrorLogFn = useCallback(
+    (entries) => {
+      if (entries.length === 0) return;
+      const now = new Date().toISOString();
+      const stamped: ErrorLogEntry[] = entries.map((entry) => ({
+        ...entry,
+        id: createId('errlog'),
+        createdAt: now,
+      }));
+      setErrorLog((prev) => [...stamped, ...prev].slice(0, 200));
+    },
+    [setErrorLog]
+  );
+
+  const handleAppendErrorEvents: AppendErrorEventsFn = useCallback(
+    (incoming) => {
+      if (incoming.length === 0) return;
+      const nowIso = new Date().toISOString();
+      const stamped: ErrorEvent[] = incoming.map((ev) => ({
+        ...ev,
+        id: createId('err'),
+        at: ev.at ?? nowIso,
+      }));
+      setErrorEvents((prev) => appendErrorEventsToStore(prev, stamped));
+    },
+    [setErrorEvents]
+  );
+
   const handleCompleteOpiSession = (session: OpiSession) => {
     setSessions((prev) => [session, ...prev].slice(0, 25));
     setSelectedSessionId(session.id);
+    const isRoleplay = session.type === 'roleplay';
     handleLogHistory({
-      id: createId('hist-opi'),
-      module: 'opi',
+      id: createId(isRoleplay ? 'hist-rp' : 'hist-opi'),
+      module: isRoleplay ? 'roleplay' : 'opi',
       language: session.language,
       dialect: session.dialect,
-      domain: session.domain,
+      domain: session.domain ?? 'general_policy',
       completedAt: session.startedAt,
-      summary: `Live OPI Session (${session.messages.length} turns)`,
+      summary: isRoleplay
+        ? `Role-play Level ${session.roleplayScenario?.level ?? session.focusLevel ?? 2} (${session.messages.length} turns)`
+        : `Live OPI Session (${session.messages.length} turns)`,
       scoreLabel: 'Ready for Debrief',
     });
-    navigateToTab('debrief');
+    if (activePlanReturn?.step === 'speaking') {
+      handleMarkPlanStepDone('speaking', activePlanReturn.dateKey);
+      setActivePlanReturn(null);
+      navigateToTab('today');
+      return;
+    }
+    // Automatically open Debrief inside Test prep when an OPI or Role-play session finishes
+    navigateToTab('test_prep', 'debrief');
   };
 
   const handleSaveMonologueSession = (session: OpiSession) => {
@@ -209,19 +372,37 @@ export default function App() {
     setSessions((prev) => prev.map((s) => (s.id === sessionId ? {...s, debrief: report} : s)));
   };
 
+  const handleSaveRoleplayDebrief = (sessionId: string, rpDebrief: RoleplayDebriefResult) => {
+    setSessions((prev) => prev.map((s) => (s.id === sessionId ? {...s, roleplayDebrief: rpDebrief} : s)));
+  };
+
+  const handleSaveRedo = (sessionId: string, record: OpiRedoRecord) => {
+    setSessions((prev) => prev.map((s) => (s.id === sessionId ? {...s, redoRecord: record} : s)));
+  };
+
   const handleResetAllData = () => {
     setConfig(DEFAULT_MISSION_CONFIG);
     setVocabItems(SEED_VOCAB);
     setSessions(SEED_SAMPLE_SESSIONS);
     setHistory([]);
+    setDlptResults([]);
+    setErrorLog([]);
+    setErrorEvents([]);
+    setTodayPlanCompletion({});
+    setActivePlanReturn(null);
     setChatThreads([]);
     setSeenTabs([]);
     clearLocalLookupCaches();
+    void clearLastOpiAudio();
     setSelectedSessionId(SEED_SAMPLE_SESSIONS[0]?.id ?? '');
     setSettingsOpen(false);
   };
 
-  const dialects = DIALECTS_BY_LANGUAGE[config.language];
+  const todayCompletionKey = getPlanCompletionKey(config.language, getLocalDateKey());
+  const todayDayCompletion = todayPlanCompletion[todayCompletionKey] ?? {};
+
+  const dialectInfo = getDialectInfo(config.language, config.dialect);
+  const domainInfo = getDomainInfo(config.domain);
   const activeLanguageVocabCount = filterItemsByLanguage(vocabItems, config.language).length;
   const activeLanguageSessionCount = filterItemsByLanguage(sessions, config.language).length;
 
@@ -253,7 +434,7 @@ export default function App() {
                   <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-[#D99B26]' : 'text-[#7D8FA3]'}`} />
                   <span className="truncate">{item.label}</span>
                 </span>
-                {item.id === 'vault' && (
+                {item.id === 'vocab' && (
                   <span className="font-mono text-xs text-[#7D8FA3] tabular-nums">{activeLanguageVocabCount}</span>
                 )}
               </button>
@@ -266,7 +447,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => setWalkthroughOpen(true)}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 min-h-[42px] rounded-lg border border-[#23303E] bg-[#111922] text-sm font-medium text-[#CBD5E1] hover:text-white hover:border-[#35495E] transition-colors whitespace-nowrap"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 min-h-[44px] rounded-lg border border-[#23303E] bg-[#111922] text-sm font-medium text-[#CBD5E1] hover:text-white hover:border-[#35495E] transition-colors whitespace-nowrap"
           >
             <HelpCircle className="w-4 h-4 text-[#D99B26]" />
             <span>Guided Tour</span>
@@ -274,7 +455,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 min-h-[42px] rounded-lg border border-[#23303E] bg-[#111922] text-sm font-medium text-[#CBD5E1] hover:text-white hover:border-[#35495E] transition-colors whitespace-nowrap"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 min-h-[44px] rounded-lg border border-[#23303E] bg-[#111922] text-sm font-medium text-[#CBD5E1] hover:text-white hover:border-[#35495E] transition-colors whitespace-nowrap"
           >
             <Settings className="w-4 h-4 text-[#94A3B8]" />
             <span>Mission Settings</span>
@@ -291,31 +472,11 @@ export default function App() {
           </span>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <div
-              className="flex items-center rounded-md bg-[#111922] p-0.5 border border-[#23303E]"
-              role="group"
-              aria-label="Target language"
-            >
-              {(['es', 'pt'] as const).map((lang) => (
-                <button
-                  key={lang}
-                  type="button"
-                  onClick={() => handleLanguageToggle(lang)}
-                  aria-pressed={config.language === lang}
-                  className={`px-2 py-1 text-xs font-semibold rounded transition-colors ${
-                    config.language === lang ? 'bg-[#D99B26] text-[#0B1117]' : 'text-[#94A3B8]'
-                  }`}
-                >
-                  {lang.toUpperCase()}
-                </button>
-              ))}
-            </div>
-
             <button
               type="button"
               onClick={() => setTabIntroOpen(activeTab)}
               aria-label="About this tab"
-              className="min-h-[38px] min-w-[38px] flex items-center justify-center rounded-lg border border-[#23303E] bg-[#111922] text-[#D99B26]"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[#23303E] bg-[#111922] text-[#D99B26]"
             >
               <HelpCircle className="w-4 h-4" />
             </button>
@@ -324,88 +485,38 @@ export default function App() {
               type="button"
               onClick={() => setSettingsOpen(true)}
               aria-label="Open mission settings"
-              className="min-h-[38px] min-w-[38px] flex items-center justify-center rounded-lg border border-[#23303E] bg-[#111922] text-[#CBD5E1]"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[#23303E] bg-[#111922] text-[#CBD5E1]"
             >
               <Settings className="w-4 h-4" />
             </button>
           </div>
         </header>
 
-        {/* Operational Context Toolbar (Language · Dialect · Military Domain) */}
-        <div className="border-b border-[#23303E] bg-[#0D141C] px-4 sm:px-6 lg:px-8 py-2.5 md:py-3">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-3">
-            <div className="grid grid-cols-2 md:flex md:flex-wrap items-center gap-2 md:gap-3">
-              {/* Desktop Target Language Segmented Toggle (mobile uses top header ES/PT toggle) */}
-              <div
-                className="hidden md:flex items-center rounded-lg bg-[#111922] p-0.5 border border-[#23303E]"
-                role="group"
-                aria-label="Target language selector"
-              >
-                <button
-                  type="button"
-                  onClick={() => handleLanguageToggle('es')}
-                  aria-pressed={config.language === 'es'}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap ${
-                    config.language === 'es' ? 'bg-[#D99B26] text-[#0B1117]' : 'text-[#94A3B8] hover:text-white'
-                  }`}
-                >
-                  Spanish
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleLanguageToggle('pt')}
-                  aria-pressed={config.language === 'pt'}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap ${
-                    config.language === 'pt' ? 'bg-[#D99B26] text-[#0B1117]' : 'text-[#94A3B8] hover:text-white'
-                  }`}
-                >
-                  Portuguese
-                </button>
-              </div>
-
-              {/* Regional Dialect Selector */}
-              <div className="flex items-center gap-2 min-w-0">
-                <label htmlFor="toolbar-dialect" className="text-xs text-[#7D8FA3] hidden md:inline shrink-0">
-                  Dialect
-                </label>
-                <select
-                  id="toolbar-dialect"
-                  aria-label="Regional dialect"
-                  value={config.dialect}
-                  onChange={(e) => updateConfig({dialect: e.target.value})}
-                  className="w-full md:w-auto min-h-[38px] rounded-lg border border-[#23303E] bg-[#111922] px-2.5 py-1 text-xs text-[#E6EDF3] truncate focus:outline-none focus:border-[#D99B26]"
-                >
-                  {dialects.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Military Domain Preset Selector */}
-              <div className="flex items-center gap-2 min-w-0">
-                <label htmlFor="toolbar-domain" className="text-xs text-[#7D8FA3] hidden md:inline shrink-0">
-                  Domain
-                </label>
-                <select
-                  id="toolbar-domain"
-                  aria-label="Military domain preset"
-                  value={config.domain}
-                  onChange={(e) => updateConfig({domain: e.target.value as MilitaryDomain})}
-                  className="w-full md:w-auto min-h-[38px] rounded-lg border border-[#23303E] bg-[#111922] px-2.5 py-1 text-xs text-[#E6EDF3] truncate focus:outline-none focus:border-[#D99B26]"
-                >
-                  {MILITARY_DOMAINS.map((dom) => (
-                    <option key={dom.id} value={dom.id}>
-                      {dom.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+        {/* Single Mission Chip Row below header */}
+        <div className="border-b border-[#23303E] bg-[#0D141C] px-4 sm:px-6 lg:px-8 py-2">
+          <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+            <button
+              type="button"
+              data-testid="mission-chip"
+              onClick={() => setMissionSheetOpen(true)}
+              aria-label={`Change mission context: ${config.language.toUpperCase()} ${dialectInfo.short} ${domainInfo.shortLabel}`}
+              className="inline-flex items-center gap-2 min-h-[44px] max-w-full px-3 rounded-lg border border-[#23303E] bg-[#111922] hover:border-[#D99B26]/60 text-left transition-colors"
+            >
+              <span className="px-1.5 py-0.5 rounded bg-[#D99B26] text-[#0B1117] font-mono text-[11px] font-bold shrink-0">
+                {config.language.toUpperCase()}
+              </span>
+              <span className="text-xs sm:text-sm font-medium text-[#E6EDF3] truncate">
+                {dialectInfo.short}{' '}
+                <span aria-hidden="true" className="text-[#7D8FA3] mx-0.5">
+                  ·
+                </span>{' '}
+                {domainInfo.shortLabel}
+              </span>
+              <ChevronDown className="w-4 h-4 text-[#94A3B8] shrink-0" />
+            </button>
 
             <div className="hidden lg:flex items-center gap-2 text-xs text-[#7D8FA3] shrink-0">
-              <span>ILR 2 → 2+/3 Progression</span>
+              <span>ILR 2 → 2+/3 Practice</span>
               <span aria-hidden="true">·</span>
               <span className="font-mono tabular-nums">
                 {activeLanguageSessionCount} {activeLanguageSessionCount === 1 ? 'session' : 'sessions'}
@@ -415,61 +526,131 @@ export default function App() {
         </div>
 
         {/* Main Content Viewport */}
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-10">
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 sm:py-6 pb-28 md:pb-10">
           <div className="max-w-6xl mx-auto">
+            {activePlanReturn && activeTab !== 'today' && !opiCallActive && (
+              <div
+                data-testid="active-plan-return-bar"
+                className="mb-4 rounded-xl border border-[#D99B26]/55 bg-[#D99B26]/10 px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2.5"
+              >
+                <div className="flex items-center gap-2 min-w-0 text-xs">
+                  <span className="font-mono font-semibold text-[#F3C669] shrink-0">Today&apos;s plan · 3/3</span>
+                  <span className="text-[#CBD5E1] truncate">{activePlanReturn.label}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => navigateToTab('today')}
+                    className="inline-flex items-center gap-1 min-h-[36px] px-2.5 rounded-lg border border-[#23303E] bg-[#111922] text-xs font-medium text-[#CBD5E1] hover:text-white transition-colors"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Today</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="complete-plan-step-return-btn"
+                    onClick={handleCompleteActivePlanReturn}
+                    className="inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Mark done &amp; return</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Keyed by language: switching language remounts the module, which resets its session state
                 (modules rely on this instead of their own reset logic). */}
             <ErrorBoundary key={`${activeTab}-${config.language}`} scopeLabel="Active Module">
               <Suspense fallback={<ModuleLoading />}>
-                {activeTab === 'chat' && (
+                {activeTab === 'today' && (
+                  <TodayModule
+                    config={config}
+                    vocabItems={vocabItems}
+                    sessions={sessions}
+                    dlptResults={dlptResults}
+                    errorEvents={errorEvents}
+                    dayCompletion={todayDayCompletion}
+                    onMarkPlanStepDone={handleMarkPlanStepDone}
+                    onReviewVocabFsrs={handleReviewVocabFsrs}
+                    onSaveVocab={handleSaveVocab}
+                    onLogHistory={handleLogHistory}
+                    onSaveDlptResult={handleSaveDlptResult}
+                    onRecordErrorLog={handleRecordErrorLog}
+                    onAppendErrorEvents={handleAppendErrorEvents}
+                    onBriefItBack={handleBriefItBack}
+                    onLaunchSpeakingPlanStep={handleLaunchSpeakingPlanStep}
+                    onNavigateTab={navigateToTab}
+                    onOpenSettings={() => setSettingsOpen(true)}
+                  />
+                )}
+
+                {activeTab === 'talk' && (
                   <FreeChatModule
                     config={config}
                     threads={chatThreads}
                     vocabItems={vocabItems}
+                    workTalkRequest={workTalkRequest}
+                    onConsumeWorkTalkRequest={() => setWorkTalkRequest(null)}
+                    onWrapUpComplete={() => {
+                      if (activePlanReturn?.step === 'speaking') {
+                        handleMarkPlanStepDone('speaking', activePlanReturn.dateKey);
+                      }
+                    }}
                     onUpdateThreads={setChatThreads}
                     onUpdateConfig={updateConfig}
                     onSaveVocab={handleSaveVocab}
+                    onAppendErrorEvents={handleAppendErrorEvents}
                     onNavigateTab={navigateToTab}
-                    onOpenTabHelp={() => setTabIntroOpen('chat')}
+                    onOpenTabHelp={() => setTabIntroOpen('talk')}
                   />
                 )}
 
-                {activeTab === 'opi' && (
-                  <OpiSimulatorModule
+                {activeTab === 'test_prep' && (
+                  <TestPrepModule
                     config={config}
                     vocabItems={vocabItems}
-                    onUpdateConfig={updateConfig}
-                    onSaveVocab={handleSaveVocab}
-                    onCompleteSession={handleCompleteOpiSession}
-                  />
-                )}
-
-                {activeTab === 'debrief' && (
-                  <DebriefModule
-                    language={config.language}
                     sessions={sessions}
                     selectedSessionId={selectedSessionId}
+                    activeView={testPrepView}
+                    briefStory={activeBriefStory}
+                    requestedRoleplayLevel={requestedRoleplayLevel}
+                    onConsumeRoleplayLevel={() => setRequestedRoleplayLevel(null)}
+                    onChangeView={setTestPrepView}
                     onSelectSession={setSelectedSessionId}
-                    onSaveDebrief={handleSaveDebrief}
+                    onCallActiveChange={setOpiCallActive}
                     onSaveVocab={handleSaveVocab}
+                    onCompleteOpiSession={handleCompleteOpiSession}
+                    onSaveMonologueSession={handleSaveMonologueSession}
+                    onSaveDebrief={handleSaveDebrief}
+                    onSaveRoleplayDebrief={handleSaveRoleplayDebrief}
+                    onSaveRedo={handleSaveRedo}
+                    onLogHistory={handleLogHistory}
+                    onAppendErrorEvents={handleAppendErrorEvents}
                   />
                 )}
 
-                {activeTab === 'vault' && (
-                  <VocabVaultModule
+                {activeTab === 'brief' && (
+                  <BriefModule
+                    config={config}
+                    vocabItems={vocabItems}
+                    onSaveVocab={handleSaveVocab}
+                    onLogHistory={handleLogHistory}
+                    onSaveDlptResult={handleSaveDlptResult}
+                    onRecordErrorLog={handleRecordErrorLog}
+                    onAppendErrorEvents={handleAppendErrorEvents}
+                    onBriefItBack={handleBriefItBack}
+                  />
+                )}
+
+                {activeTab === 'vocab' && (
+                  <VocabModule
                     config={config}
                     items={vocabItems}
                     onAddVocab={handleSaveVocab}
                     onDeleteVocab={handleDeleteVocab}
                     onUpdateMastery={handleUpdateMastery}
-                    onLogHistory={handleLogHistory}
-                  />
-                )}
-
-                {activeTab === 'lab' && (
-                  <PrepInterpLabModule
-                    config={config}
-                    onSaveMonologueSession={handleSaveMonologueSession}
+                    onReviewVocabFsrs={handleReviewVocabFsrs}
                     onLogHistory={handleLogHistory}
                   />
                 )}
@@ -479,34 +660,40 @@ export default function App() {
         </main>
       </div>
 
-      {/* Mobile Fixed Bottom Tab Bar (60px -> total sticky 52+60 = 112px = 13.2% < 15% cap) */}
-      <nav
-        aria-label="Mobile navigation"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[#23303E] bg-[#0E151D]/95 backdrop-blur-md pb-safe"
-      >
-        <div className="grid grid-cols-5 h-[60px] items-center">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const active = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => navigateToTab(item.id)}
-                aria-current={active ? 'page' : undefined}
-                className={`flex flex-col items-center justify-center gap-1 h-full py-1.5 transition-colors ${
-                  active ? 'text-[#D99B26]' : 'text-[#8B9BB0]'
-                }`}
-              >
-                <Icon className="w-[18px] h-[18px] shrink-0" />
-                <span className="text-[10px] font-medium leading-tight whitespace-nowrap">{item.shortLabel}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+      {/* Mobile Fixed Bottom Tab Bar (hidden during active full-screen OPI calls) */}
+      {!opiCallActive && (
+        <nav
+          aria-label="Mobile navigation"
+          className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[#23303E] bg-[#0E151D]/95 backdrop-blur-md pb-safe"
+        >
+          <div className="grid grid-cols-5 h-[60px] items-center">
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const active = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => navigateToTab(item.id)}
+                  aria-current={active ? 'page' : undefined}
+                  className={`flex flex-col items-center justify-center gap-1 h-full py-1.5 transition-colors ${
+                    active ? 'text-[#D99B26]' : 'text-[#8B9BB0]'
+                  }`}
+                >
+                  <Icon className="w-[18px] h-[18px] shrink-0" />
+                  <span className="text-[10px] font-medium leading-tight whitespace-nowrap">{item.shortLabel}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
 
       <Suspense fallback={null}>
+        {missionSheetOpen && (
+          <MissionSheet open onClose={() => setMissionSheetOpen(false)} config={config} onUpdateConfig={updateConfig} />
+        )}
+        {showDataSafetyModal && <DataSafetyModal open onAcknowledge={handleAcknowledgeDataSafety} />}
         {settingsOpen && (
           <SettingsModal
             open
@@ -520,7 +707,7 @@ export default function App() {
             onResetAllData={handleResetAllData}
           />
         )}
-        {tabIntroOpen && (
+        {!showDataSafetyModal && tabIntroOpen && (
           <TabIntroModal
             tab={tabIntroOpen}
             onDismiss={handleDismissTabIntro}

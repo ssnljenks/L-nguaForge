@@ -5,7 +5,7 @@ import type {AddressInfo} from 'net';
 import type {GoogleGenAI} from '@google/genai';
 import {WebSocket} from 'ws';
 import {loadConfig, type ServerConfig} from './config.ts';
-import {attachLiveBridge} from './live.ts';
+import {attachLiveBridge, type LiveBridgeDeps} from './live.ts';
 
 interface FakeLive {
   connectCalls: Array<{config: {systemInstruction?: string}}>;
@@ -16,7 +16,7 @@ interface FakeLive {
 const servers: http.Server[] = [];
 after(() => servers.forEach((s) => s.close()));
 
-async function startBridge(overrides: Partial<ServerConfig> = {}) {
+async function startBridge(overrides: Partial<ServerConfig> = {}, analyzeTalkTurn?: LiveBridgeDeps['analyzeTalkTurn']) {
   const fake: FakeLive = {connectCalls: [], sentAudio: [], emit: () => {}};
   const client = {
     live: {
@@ -34,7 +34,7 @@ async function startBridge(overrides: Partial<ServerConfig> = {}) {
   const server = http.createServer();
   servers.push(server);
   const config = {...loadConfig({TRUST_PROXY: '0'}), ...overrides};
-  attachLiveBridge(server, config, {getClient: () => client});
+  attachLiveBridge(server, config, {getClient: () => client, analyzeTalkTurn});
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const {port} = server.address() as AddressInfo;
   return {fake, url: `ws://127.0.0.1:${port}/ws/live`, origin: `http://127.0.0.1:${port}`};
@@ -114,4 +114,44 @@ test('enforces the per-IP concurrent session cap', async () => {
   assert.equal(closeCode, 1013);
   assert.match(String(second.received.json[0]?.error), /maximum number of live voice sessions/);
   first.ws.close();
+});
+
+test('Talk live session builds tutor system prompt and emits talk_note on turnComplete', async () => {
+  const {fake, url, origin} = await startBridge({maxLiveSessionsPerIp: 4}, async (_ctx, userText, tutorText) => ({
+    recastNote:
+      userText.includes('trabajo') && tutorText.includes('laburo')
+        ? 'He recast you: porteños say laburo for trabajo.'
+        : undefined,
+    pickedUp: [{term: 'laburo', meaning: 'work / job', regionTag: 'Rioplatense', kind: 'word'}],
+  }));
+  const {ws, received} = await connect(url, origin);
+  ws.send(
+    JSON.stringify({
+      type: 'start',
+      language: 'es',
+      dialect: 'rioplatense',
+      tutorId: 'es-ba-mateo',
+      sceneId: 'asado',
+      workTalk: false,
+      domain: 'maritime_surveillance',
+      slangLevel: 3,
+      correctionMode: 'recast',
+      binaryAudio: true,
+    })
+  );
+  await waitFor(() => received.json.some((m) => m.type === 'ready'), 'ready');
+  const prompt = fake.connectCalls[0].config.systemInstruction ?? '';
+  assert.match(prompt, /Mateo/);
+  assert.match(prompt, /Buenos Aires/);
+  assert.ok(!prompt.includes('Maritime Surveillance'));
+
+  fake.emit({serverContent: {inputTranscription: {text: 'Tengo mucho trabajo hoy.'}}});
+  fake.emit({serverContent: {outputTranscription: {text: '¡Qué laburo, che!'}}});
+  fake.emit({serverContent: {turnComplete: true}});
+
+  await waitFor(() => received.json.some((m) => m.type === 'talk_note'), 'talk_note');
+  const note = received.json.find((m) => m.type === 'talk_note');
+  assert.match(String(note?.recastNote), /laburo/);
+  assert.equal((note?.pickedUp as unknown[])?.length, 1);
+  ws.close();
 });

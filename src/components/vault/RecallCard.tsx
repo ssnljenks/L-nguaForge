@@ -1,7 +1,8 @@
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import {Check, Loader2, Mic, MicOff, Volume2} from 'lucide-react';
-import type {VocabItem} from '../../types';
+import type {VocabFsrsRating, VocabItem} from '../../types';
 import {getDialectInfo, getDomainInfo, LANGUAGE_LABELS, scorePhraseRecallMatch} from '../../utils/ilrLogic';
+import {formatDueSummary, getFsrsIntervalPreviews} from '../../utils/vocabFsrs';
 import {evaluateRecallSentence} from '../../services/api';
 import {useSpeechRecognition} from '../../hooks/useSpeech';
 
@@ -10,6 +11,7 @@ interface RecallCardProps {
   /** 1-based position in the deck, for display. */
   position: number;
   deckSize: number;
+  onGradeFsrs?: (rating: VocabFsrsRating) => void;
   onGrade: (mastery: VocabItem['mastery']) => void;
   onSpeak: (text: string, lang: string) => void;
 }
@@ -24,7 +26,7 @@ function stripNotes(term: string): string {
  * spoken), then use it in a sentence for AI coaching, then self-rate mastery. The parent remounts
  * this component for each card, which resets all per-card state.
  */
-export const RecallCard: React.FC<RecallCardProps> = ({card, position, deckSize, onGrade, onSpeak}) => {
+export const RecallCard: React.FC<RecallCardProps> = ({card, position, deckSize, onGradeFsrs, onGrade, onSpeak}) => {
   const [recallGuess, setRecallGuess] = useState('');
   const [revealed, setRevealed] = useState(false);
   const [recallMatchScore, setRecallMatchScore] = useState<number | null>(null);
@@ -40,6 +42,16 @@ export const RecallCard: React.FC<RecallCardProps> = ({card, position, deckSize,
 
   const spokenTerm = stripNotes(card.term);
   const bcp47 = getDialectInfo(card.language, card.dialect).bcp47;
+  const fsrsPreviews = useMemo(() => getFsrsIntervalPreviews(card), [card]);
+  const dueSummary = useMemo(() => formatDueSummary(card), [card]);
+
+  const handleFsrsRate = (rating: VocabFsrsRating) => {
+    if (onGradeFsrs) {
+      onGradeFsrs(rating);
+      return;
+    }
+    onGrade(rating === 'again' ? 'new' : rating === 'easy' ? 'mastered' : 'practicing');
+  };
 
   const handleCheckRecall = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +91,7 @@ export const RecallCard: React.FC<RecallCardProps> = ({card, position, deckSize,
         language: card.language,
         targetTerm: card.term,
         userSentence: usageSentence.trim(),
-        domain: card.domain,
+        domain: card.domain ?? 'general_policy',
       });
       setSentenceEval(res);
     } catch (err) {
@@ -93,10 +105,14 @@ export const RecallCard: React.FC<RecallCardProps> = ({card, position, deckSize,
     <div className="max-w-3xl mx-auto rounded-xl border border-[#23303E] bg-[#111922] p-5 sm:p-7 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#94A3B8]">
         <span>
-          Reverse Active-Recall · Card{' '}
+          FSRS Active Recall · Card{' '}
           <span className="font-mono text-[#F8FAFC] tabular-nums">
             {position}/{deckSize}
           </span>
+          <span className="mx-1.5" aria-hidden="true">
+            ·
+          </span>
+          <span className="text-[#F3C669]">{dueSummary}</span>
         </span>
         <span>
           Target: <strong className="text-[#E6EDF3]">{LANGUAGE_LABELS[card.language]}</strong> · {card.category}
@@ -110,7 +126,12 @@ export const RecallCard: React.FC<RecallCardProps> = ({card, position, deckSize,
           {card.englishConcept}
         </h2>
         <p className="text-xs text-[#94A3B8]">
-          Register target: {card.registerTag} · Domain: {getDomainInfo(card.domain).shortLabel}
+          Register target: {card.registerTag}
+          {card.domain
+            ? ` · Domain: ${getDomainInfo(card.domain).shortLabel}`
+            : card.regionTag
+              ? ` · ${card.regionTag}`
+              : ''}
         </p>
       </div>
 
@@ -256,31 +277,49 @@ export const RecallCard: React.FC<RecallCardProps> = ({card, position, deckSize,
             )}
           </form>
 
-          {/* Mastery Self-Rating & Next Card */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[#23303E]">
-            <span className="text-xs text-[#94A3B8]">Log mastery to advance:</span>
-            <div className="flex items-center gap-2">
+          {/* FSRS Self-Rating & Next Card */}
+          <div className="space-y-2.5 pt-4 border-t border-[#23303E]">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-[#94A3B8]">Rate recall (FSRS schedule):</span>
+              <span className="font-mono text-[11px] text-[#7D8FA3] tabular-nums">
+                {card.reviewCount} {card.reviewCount === 1 ? 'review' : 'reviews'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <button
                 type="button"
-                onClick={() => onGrade('new')}
-                className="px-3.5 py-2 min-h-[40px] rounded-lg border border-red-500/30 bg-red-950/20 text-xs font-medium text-red-300 hover:bg-red-950/40"
+                onClick={() => handleFsrsRate('again')}
+                className="flex flex-col items-center justify-center px-3 py-2 min-h-[48px] rounded-lg border border-red-500/35 bg-red-950/20 text-xs font-semibold text-red-300 hover:bg-red-950/40 transition-colors"
               >
-                Needs Work
+                <span>Again</span>
+                <span className="font-mono text-[11px] text-red-300/80 tabular-nums">{fsrsPreviews.again}</span>
               </button>
               <button
                 type="button"
-                onClick={() => onGrade('practicing')}
-                className="px-3.5 py-2 min-h-[40px] rounded-lg border border-amber-500/30 bg-amber-950/20 text-xs font-medium text-amber-300 hover:bg-amber-950/40"
+                onClick={() => handleFsrsRate('hard')}
+                className="flex flex-col items-center justify-center px-3 py-2 min-h-[48px] rounded-lg border border-amber-500/35 bg-amber-950/20 text-xs font-semibold text-amber-300 hover:bg-amber-950/40 transition-colors"
               >
-                Solid
+                <span>Hard</span>
+                <span className="font-mono text-[11px] text-amber-300/80 tabular-nums">{fsrsPreviews.hard}</span>
               </button>
               <button
                 type="button"
-                onClick={() => onGrade('mastered')}
-                className="flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-lg bg-emerald-600/20 border border-emerald-500/40 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/30"
+                onClick={() => handleFsrsRate('good')}
+                className="flex flex-col items-center justify-center px-3 py-2 min-h-[48px] rounded-lg border border-sky-500/35 bg-sky-950/20 text-xs font-semibold text-[#7DD3FC] hover:bg-sky-950/40 transition-colors"
               >
-                <Check className="w-3.5 h-3.5" />
-                <span>Mastered</span>
+                <span>Good</span>
+                <span className="font-mono text-[11px] text-[#7DD3FC]/80 tabular-nums">{fsrsPreviews.good}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFsrsRate('easy')}
+                className="flex flex-col items-center justify-center px-3 py-2 min-h-[48px] rounded-lg bg-emerald-600/20 border border-emerald-500/40 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/30 transition-colors"
+              >
+                <span className="inline-flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5" />
+                  Easy
+                </span>
+                <span className="font-mono text-[11px] text-emerald-300/80 tabular-nums">{fsrsPreviews.easy}</span>
               </button>
             </div>
           </div>

@@ -3,7 +3,7 @@ import type {Router} from 'express';
 import {MODELS} from '../config.ts';
 import {handleAsync, UserFacingError} from '../errors.ts';
 import {BUDGETS, ThinkingLevel} from '../gemini.ts';
-import {pickVocabCategory, resolveTrainingContext, sanitizeString} from '../validation.ts';
+import {assertUnclassifiedText, pickVocabCategory, resolveTrainingContext, sanitizeString} from '../validation.ts';
 import type {RouteDeps} from './types.ts';
 
 const CATEGORY_CHOICES =
@@ -21,6 +21,7 @@ export function registerVocabRoutes(router: Router, {generate}: RouteDeps): void
       if (!word || !contextSentence) {
         throw new UserFacingError(400, 'Word and context sentence are required.');
       }
+      assertUnclassifiedText(word, contextSentence);
 
       const data = await generate({
         model: MODELS.fastLookup,
@@ -66,6 +67,7 @@ Return concise contextual English meaning, crisp registerTag, 1-sentence grammar
       if (!englishQuery) {
         throw new UserFacingError(400, 'Please enter the English phrase or concept you want to express.');
       }
+      assertUnclassifiedText(englishQuery);
 
       const data = await generate({
         model: MODELS.fastLookup,
@@ -114,6 +116,7 @@ Return the strongest idiomatic high-register target phrase, an optional formal d
       if (!targetTerm || !userSentence) {
         throw new UserFacingError(400, 'Target term and candidate sentence are required.');
       }
+      assertUnclassifiedText(targetTerm, userSentence);
 
       const data = await generate({
         model: MODELS.chat,

@@ -2,7 +2,7 @@ import type {LookupSource} from '../../utils/localDictionary';
 
 /** Where a word lookup came from, shown under the word in the popover. */
 export const WORD_SOURCE_LABELS: Record<LookupSource, string> = {
-  vault: 'In Vault · Offline',
+  vault: 'In Vocab · Offline',
   military_dict: 'Military Dict · Offline',
   dictionary: 'Local Dict · Offline',
   cache: 'Cached · Offline',

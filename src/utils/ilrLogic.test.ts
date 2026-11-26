@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildChatThreadTitle,
-  determineProbeLevel,
   filterItemsByLanguage,
   formatSecondsClock,
   formatVocabToAnkiCsv,
@@ -26,30 +25,6 @@ test('PREP 90-second pacing transitions across exact boundaries', () => {
   assert.equal(getPrepPhase(70).id, 'pivot');
   assert.equal(getPrepPhase(90).id, 'pivot');
   assert.equal(getPrepPhase(120).id, 'pivot');
-});
-
-test('OPI probe level stays at Level 2 during initial warm-up, escalates to Level 3, and backs off on breakdown', () => {
-  const warmup = determineProbeLevel({
-    elapsedSeconds: 45,
-    candidateTurnCount: 1,
-    lastCandidateText: 'Mi unidad coordina patrullas marítimas en la zona económica exclusiva.',
-  });
-  assert.equal(warmup.level, 'level_2_baseline');
-
-  const escalated = determineProbeLevel({
-    elapsedSeconds: 135,
-    candidateTurnCount: 3,
-    lastCandidateText:
-      'Si bien existen desafíos presupuestarios, la cooperación interagencial fortalece la disuasión regional.',
-  });
-  assert.equal(escalated.level, 'level_3_probe');
-
-  const backedOff = determineProbeLevel({
-    elapsedSeconds: 180,
-    candidateTurnCount: 4,
-    lastCandidateText: 'Perdón, no sé cómo decir eso.',
-  });
-  assert.equal(backedOff.level, 'level_2_baseline');
 });
 
 test('scorePhraseRecallMatch normalizes accents and computes accurate lexical match percentage', () => {

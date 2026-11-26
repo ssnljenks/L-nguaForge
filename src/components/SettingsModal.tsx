@@ -1,6 +1,14 @@
 import React, {useEffect, useState} from 'react';
-import {HelpCircle, RotateCcw, Trash2, Volume2, X} from 'lucide-react';
-import type {DrillHistoryEntry, MilitaryDomain, MissionConfig, TargetLanguage} from '../types';
+import {Calendar, HelpCircle, RotateCcw, ShieldAlert, Trash2, Volume2, X} from 'lucide-react';
+import type {
+  DrillHistoryEntry,
+  GeminiLiveVoice,
+  IlrGoalLevel,
+  MilitaryDomain,
+  MissionConfig,
+  TargetLanguage,
+} from '../types';
+import {DATA_SAFETY_SHORT_NOTICE} from '../utils/classificationGuard';
 import {
   DIALECTS_BY_LANGUAGE,
   filterItemsByLanguage,
@@ -9,6 +17,8 @@ import {
   LANGUAGE_LABELS,
   MILITARY_DOMAINS,
 } from '../utils/ilrLogic';
+import {GEMINI_LIVE_VOICES} from '../utils/storageSchemas';
+import {DEFAULT_ILR_GOALS, formatTestCountdown, getDaysUntilTest, ILR_GOAL_OPTIONS} from '../utils/todayPlan';
 import {clearWordCacheOnly, getLocalCacheStats, WORD_CACHE_EVENT} from '../utils/localDictionary';
 import {useSpeechSynthesis} from '../hooks/useSpeech';
 import {PWAInstallButton} from './PWAControls';
@@ -83,10 +93,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           type="button"
           onClick={onClose}
           aria-label="Close settings"
-          className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white"
         >
           <X className="w-5 h-5" />
         </button>
+      </div>
+
+      {/* Data-Safety Notice */}
+      <div
+        role="note"
+        aria-label="Data-safety notice"
+        className="rounded-xl border border-[#D99B26]/35 bg-[#D99B26]/10 px-4 py-3 flex items-start gap-3"
+      >
+        <ShieldAlert className="w-4 h-4 text-[#D99B26] shrink-0 mt-0.5" />
+        <div className="space-y-0.5">
+          <p className="text-xs font-semibold text-[#F8FAFC]">{DATA_SAFETY_SHORT_NOTICE}</p>
+          <p className="text-xs text-[#CBD5E1]">
+            Inputs with classification or control markings are rejected automatically before reaching AI models.
+          </p>
+        </div>
       </div>
 
       {/* Language, Dialect, Domain */}
@@ -99,7 +124,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             id="settings-lang"
             value={config.language}
             onChange={(e) => handleLanguageChange(e.target.value as TargetLanguage)}
-            className="w-full min-h-[42px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
+            className="w-full min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
           >
             <option value="es">Spanish (ES)</option>
             <option value="pt">Portuguese (PT)</option>
@@ -114,7 +139,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             id="settings-dialect"
             value={config.dialect}
             onChange={(e) => onUpdateConfig({dialect: e.target.value})}
-            className="w-full min-h-[42px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
+            className="w-full min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
           >
             {dialectList.map((d) => (
               <option key={d.id} value={d.id}>
@@ -124,29 +149,140 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </select>
         </div>
 
-        <div className="sm:col-span-2 space-y-1.5">
-          <label htmlFor="settings-domain" className="text-xs font-medium text-[#CBD5E1]">
-            Military Domain Preset
-          </label>
-          <select
-            id="settings-domain"
-            value={config.domain}
-            onChange={(e) => onUpdateConfig({domain: e.target.value as MilitaryDomain})}
-            className="w-full min-h-[42px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
-          >
-            {MILITARY_DOMAINS.map((dom) => (
-              <option key={dom.id} value={dom.id}>
-                {dom.label}
-              </option>
-            ))}
-          </select>
+        <div className="sm:col-span-2 rounded-xl border border-[#23303E] bg-[#0B1117] p-3.5 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <label htmlFor="settings-work-focus" className="text-xs font-semibold text-[#F8FAFC] cursor-pointer">
+                Work focus
+              </label>
+              <p className="text-xs text-[#94A3B8]">
+                Shows the &ldquo;Work talk&rdquo; option in Talk for practicing job duties and domain terminology.
+              </p>
+            </div>
+            <button
+              id="settings-work-focus"
+              type="button"
+              role="switch"
+              aria-checked={config.workFocusEnabled}
+              onClick={() => onUpdateConfig({workFocusEnabled: !config.workFocusEnabled})}
+              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
+                config.workFocusEnabled ? 'border-[#D99B26] bg-[#D99B26]' : 'border-[#35495E] bg-[#16202B]'
+              }`}
+            >
+              <span className="sr-only">Toggle Work focus</span>
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full transition-transform ${
+                  config.workFocusEnabled ? 'translate-x-6 bg-[#0B1117]' : 'translate-x-1 bg-[#94A3B8]'
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="settings-domain" className="text-xs font-medium text-[#CBD5E1]">
+              Default Work Focus Domain
+            </label>
+            <select
+              id="settings-domain"
+              value={config.domain}
+              onChange={(e) => onUpdateConfig({domain: e.target.value as MilitaryDomain})}
+              className="w-full min-h-[44px] rounded-lg border border-[#23303E] bg-[#111922] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
+            >
+              {MILITARY_DOMAINS.map((dom) => (
+                <option key={dom.id} value={dom.id}>
+                  {dom.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Speech Synthesis Calibration */}
+      {/* ILR Goal Levels & Optional DLPT/OPI Test Date */}
+      <div className="pt-4 border-t border-[#23303E] space-y-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-semibold text-[#F8FAFC]">ILR Goals &amp; Test Date</h3>
+            <p className="text-xs text-[#94A3B8] mt-0.5">
+              Sets your target bars on Today&apos;s ILR profile (default 3 / 3 / 3) and optional exam countdown.
+            </p>
+          </div>
+          {config.testDate && (
+            <span className="font-mono text-xs text-[#F3C669] tabular-nums">
+              {formatTestCountdown(getDaysUntilTest(config.testDate)) ?? config.testDate}
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-3 gap-2.5">
+          {(['listening', 'reading', 'speaking'] as const).map((skill) => {
+            const goals = config.ilrGoals ?? DEFAULT_ILR_GOALS;
+            const currentVal = goals[skill];
+            const label = skill === 'listening' ? 'Listening' : skill === 'reading' ? 'Reading' : 'Speaking';
+            return (
+              <div key={skill} className="space-y-1.5">
+                <label htmlFor={`settings-goal-${skill}`} className="text-xs font-medium text-[#CBD5E1]">
+                  {label} goal
+                </label>
+                <select
+                  id={`settings-goal-${skill}`}
+                  data-testid={`settings-goal-${skill}`}
+                  value={currentVal}
+                  onChange={(e) =>
+                    onUpdateConfig({
+                      ilrGoals: {
+                        ...goals,
+                        [skill]: e.target.value as IlrGoalLevel,
+                      },
+                    })
+                  }
+                  className="w-full min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 font-mono text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
+                >
+                  {ILR_GOAL_OPTIONS.map((lvl) => (
+                    <option key={lvl} value={lvl}>
+                      ILR {lvl}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="space-y-1.5">
+          <label
+            htmlFor="settings-test-date"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#CBD5E1]"
+          >
+            <Calendar className="w-3.5 h-3.5 text-[#D99B26]" />
+            <span>Optional DLPT / OPI Test Date</span>
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="settings-test-date"
+              data-testid="settings-test-date"
+              type="date"
+              value={config.testDate ?? ''}
+              onChange={(e) => onUpdateConfig({testDate: e.target.value || undefined})}
+              className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
+            />
+            {config.testDate && (
+              <button
+                type="button"
+                onClick={() => onUpdateConfig({testDate: undefined})}
+                className="min-h-[44px] px-3 rounded-lg border border-[#23303E] bg-[#0B1117] text-xs font-medium text-[#94A3B8] hover:text-white transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Speech Synthesis & Live Voice Calibration */}
       <div className="pt-4 border-t border-[#23303E] space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-[#F8FAFC]">Web Speech TTS &amp; Voice</h3>
+          <h3 className="text-sm font-semibold text-[#F8FAFC]">Voice &amp; Audio Calibration</h3>
           <button
             type="button"
             onClick={() =>
@@ -161,7 +297,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 }
               )
             }
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#23303E] text-xs text-[#CBD5E1] hover:text-white"
+            className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg border border-[#23303E] text-xs text-[#CBD5E1] hover:text-white"
           >
             <Volume2 className="w-3.5 h-3.5 text-[#D99B26]" />
             <span>Test Voice</span>
@@ -170,6 +306,43 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
+            <label htmlFor="settings-live-voice" className="text-xs font-medium text-[#CBD5E1]">
+              Live Voice Partner
+            </label>
+            <select
+              id="settings-live-voice"
+              value={config.liveVoice}
+              onChange={(e) => onUpdateConfig({liveVoice: e.target.value as GeminiLiveVoice})}
+              className="w-full min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-xs text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
+            >
+              {GEMINI_LIVE_VOICES.map((voice) => (
+                <option key={voice} value={voice}>
+                  {voice}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="settings-voice" className="text-xs font-medium text-[#CBD5E1]">
+              Browser {LANGUAGE_LABELS[config.language]} Voice
+            </label>
+            <select
+              id="settings-voice"
+              value={config.voiceURI}
+              onChange={(e) => onUpdateConfig({voiceURI: e.target.value})}
+              className="w-full min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-xs text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
+            >
+              <option value="">Auto-select ({dialectInfo.bcp47})</option>
+              {matchingVoices.map((v) => (
+                <option key={v.voiceURI} value={v.voiceURI}>
+                  {v.name} ({v.lang})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="sm:col-span-2 space-y-1.5">
             <div className="flex items-center justify-between text-xs text-[#CBD5E1]">
               <label htmlFor="settings-rate">Default Speech Rate</label>
               <span className="font-mono tabular-nums text-[#F3C669]">{config.speechRate.toFixed(2)}x</span>
@@ -184,25 +357,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onChange={(e) => onUpdateConfig({speechRate: Number(e.target.value)})}
               className="w-full accent-[#D99B26]"
             />
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="settings-voice" className="text-xs font-medium text-[#CBD5E1]">
-              Browser {LANGUAGE_LABELS[config.language]} Voice
-            </label>
-            <select
-              id="settings-voice"
-              value={config.voiceURI}
-              onChange={(e) => onUpdateConfig({voiceURI: e.target.value})}
-              className="w-full min-h-[40px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-xs text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
-            >
-              <option value="">Auto-select ({dialectInfo.bcp47})</option>
-              {matchingVoices.map((v) => (
-                <option key={v.voiceURI} value={v.voiceURI}>
-                  {v.name} ({v.lang})
-                </option>
-              ))}
-            </select>
           </div>
         </div>
       </div>
@@ -242,8 +396,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         <p className="text-xs text-[#94A3B8] leading-relaxed">
-          Tap-to-define checks your Vocab Vault, the built-in offline military &amp; core dictionaries (including
-          plurals and gender forms), and your browser&apos;s persistent word cache before calling AI.
+          Tap-to-define checks your Vocab, the built-in offline military &amp; core dictionaries (including plurals and
+          gender forms), and your browser&apos;s persistent word cache before calling AI.
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -253,7 +407,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               setCacheStats(getLocalCacheStats(config.language));
             }}
             disabled={cacheStats.cachedWordCount === 0 && cacheStats.cachedTotCount === 0}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#23303E] bg-[#0B1117] text-xs font-medium text-[#CBD5E1] hover:text-white hover:border-[#35495E] disabled:opacity-40 transition-colors"
+            className="inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg border border-[#23303E] bg-[#0B1117] text-xs font-medium text-[#CBD5E1] hover:text-white hover:border-[#35495E] disabled:opacity-40 transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5 text-[#94A3B8]" />
             <span>Clear Word Cache</span>
@@ -264,7 +418,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onClose();
               onOpenWalkthrough();
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#23303E] bg-[#0B1117] text-xs font-medium text-[#CBD5E1] hover:text-white hover:border-[#35495E] transition-colors"
+            className="inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg border border-[#23303E] bg-[#0B1117] text-xs font-medium text-[#CBD5E1] hover:text-white hover:border-[#35495E] transition-colors"
           >
             <HelpCircle className="w-3.5 h-3.5 text-[#D99B26]" />
             <span>Open Guided Walkthrough</span>
@@ -275,7 +429,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onClose();
               onResetTabIntros();
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#23303E] bg-[#0B1117] text-xs font-medium text-[#94A3B8] hover:text-white hover:border-[#35495E] transition-colors"
+            className="inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg border border-[#23303E] bg-[#0B1117] text-xs font-medium text-[#94A3B8] hover:text-white hover:border-[#35495E] transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Replay Tab Tips</span>

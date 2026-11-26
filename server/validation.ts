@@ -1,10 +1,23 @@
 import {CHAT_REGISTER_MODES, getDialectInfo, getDomainInfo, isVocabCategory} from '../src/utils/ilrLogic.ts';
+import {CLASSIFICATION_REJECT_MESSAGE, findClassificationMarkingInTexts} from '../src/utils/classificationGuard.ts';
 import type {ChatRegisterMode, MilitaryDomain, TargetLanguage, VocabCategory} from '../src/types.ts';
+import {UserFacingError} from './errors.ts';
 
 /** Trims and truncates; anything that isn't a string becomes ''. */
 export function sanitizeString(val: unknown, maxLen = 4000): string {
   if (typeof val !== 'string') return '';
   return val.trim().slice(0, maxLen);
+}
+
+/**
+ * Rejects free-text payloads that contain classification or control markings with HTTP 422
+ * before any outbound Gemini call occurs.
+ */
+export function assertUnclassifiedText(...texts: unknown[]): void {
+  const match = findClassificationMarkingInTexts(texts);
+  if (match) {
+    throw new UserFacingError(422, CLASSIFICATION_REJECT_MESSAGE);
+  }
 }
 
 export function sanitizeStringArray(val: unknown, maxItems: number, maxLen: number): string[] {

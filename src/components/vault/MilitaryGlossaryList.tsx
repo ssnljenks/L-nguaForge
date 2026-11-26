@@ -92,17 +92,18 @@ export const MilitaryGlossaryList: React.FC<MilitaryGlossaryListProps> = ({
                       language: config.language,
                       dialect: config.dialect,
                       domain: entry.domain,
+                      source: 'manual',
                     })
                   }
-                  aria-label={alreadySaved ? `${entry.term} already in Vault` : `Save ${entry.term} to Vault`}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 min-h-[38px] rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+                  aria-label={alreadySaved ? `${entry.term} already in Vocab` : `Save ${entry.term} to Vocab`}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
                     alreadySaved
                       ? 'border border-emerald-500/35 bg-emerald-950/25 text-emerald-300 cursor-default'
                       : 'bg-[#D99B26] text-[#0B1117] hover:bg-[#E5AE42]'
                   }`}
                 >
                   {alreadySaved ? <Check className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
-                  <span>{alreadySaved ? 'In Vault' : 'Save to Vault'}</span>
+                  <span>{alreadySaved ? 'In Vocab' : 'Save to Vocab'}</span>
                 </button>
               </div>
             </div>

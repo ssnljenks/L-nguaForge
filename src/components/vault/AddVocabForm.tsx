@@ -28,12 +28,13 @@ export const AddVocabForm: React.FC<AddVocabFormProps> = ({config, onAdd, onClos
     onAdd({
       term: newTerm.trim(),
       englishConcept: newEnglish.trim(),
-      contextSentence: newContext.trim() || `Operational example using "${newTerm.trim()}".`,
+      contextSentence: newContext.trim() || `Example using "${newTerm.trim()}".`,
       registerTag: newRegister.trim() || 'Formal / Operational',
       category: newCategory,
       language: config.language,
       dialect: config.dialect,
-      domain: config.domain,
+      ...(config.workFocusEnabled ? {domain: config.domain} : {}),
+      source: 'manual',
     });
     onClose();
   };
@@ -41,7 +42,7 @@ export const AddVocabForm: React.FC<AddVocabFormProps> = ({config, onAdd, onClos
   return (
     <form onSubmit={handleManualAdd} className="rounded-xl border border-[#D99B26]/35 bg-[#111922] p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-[#F8FAFC]">Add to {LANGUAGE_LABELS[config.language]} Vault</h2>
+        <h2 className="text-sm font-semibold text-[#F8FAFC]">Add to {LANGUAGE_LABELS[config.language]} Vocab</h2>
         <button
           type="button"
           onClick={onClose}
@@ -144,7 +145,7 @@ export const AddVocabForm: React.FC<AddVocabFormProps> = ({config, onAdd, onClos
           type="submit"
           className="px-4 py-2 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42]"
         >
-          Save to Vault
+          Save to Vocab
         </button>
       </div>
     </form>

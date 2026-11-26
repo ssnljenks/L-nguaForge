@@ -4,7 +4,6 @@ import type {
   MilitaryDomain,
   OpiSession,
   PrepPhase,
-  ProbeLevel,
   TargetLanguage,
   VocabCategory,
   VocabItem,
@@ -108,6 +107,10 @@ export function getDomainInfo(domainId: MilitaryDomain) {
   return MILITARY_DOMAINS.find((d) => d.id === domainId) ?? MILITARY_DOMAINS[0];
 }
 
+export function isMilitaryDomain(val: unknown): val is MilitaryDomain {
+  return typeof val === 'string' && MILITARY_DOMAINS.some((d) => d.id === val);
+}
+
 /**
  * Deterministic PREP 90-second pacing state machine.
  * Boundaries:
@@ -122,53 +125,6 @@ export function getPrepPhase(elapsedSeconds: number): PrepPhase {
   if (clamped < 40) return PREP_PHASES[1];
   if (clamped < 70) return PREP_PHASES[2];
   return PREP_PHASES[3];
-}
-
-/**
- * Determines the OPI examiner probe target:
- * - First 120 seconds (or fewer than 2 candidate turns) stay in Level 2 Baseline warm-up.
- * - After 120s (or >= 2 candidate turns), escalates to Level 3 Probe unless
- *   the candidate's recent response shows severe breakdown (< 7 words or explicit confusion).
- */
-export function determineProbeLevel(params: {
-  elapsedSeconds: number;
-  candidateTurnCount: number;
-  lastCandidateText?: string;
-}): {level: ProbeLevel; reason: string} {
-  const {elapsedSeconds, candidateTurnCount, lastCandidateText = ''} = params;
-
-  if (elapsedSeconds < 120 && candidateTurnCount < 2) {
-    return {
-      level: 'level_2_baseline',
-      reason: 'Initial 2-minute Level 2 baseline warm-up (concrete facts & operational description).',
-    };
-  }
-
-  const trimmed = lastCandidateText.trim().toLowerCase();
-  const wordCount = trimmed ? trimmed.split(/\s+/).length : 0;
-  const breakdownSignals = [
-    'no entiendo',
-    'não entendo',
-    'no sé cómo decir',
-    'não sei como dizer',
-    'puede repetir',
-    'pode repetir',
-    'perdón',
-    'desculpe',
-  ];
-  const hasExplicitBreakdown = breakdownSignals.some((sig) => trimmed.includes(sig));
-
-  if ((candidateTurnCount >= 2 && wordCount > 0 && wordCount < 6) || hasExplicitBreakdown) {
-    return {
-      level: 'level_2_baseline',
-      reason: 'Smooth step-down to Level 2 baseline to restore fluency after linguistic strain.',
-    };
-  }
-
-  return {
-    level: 'level_3_probe',
-    reason: 'Level 3 abstract policy, systemic cause-and-effect, and hypothetical subjunctive probe.',
-  };
 }
 
 /**
@@ -264,9 +220,12 @@ export function formatVocabToAnkiCsv(items: VocabItem[]): string {
   const rows = items.map((item) => {
     const tags = [
       `lang::${item.language}`,
-      `domain::${item.domain}`,
+      item.domain ? `domain::${item.domain}` : null,
+      item.source ? `src::${item.source}` : null,
       `cat::${item.category.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`,
-    ].join(' ');
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     return [
       item.englishConcept,

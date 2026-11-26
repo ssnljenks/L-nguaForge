@@ -1668,10 +1668,10 @@ export function lookupLocalWord(
     return {
       word: displayWord,
       contextualMeaning: vaultMatch.englishConcept,
-      registerTag: vaultMatch.registerTag || 'Saved in Vault',
+      registerTag: vaultMatch.registerTag || 'Saved in Vocab',
       grammarNote: vaultMatch.contextSentence
-        ? `From your Vocab Vault: "${vaultMatch.contextSentence}"`
-        : 'Already saved in your Vocab Vault.',
+        ? `From your Vocab: "${vaultMatch.contextSentence}"`
+        : 'Already saved in your Vocab.',
       suggestedCategory: vaultMatch.category,
       source: 'vault',
       matchedTerm: vaultMatch.term,

@@ -1,5 +1,5 @@
 import React, {useRef, useState} from 'react';
-import type {DrillHistoryEntry, MissionConfig, OpiSession} from '../types';
+import type {AppendErrorEventsFn, DrillHistoryEntry, MissionConfig, OpiSession} from '../types';
 import {getDialectInfo, getDomainInfo, LANGUAGE_LABELS} from '../utils/ilrLogic';
 import {type LabPanelHandle, PrepMonologuePanel} from './lab/PrepMonologuePanel';
 import {InterpretationPanel} from './lab/InterpretationPanel';
@@ -8,6 +8,7 @@ interface PrepInterpLabModuleProps {
   config: MissionConfig;
   onSaveMonologueSession: (session: OpiSession) => void;
   onLogHistory: (entry: DrillHistoryEntry) => void;
+  onAppendErrorEvents?: AppendErrorEventsFn;
 }
 
 type LabMode = 'prep' | 'interp';
@@ -21,6 +22,7 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
   config,
   onSaveMonologueSession,
   onLogHistory,
+  onAppendErrorEvents,
 }) => {
   const dialectInfo = getDialectInfo(config.language, config.dialect);
   const domainInfo = getDomainInfo(config.domain);
@@ -50,7 +52,7 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
         </div>
 
         <div
-          className="flex items-center p-1 rounded-lg bg-[#111922] border border-[#23303E] self-start lg:self-auto"
+          className="grid grid-cols-2 sm:inline-flex items-center p-1 rounded-lg bg-[#111922] border border-[#23303E] w-full sm:w-auto"
           role="tablist"
           aria-label="Lab mode"
         >
@@ -63,7 +65,7 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
               aria-controls={`lab-panel-${mode.id}`}
               aria-selected={subMode === mode.id}
               onClick={() => switchMode(mode.id)}
-              className={`px-4 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+              className={`min-h-[44px] px-2.5 sm:px-4 py-2 text-xs font-medium rounded-md transition-colors text-center leading-tight sm:whitespace-nowrap ${
                 subMode === mode.id ? 'bg-[#D99B26] text-[#0B1117] font-semibold' : 'text-[#94A3B8] hover:text-white'
               }`}
             >
@@ -88,6 +90,7 @@ export const PrepInterpLabModule: React.FC<PrepInterpLabModuleProps> = ({
           ref={interpRef}
           config={config}
           onLogHistory={onLogHistory}
+          onAppendErrorEvents={onAppendErrorEvents}
         />
       </div>
     </div>

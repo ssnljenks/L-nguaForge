@@ -67,7 +67,7 @@ export const TotRetrievalHelper: React.FC<TotRetrievalHelperProps> = ({config, o
       const res = await requestTotPhrase({
         language: config.language,
         dialect: config.dialect,
-        domain: config.domain,
+        domain: 'general_policy',
         englishQuery: q,
       });
       if (seq === requestSeqRef.current) setResult(res);
@@ -90,29 +90,28 @@ export const TotRetrievalHelper: React.FC<TotRetrievalHelperProps> = ({config, o
       category: revealed.category,
       language: config.language,
       dialect: config.dialect,
-      domain: config.domain,
+      domain: 'general_policy',
     });
     setSaved(true);
   };
 
   return (
     <section
-      aria-label="5-Second Tip-of-the-Tongue Helper"
+      aria-label="Stuck? Hold for a hint"
       className="rounded-xl border border-[#D99B26]/35 bg-[#131A22] p-4 sm:p-5 space-y-4"
     >
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-semibold text-[#F8FAFC]">5-Second Tip-of-the-Tongue Retrieval Helper</h2>
+          <h2 className="text-sm font-semibold text-[#F8FAFC]">Stuck? Hold for a hint</h2>
           <p className="text-xs text-[#94A3B8] mt-0.5">
-            Enter what you want to say in English. Hold for the 5-second active recall window to retrieve it from memory
-            before reveal.
+            Type what you want to say in English. Hold for 5 seconds to try recalling it before the phrase reveals.
           </p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close Tip-of-the-Tongue helper"
-          className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white"
+          aria-label="Close hint helper"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white"
         >
           <X className="w-4 h-4" />
         </button>
@@ -127,15 +126,15 @@ export const TotRetrievalHelper: React.FC<TotRetrievalHelperProps> = ({config, o
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder='e.g., "provided that maritime assets arrive on time" or "joint staff talks"'
-          className="flex-1 min-h-[42px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
+          placeholder='e.g., "provided that public funding stays steady" or "on the other hand"'
+          className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
         />
         <button
           type="submit"
           disabled={!query.trim() || loading}
-          className="px-4 py-2 min-h-[42px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
+          className="px-4 py-2 min-h-[44px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
         >
-          Start 5s Recall
+          Hold 5s for hint
         </button>
       </form>
 
@@ -213,7 +212,7 @@ export const TotRetrievalHelper: React.FC<TotRetrievalHelperProps> = ({config, o
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-70"
               >
                 {saved ? <Check className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
-                <span>{saved ? 'Saved to Vault' : 'Save to Vocab Vault'}</span>
+                <span>{saved ? 'Saved to Vocab' : 'Save to Vocab'}</span>
               </button>
             </div>
           </div>

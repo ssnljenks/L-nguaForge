@@ -194,7 +194,7 @@ export const FlagWordDrawer: React.FC<FlagWordDrawerProps> = ({
               className={`sm:col-span-4 ${inputClass}`}
             />
             <select
-              aria-label="Vault category"
+              aria-label="Vocab category"
               value={category}
               onChange={(e) => setCategory(e.target.value as VocabCategory)}
               className="sm:col-span-2 min-h-[40px] rounded-lg border border-[#23303E] bg-[#111922] px-2 text-xs text-[#E6EDF3]"
@@ -227,7 +227,7 @@ export const FlagWordDrawer: React.FC<FlagWordDrawerProps> = ({
       )}
       {saved && mode === 'direct' && (
         <p className="text-xs text-emerald-400" role="status">
-          Saved to Vocab Vault.
+          Saved to Vocab.
         </p>
       )}
 
@@ -245,7 +245,7 @@ export const FlagWordDrawer: React.FC<FlagWordDrawerProps> = ({
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-70 shrink-0"
           >
             {saved ? <Check className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
-            <span>{saved ? 'Saved' : 'Save to Vault'}</span>
+            <span>{saved ? 'Saved' : 'Save to Vocab'}</span>
           </button>
         </div>
       )}

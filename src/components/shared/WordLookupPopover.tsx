@@ -106,7 +106,7 @@ export const WordLookupPopover: React.FC<WordLookupPopoverProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-70 transition-colors"
             >
               {lookup.saved ? <Check className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
-              <span>{lookup.saved ? 'Saved to Vault' : 'Save to Vocab Vault'}</span>
+              <span>{lookup.saved ? 'Saved to Vocab' : 'Save to Vocab'}</span>
             </button>
           </div>
         </>

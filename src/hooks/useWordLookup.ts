@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
-import type {MissionConfig, VocabItem} from '../types';
+import type {MissionConfig, VocabItem, VocabSource} from '../types';
 import {lookupContextualWord} from '../services/api';
 import {normalizeVocabCategory} from '../utils/ilrLogic';
 import {type EnrichedWordLookup, incrementApiSavedCount, lookupLocalWord} from '../utils/localDictionary';
@@ -22,13 +22,24 @@ interface UseWordLookupOptions {
   onSaveVocab: SaveVocabFn;
   /** Called after a word is saved (e.g. to record it on the active chat thread). */
   onSaved?: (term: string) => void;
+  vocabSource?: VocabSource;
+  regionTag?: string;
+  omitDomain?: boolean;
 }
 
 /**
  * Tap-a-word lookup shared by the OPI and Free Chat transcripts: resolves instantly from the
  * vault/offline dictionaries/cache when possible, otherwise asks the AI with the sentence as context.
  */
-export function useWordLookup({config, vocabItems, onSaveVocab, onSaved}: UseWordLookupOptions) {
+export function useWordLookup({
+  config,
+  vocabItems,
+  onSaveVocab,
+  onSaved,
+  vocabSource,
+  regionTag,
+  omitDomain = false,
+}: UseWordLookupOptions) {
   const [lookup, setLookup] = useState<WordLookupState | null>(null);
   // Ignore responses that arrive after the user tapped a different word or closed the popover.
   const requestSeqRef = useRef(0);
@@ -100,11 +111,24 @@ export function useWordLookup({config, vocabItems, onSaveVocab, onSaved}: UseWor
       category: normalizeVocabCategory(lookup.result.suggestedCategory),
       language: config.language,
       dialect: config.dialect,
-      domain: config.domain,
+      ...(!omitDomain ? {domain: config.domain} : {}),
+      ...(vocabSource ? {source: vocabSource} : {}),
+      ...(regionTag ? {regionTag} : {}),
+      kind: lookup.word.trim().includes(' ') ? 'phrase' : 'word',
     });
     onSaved?.(lookup.word);
     setLookup((prev) => (prev ? {...prev, saved: true} : null));
-  }, [lookup, onSaveVocab, onSaved, config.language, config.dialect, config.domain]);
+  }, [
+    lookup,
+    onSaveVocab,
+    onSaved,
+    config.language,
+    config.dialect,
+    config.domain,
+    omitDomain,
+    vocabSource,
+    regionTag,
+  ]);
 
   return {lookup, lookUpWord, retry, save, close};
 }
