@@ -46,6 +46,11 @@ test('Talk: tutor + scene, live and typed turns, save a dotted word, wrap up int
   await expect(transcript).toContainText('tacos al pastor');
   await checkScreen(page, testInfo, '12-talk-chat');
 
+  // Tappable words sit in the running text: no 44 px touch-target box per word (WCAG 2.5.8 inline exception).
+  const word = transcript.getByRole('button', {name: 'Mañana', exact: true});
+  const box = await word.boundingBox();
+  expect(box?.height ?? 0).toBeLessThan(32);
+
   // Tap the dotted local expression -> save to Vocab.
   await transcript
     .getByRole('button', {name: /^Local expression chido/})

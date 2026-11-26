@@ -97,7 +97,7 @@ type Fixtures = {
 export const test = base.extend<Fixtures>({
   freshInstall: [false, {option: true}],
   utterances: [DEFAULT_UTTERANCES, {option: true}],
-  api: async ({page}, use) => {
+  api: async ({page}, provide) => {
     const calls: ApiCall[] = [];
     const pending: Promise<void>[] = [];
     page.on('requestfinished', (req: Request) => {
@@ -116,10 +116,10 @@ export const test = base.extend<Fixtures>({
         })()
       );
     });
-    await use(calls);
+    await provide(calls);
     await Promise.all(pending);
   },
-  page: async ({page, freshInstall, utterances, request}, use) => {
+  page: async ({page, freshInstall, utterances, request}, provide) => {
     // Every test starts each canned Gemini sequence from its first answer.
     await request.post('/__fixtures/reset');
     await page.addInitScript(installSpeechStubs, utterances);
@@ -135,7 +135,7 @@ export const test = base.extend<Fixtures>({
         }
       });
     }
-    await use(page);
+    await provide(page);
   },
 });
 
@@ -163,12 +163,15 @@ export async function openSettings(page: Page) {
   await expect(page.locator('#settings-work-focus')).toBeVisible();
 }
 
-/** Saves a full-page screenshot of a main screen for design review (uploaded as a CI artifact). */
+/**
+ * Saves what the user sees on a main screen (the viewport, like a device mockup) for design review;
+ * uploaded as a CI artifact. Full-page captures would paint sticky headers mid-page.
+ */
 export async function screen(page: Page, testInfo: TestInfo, name: string) {
   const dir = path.join('e2e', 'screens', testInfo.project.name);
   fs.mkdirSync(dir, {recursive: true});
   await page.waitForTimeout(250);
-  await page.screenshot({path: path.join(dir, `${name}.png`), fullPage: true, animations: 'disabled'});
+  await page.screenshot({path: path.join(dir, `${name}.png`), animations: 'disabled'});
 }
 
 /** Runs axe on the current screen and fails on serious or critical violations. */

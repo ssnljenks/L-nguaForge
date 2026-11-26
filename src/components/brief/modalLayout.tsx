@@ -5,6 +5,8 @@ import React from 'react';
  * even when it holds no controls, e.g. the gist result (WCAG 2.1.1).
  */
 export const ModalBody: React.FC<{children: React.ReactNode}> = ({children}) => (
+  // A scroll container must be focusable to be keyboard-scrollable (axe scrollable-region-focusable).
+  // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex
   <div tabIndex={0} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
     {children}
   </div>
