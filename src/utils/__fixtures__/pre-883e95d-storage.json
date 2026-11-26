@@ -1,0 +1,371 @@
+{
+  "linguaforge_config_v1": {
+    "language": "es",
+    "dialect": "rioplatense",
+    "domain": "c2_comms",
+    "speechRate": 1.1,
+    "autoSpeakExaminer": true,
+    "handsFreeMode": false,
+    "voiceURI": "Google español"
+  },
+  "linguaforge_vocab_v1": [
+    {
+      "id": "v-user-1",
+      "term": "a fin de cuentas",
+      "englishConcept": "at the end of the day",
+      "contextSentence": "A fin de cuentas, la decisión es tuya.",
+      "registerTag": "Formal / Diplomatic",
+      "category": "High-Register Connectors",
+      "language": "es",
+      "dialect": "neutral_latam",
+      "domain": "c2_comms",
+      "createdAt": "2026-11-20T10:00:00.000Z",
+      "mastery": "practicing",
+      "reviewCount": 3
+    },
+    {
+      "id": "v-seed-1",
+      "term": "no obstante",
+      "englishConcept": "nevertheless / notwithstanding (formal adversative pivot)",
+      "contextSentence": "El informe técnico fue favorable; no obstante, persisten vulnerabilidades en la red táctica.",
+      "registerTag": "Formal / Diplomatic",
+      "category": "High-Register Connectors",
+      "language": "es",
+      "dialect": "neutral_latam",
+      "domain": "c2_comms",
+      "createdAt": "2026-11-20T14:00:00.000Z",
+      "mastery": "practicing",
+      "reviewCount": 2
+    },
+    {
+      "id": "v-seed-2",
+      "term": "en la medida en que",
+      "englishConcept": "to the extent that / insofar as (nuanced conditional framing)",
+      "contextSentence": "La cooperación será sostenible en la medida en que ambos estados compartan costos de mantenimiento.",
+      "registerTag": "ILR 3 Analytical",
+      "category": "High-Register Connectors",
+      "language": "es",
+      "dialect": "neutral_latam",
+      "domain": "general_policy",
+      "createdAt": "2026-11-20T14:10:00.000Z",
+      "mastery": "new",
+      "reviewCount": 0
+    },
+    {
+      "id": "v-seed-3",
+      "term": "conciencia del dominio marítimo",
+      "englishConcept": "maritime domain awareness (MDA)",
+      "contextSentence": "El radar costero amplía la conciencia del dominio marítimo frente a embarcaciones semisumergibles.",
+      "registerTag": "Operational Military",
+      "category": "Operational/Military Terms",
+      "language": "es",
+      "dialect": "caribbean",
+      "domain": "maritime_surveillance",
+      "createdAt": "2026-11-20T14:20:00.000Z",
+      "mastery": "mastered",
+      "reviewCount": 4
+    },
+    {
+      "id": "v-seed-4",
+      "term": "actualmente (= currently, NOT \"actually\")",
+      "englishConcept": "currently / at present (English false-friend correction)",
+      "contextSentence": "Actualmente la unidad prioriza el entrenamiento de mantenimiento preventivo.",
+      "registerTag": "False Friend Correction",
+      "category": "False Friends",
+      "language": "es",
+      "dialect": "neutral_latam",
+      "domain": "aviation_logistics",
+      "createdAt": "2026-11-21T09:00:00.000Z",
+      "mastery": "practicing",
+      "reviewCount": 1
+    },
+    {
+      "id": "v-seed-5",
+      "term": "ir al grano",
+      "englishConcept": "to get straight to the point (natural idiomatic transition)",
+      "contextSentence": "Para ir al grano, la interoperabilidad radial define el éxito de la interdicción.",
+      "registerTag": "Natural Idiomatic",
+      "category": "Regional Idioms",
+      "language": "es",
+      "dialect": "rioplatense",
+      "domain": "c2_comms",
+      "createdAt": "2026-11-21T09:15:00.000Z",
+      "mastery": "new",
+      "reviewCount": 0
+    },
+    {
+      "id": "v-seed-6",
+      "term": "em contrapartida",
+      "englishConcept": "on the other hand / in return (high-register Portuguese pivot)",
+      "contextSentence": "O treinamento conjunto eleva os custos iniciais; em contrapartida, reduz drasticamente o tempo de resposta.",
+      "registerTag": "Formal / Diplomatic",
+      "category": "High-Register Connectors",
+      "language": "pt",
+      "dialect": "br_standard",
+      "domain": "delegation_hosting",
+      "createdAt": "2026-11-21T10:00:00.000Z",
+      "mastery": "practicing",
+      "reviewCount": 1
+    },
+    {
+      "id": "v-seed-7",
+      "term": "prontidão operacional",
+      "englishConcept": "operational readiness (Portuguese military doctrine)",
+      "contextSentence": "A manutenção preventiva dos helicópteros garante a prontidão operacional em missões humanitárias.",
+      "registerTag": "Operational Military",
+      "category": "Operational/Military Terms",
+      "language": "pt",
+      "dialect": "br_standard",
+      "domain": "aviation_logistics",
+      "createdAt": "2026-11-21T10:30:00.000Z",
+      "mastery": "new",
+      "reviewCount": 0
+    },
+    {
+      "id": "v-seed-8",
+      "term": "pretender (= to intend to, NOT \"to pretend\")",
+      "englishConcept": "to intend / plan to (English false-friend correction)",
+      "contextSentence": "A delegação pretende assinar o acordo técnico antes do encerramento da conferência.",
+      "registerTag": "False Friend Correction",
+      "category": "False Friends",
+      "language": "pt",
+      "dialect": "br_bahian",
+      "domain": "general_policy",
+      "createdAt": "2026-11-21T11:00:00.000Z",
+      "mastery": "new",
+      "reviewCount": 0
+    }
+  ],
+  "linguaforge_sessions_v1": [
+    {
+      "id": "opi-user-1",
+      "type": "opi",
+      "language": "es",
+      "dialect": "neutral_latam",
+      "domain": "maritime_surveillance",
+      "startedAt": "2026-11-21T09:00:00.000Z",
+      "durationSeconds": 312,
+      "messages": [
+        {
+          "id": "opi-user-m0",
+          "role": "examiner",
+          "text": "Buenas tardes. Para comenzar, ¿podría describir brevemente el papel de su equipo en los ejercicios recientes de vigilancia marítima conjunta?",
+          "timestamp": "2026-11-21T16:30:05.000Z",
+          "probeLevel": "level_2_baseline",
+          "probeReason": "Opening Level 2 concrete operational description."
+        },
+        {
+          "id": "opi-user-m1",
+          "role": "candidate",
+          "text": "Buenas tardes. Mi equipo coordina las comunicaciones entre las fragatas y los aviones de patrulla. La semana pasada hicimos un ejercicio que fue más largo de lo que esperábamos, entonces tuvimos que rotar a los operadores cada seis horas.",
+          "timestamp": "2026-11-21T16:31:00.000Z",
+          "probeLevel": "level_2_baseline"
+        },
+        {
+          "id": "opi-user-m2",
+          "role": "examiner",
+          "text": "Entiendo. Ahora bien, mirando más allá de lo táctico: ¿qué implicaciones estratégicas tendría para la región si se redujera el financiamiento bilateral para estos patrullajes conjuntos en los próximos cinco años?",
+          "timestamp": "2026-11-21T16:32:10.000Z",
+          "probeLevel": "level_3_probe",
+          "probeReason": "Escalated to Level 3 hypothetical policy probe requiring imperfect subjunctive/conditional."
+        },
+        {
+          "id": "opi-user-m3",
+          "role": "candidate",
+          "text": "Creo que sería un problema muy grande para todos los países. Si cortan el dinero, las redes criminales van a aprovechar la situación, pero los gobiernos pequeños no tienen suficientes barcos para cubrir toda la costa solos.",
+          "timestamp": "2026-11-21T16:33:30.000Z",
+          "probeLevel": "level_3_probe"
+        },
+        {
+          "id": "opi-user-m4",
+          "role": "examiner",
+          "text": "Un punto relevante. ¿Y de qué manera podrían las armadas socias compensar esa brecha sin comprometer la soberanía jurisdiccional de cada país?",
+          "timestamp": "2026-11-21T16:34:15.000Z",
+          "probeLevel": "level_3_probe",
+          "probeReason": "Sustaining Level 3 abstract diplomatic trade-off probe."
+        },
+        {
+          "id": "opi-user-m5",
+          "role": "candidate",
+          "text": "Bueno, podrían compartir más información de radar y satélites porque eso cuesta menos que mandar barcos todo el tiempo. Al final, cada país mantiene control de sus aguas, pero trabajan juntos en la inteligencia.",
+          "timestamp": "2026-11-21T16:35:10.000Z",
+          "probeLevel": "level_3_probe"
+        }
+      ],
+      "debrief": {
+        "generatedAt": "2026-11-21T16:36:00.000Z",
+        "estimatedIlr": "ILR 2+",
+        "summaryAssessment": "Strong factual control at Level 2 with clear operational vocabulary and logical answers to Level 3 policy probes. Pushing decisively into sustained ILR 2+/3 requires tightening hypothetical subjunctive frames (replacing indicative \"si cortan\" with \"si se recortaran\") and upgrading casual connectors (\"bueno\", \"al final\", \"entonces\") to formal diplomatic pivots.",
+        "discourseAudit": {
+          "pointScore": 84,
+          "reasonScore": 76,
+          "exampleScore": 72,
+          "pivotScore": 64,
+          "cohesionNotes": "Paragraphs state clear positions and causes, yet rely heavily on conversational links (\"bueno\", \"al final\", \"porque\") instead of formal discourse architecture (\"cabe señalar\", \"no obstante\", \"en la medida en que\").",
+          "subjunctiveControl": "Partially controlled: used conditional \"sería / podrían\" accurately, but dropped to present indicative (\"si cortan... van a aprovechar\") instead of imperfect subjunctive (\"si se redujeran... aprovecharían\").",
+          "timeFrameStability": "Solid preterite/imperfect control during the Level 2 warm-up; occasional softening into present tense during abstract counterfactual hypotheses."
+        },
+        "naturalUpgrades": [
+          {
+            "originalLevel2": "Creo que sería un problema muy grande para todos los países.",
+            "upgradedLevel2Plus": "A mi juicio, dicha reducción acarrearía repercusiones considerables para la seguridad hemisférica.",
+            "connectorsUsed": ["A mi juicio", "dicha reducción"],
+            "whyItUpgrades": "Replaces generic Level 2 phrasing (\"problema muy grande\") with natural defense-policy register without sounding robotic."
+          },
+          {
+            "originalLevel2": "Si cortan el dinero, las redes criminales van a aprovechar la situación.",
+            "upgradedLevel2Plus": "De recortarse el financiamiento, las redes ilícitas no tardarían en explotar ese vacío operativo.",
+            "connectorsUsed": ["De recortarse", "vacío operativo"],
+            "whyItUpgrades": "Demonstrates clean Level 3 hypothetical framing and precise operational terminology."
+          },
+          {
+            "originalLevel2": "Al final, cada país mantiene control de sus aguas, pero trabajan juntos en la inteligencia.",
+            "upgradedLevel2Plus": "En última instancia, cada nación preserva su soberanía jurisdiccional, al tiempo que consolida el intercambio de inteligencia.",
+            "connectorsUsed": ["En última instancia", "al tiempo que"],
+            "whyItUpgrades": "Elevates a compound \"pero\" clause into balanced, high-register diplomatic subordination."
+          }
+        ],
+        "nextDrillRecommendation": "Run a 90-second PREP Monologue on maritime burden-sharing focusing specifically on imperfect subjunctive \"si\" clauses and formal adversative pivots."
+      }
+    },
+    {
+      "id": "sample-opi-maritime-es",
+      "type": "opi",
+      "language": "es",
+      "dialect": "neutral_latam",
+      "domain": "maritime_surveillance",
+      "startedAt": "2026-11-21T16:30:00.000Z",
+      "durationSeconds": 312,
+      "messages": [
+        {
+          "id": "m1",
+          "role": "examiner",
+          "text": "Buenas tardes. Para comenzar, ¿podría describir brevemente el papel de su equipo en los ejercicios recientes de vigilancia marítima conjunta?",
+          "timestamp": "2026-11-21T16:30:05.000Z",
+          "probeLevel": "level_2_baseline",
+          "probeReason": "Opening Level 2 concrete operational description."
+        },
+        {
+          "id": "m2",
+          "role": "candidate",
+          "text": "Buenas tardes. Mi equipo coordina las comunicaciones entre las fragatas y los aviones de patrulla. La semana pasada hicimos un ejercicio que fue más largo de lo que esperábamos, entonces tuvimos que rotar a los operadores cada seis horas.",
+          "timestamp": "2026-11-21T16:31:00.000Z",
+          "probeLevel": "level_2_baseline"
+        },
+        {
+          "id": "m3",
+          "role": "examiner",
+          "text": "Entiendo. Ahora bien, mirando más allá de lo táctico: ¿qué implicaciones estratégicas tendría para la región si se redujera el financiamiento bilateral para estos patrullajes conjuntos en los próximos cinco años?",
+          "timestamp": "2026-11-21T16:32:10.000Z",
+          "probeLevel": "level_3_probe",
+          "probeReason": "Escalated to Level 3 hypothetical policy probe requiring imperfect subjunctive/conditional."
+        },
+        {
+          "id": "m4",
+          "role": "candidate",
+          "text": "Creo que sería un problema muy grande para todos los países. Si cortan el dinero, las redes criminales van a aprovechar la situación, pero los gobiernos pequeños no tienen suficientes barcos para cubrir toda la costa solos.",
+          "timestamp": "2026-11-21T16:33:30.000Z",
+          "probeLevel": "level_3_probe"
+        },
+        {
+          "id": "m5",
+          "role": "examiner",
+          "text": "Un punto relevante. ¿Y de qué manera podrían las armadas socias compensar esa brecha sin comprometer la soberanía jurisdiccional de cada país?",
+          "timestamp": "2026-11-21T16:34:15.000Z",
+          "probeLevel": "level_3_probe",
+          "probeReason": "Sustaining Level 3 abstract diplomatic trade-off probe."
+        },
+        {
+          "id": "m6",
+          "role": "candidate",
+          "text": "Bueno, podrían compartir más información de radar y satélites porque eso cuesta menos que mandar barcos todo el tiempo. Al final, cada país mantiene control de sus aguas, pero trabajan juntos en la inteligencia.",
+          "timestamp": "2026-11-21T16:35:10.000Z",
+          "probeLevel": "level_3_probe"
+        }
+      ],
+      "debrief": {
+        "generatedAt": "2026-11-21T16:36:00.000Z",
+        "estimatedIlr": "ILR 2+",
+        "summaryAssessment": "Strong factual control at Level 2 with clear operational vocabulary and logical answers to Level 3 policy probes. Pushing decisively into sustained ILR 2+/3 requires tightening hypothetical subjunctive frames (replacing indicative \"si cortan\" with \"si se recortaran\") and upgrading casual connectors (\"bueno\", \"al final\", \"entonces\") to formal diplomatic pivots.",
+        "discourseAudit": {
+          "pointScore": 84,
+          "reasonScore": 76,
+          "exampleScore": 72,
+          "pivotScore": 64,
+          "cohesionNotes": "Paragraphs state clear positions and causes, yet rely heavily on conversational links (\"bueno\", \"al final\", \"porque\") instead of formal discourse architecture (\"cabe señalar\", \"no obstante\", \"en la medida en que\").",
+          "subjunctiveControl": "Partially controlled: used conditional \"sería / podrían\" accurately, but dropped to present indicative (\"si cortan... van a aprovechar\") instead of imperfect subjunctive (\"si se redujeran... aprovecharían\").",
+          "timeFrameStability": "Solid preterite/imperfect control during the Level 2 warm-up; occasional softening into present tense during abstract counterfactual hypotheses."
+        },
+        "naturalUpgrades": [
+          {
+            "originalLevel2": "Creo que sería un problema muy grande para todos los países.",
+            "upgradedLevel2Plus": "A mi juicio, dicha reducción acarrearía repercusiones considerables para la seguridad hemisférica.",
+            "connectorsUsed": ["A mi juicio", "dicha reducción"],
+            "whyItUpgrades": "Replaces generic Level 2 phrasing (\"problema muy grande\") with natural defense-policy register without sounding robotic."
+          },
+          {
+            "originalLevel2": "Si cortan el dinero, las redes criminales van a aprovechar la situación.",
+            "upgradedLevel2Plus": "De recortarse el financiamiento, las redes ilícitas no tardarían en explotar ese vacío operativo.",
+            "connectorsUsed": ["De recortarse", "vacío operativo"],
+            "whyItUpgrades": "Demonstrates clean Level 3 hypothetical framing and precise operational terminology."
+          },
+          {
+            "originalLevel2": "Al final, cada país mantiene control de sus aguas, pero trabajan juntos en la inteligencia.",
+            "upgradedLevel2Plus": "En última instancia, cada nación preserva su soberanía jurisdiccional, al tiempo que consolida el intercambio de inteligencia.",
+            "connectorsUsed": ["En última instancia", "al tiempo que"],
+            "whyItUpgrades": "Elevates a compound \"pero\" clause into balanced, high-register diplomatic subordination."
+          }
+        ],
+        "nextDrillRecommendation": "Run a 90-second PREP Monologue on maritime burden-sharing focusing specifically on imperfect subjunctive \"si\" clauses and formal adversative pivots."
+      }
+    }
+  ],
+  "linguaforge_history_v1": [
+    {
+      "id": "hist-1",
+      "module": "opi",
+      "language": "es",
+      "dialect": "rioplatense",
+      "domain": "c2_comms",
+      "completedAt": "2026-11-21T09:20:00.000Z",
+      "summary": "Live OPI Session (6 turns)",
+      "scoreLabel": "Ready for Debrief"
+    }
+  ],
+  "linguaforge_chat_threads_v1": [
+    {
+      "id": "chat-1",
+      "title": "Hablemos",
+      "language": "es",
+      "dialect": "rioplatense",
+      "registerMode": "professional",
+      "updatedAt": "2026-11-22T08:00:00.000Z",
+      "savedTerms": ["lidiar con"],
+      "messages": [
+        {
+          "id": "m1",
+          "role": "user",
+          "text": "Hola, ¿cómo andás?",
+          "timestamp": "2026-11-22T08:00:00.000Z"
+        },
+        {
+          "id": "m2",
+          "role": "assistant",
+          "text": "Todo bien, ¿y vos?",
+          "timestamp": "2026-11-22T08:00:05.000Z",
+          "struggleSuggestions": [
+            {
+              "targetPhrase": "lidiar con",
+              "englishConcept": "deal with",
+              "contextSentence": "Hay que lidiar con eso.",
+              "reasonTag": "Code-switch fix",
+              "note": "n",
+              "suggestedCategory": "Regional Idioms"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "linguaforge_seen_tabs_v1": ["chat", "opi", "vault"]
+}
