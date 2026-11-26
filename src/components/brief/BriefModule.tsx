@@ -315,7 +315,7 @@ export const BriefModule: React.FC<BriefModuleProps> = ({
       {/* Legal & Copyright Safeguard Footer */}
       <footer className="pt-6 border-t border-[#23303E] text-center text-xs text-[#7D8FA3] space-y-1">
         <p className="italic font-medium">Sources are linked or embedded, never copied.</p>
-        <p className="text-[11px] text-[#556980]">
+        <p className="text-[11px] text-[#94A3B8]">
           Articles and broadcasts remain the intellectual property of their original publishers. Transcripts and
           excerpts are utilized solely for language proficiency assessment.
         </p>

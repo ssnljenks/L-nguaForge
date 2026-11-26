@@ -153,7 +153,7 @@ export const HowDoLocalsSaySheet: React.FC<HowDoLocalsSaySheetProps> = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="e.g. I’m running late because of traffic"
-            className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
+            className="flex-1 min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2 text-sm text-[#E6EDF3] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26]"
           />
           {stt.supported && (
             <button

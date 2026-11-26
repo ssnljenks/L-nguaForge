@@ -127,7 +127,7 @@ export const FlagWordDrawer: React.FC<FlagWordDrawerProps> = ({
   };
 
   const inputClass =
-    'min-h-[40px] rounded-lg border border-[#23303E] bg-[#111922] px-3 py-2 text-xs text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]';
+    'min-h-[40px] rounded-lg border border-[#23303E] bg-[#111922] px-3 py-2 text-xs text-[#E6EDF3] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26]';
 
   return (
     <div className="p-4 border-b border-[#23303E] bg-[#0D141C] space-y-3">

@@ -284,7 +284,7 @@ export const OpiCallScreen: React.FC<OpiCallScreenProps> = ({
                   value={draftResponse}
                   onChange={(e) => onChangeDraft(e.target.value)}
                   placeholder={`Respond in ${LANGUAGE_LABELS[config.language]}…`}
-                  className="flex-1 min-h-[48px] rounded-xl border border-[#23303E] bg-[#111922] px-4 py-2 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
+                  className="flex-1 min-h-[48px] rounded-xl border border-[#23303E] bg-[#111922] px-4 py-2 text-sm text-[#E6EDF3] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26]"
                 />
                 <button
                   type="submit"

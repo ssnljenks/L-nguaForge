@@ -95,9 +95,15 @@ export const RecurringErrorsView: React.FC<RecurringErrorsViewProps> = ({
                   <div className="space-y-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium">
                       {isTop && <span className="text-[#F3C669] font-semibold">Top priority</span>}
-                      {isTop && <span className="text-[#556980]">·</span>}
+                      {isTop && (
+                        <span aria-hidden="true" className="text-[#556980]">
+                          ·
+                        </span>
+                      )}
                       <span className="font-mono text-[#7DD3FC]">ILR L{pattern.entry.ilrLevel}</span>
-                      <span className="text-[#556980]">·</span>
+                      <span aria-hidden="true" className="text-[#556980]">
+                        ·
+                      </span>
                       <span className="text-[#94A3B8]">Shows up in: {pattern.sourcesLabel}</span>
                     </div>
                     <h2 className="font-display text-lg font-semibold text-[#F8FAFC]">{pattern.entry.label}</h2>

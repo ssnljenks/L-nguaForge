@@ -301,7 +301,7 @@ export const InterpretationPanel: React.FC<InterpretationPanelProps> = ({
               value={chunkNotes}
               onChange={(e) => setChunkNotes(e.target.value)}
               placeholder="Jot down diagonal Rozan-style chunks while listening (numbers, actors, → causes, ≠ caveats, ⏱ deadlines)…"
-              className="w-full rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2.5 font-mono text-xs text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26] leading-relaxed"
+              className="w-full rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2.5 font-mono text-xs text-[#E6EDF3] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26] leading-relaxed"
             />
           </div>
 
@@ -331,7 +331,7 @@ export const InterpretationPanel: React.FC<InterpretationPanelProps> = ({
               value={renditionText}
               onChange={(e) => setRenditionText(e.target.value)}
               placeholder="Deliver your consecutive interpretation aloud using your chunking notes, or type it here…"
-              className="w-full rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2.5 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26] leading-relaxed"
+              className="w-full rounded-lg border border-[#23303E] bg-[#0B1117] px-3.5 py-2.5 text-sm text-[#E6EDF3] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26] leading-relaxed"
             />
 
             {interpError && (

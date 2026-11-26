@@ -314,7 +314,7 @@ export const TodayModule: React.FC<TodayModuleProps> = ({
                   ) : (
                     <div className="space-y-0.5">
                       <p className="text-[11px] text-[#CBD5E1] leading-snug">{col.emptyHint}</p>
-                      <p className="text-[11px] text-[#64748B] leading-snug">{col.sourceLabel}</p>
+                      <p className="text-[11px] text-[#94A3B8] leading-snug">{col.sourceLabel}</p>
                     </div>
                   )}
                 </div>

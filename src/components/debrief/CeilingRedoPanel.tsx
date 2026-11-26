@@ -172,7 +172,7 @@ export const CeilingRedoPanel: React.FC<CeilingRedoPanelProps> = ({
           value={redoText}
           onChange={(e) => setRedoText(e.target.value)}
           placeholder={`Speak or type an improved ${LANGUAGE_LABELS[session.language]} response targeting ${ceiling.failedFunctionLabel.toLowerCase()}…`}
-          className="w-full rounded-xl border border-[#23303E] bg-[#111922] px-3.5 py-2.5 text-sm text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
+          className="w-full rounded-xl border border-[#23303E] bg-[#111922] px-3.5 py-2.5 text-sm text-[#E6EDF3] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26]"
         />
 
         {stt.error && <p className="text-xs text-amber-300">{stt.error}</p>}

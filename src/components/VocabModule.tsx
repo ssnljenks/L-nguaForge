@@ -316,7 +316,7 @@ export const VocabModule: React.FC<VocabModuleProps> = ({
         <div className="flex items-center gap-2">
           {(mode === 'browse' || mode === 'glossary') && (
             <div className="relative flex-1 md:w-64">
-              <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <label htmlFor="vocab-search-input" className="sr-only">
                 {mode === 'glossary'
                   ? `Search offline ${LANGUAGE_LABELS[config.language]} military dictionary`
@@ -332,7 +332,7 @@ export const VocabModule: React.FC<VocabModuleProps> = ({
                     ? `Search offline ${LANGUAGE_LABELS[config.language]} military terms…`
                     : `Search ${LANGUAGE_LABELS[config.language]} terms…`
                 }
-                className="w-full min-h-[44px] rounded-lg border border-[#23303E] bg-[#111922] pl-8 pr-3 py-1.5 text-xs text-[#E6EDF3] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26]"
+                className="w-full min-h-[44px] rounded-lg border border-[#23303E] bg-[#111922] pl-8 pr-3 py-1.5 text-xs text-[#E6EDF3] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26]"
               />
             </div>
           )}

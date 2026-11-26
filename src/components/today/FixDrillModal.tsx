@@ -445,7 +445,7 @@ export const FixDrillModal: React.FC<FixDrillModalProps> = ({errorKey, config, o
                   onChange={(e) => setAnswerText(e.target.value)}
                   disabled={Boolean(currentResult) || grading}
                   placeholder={`Speak or type your ${LANGUAGE_LABELS[config.language]} answer…`}
-                  className="w-full rounded-xl border border-[#23303E] bg-[#0B1117] px-3.5 py-3 text-sm text-[#F8FAFC] placeholder:text-[#64748B] focus:outline-none focus:border-[#D99B26] disabled:opacity-75"
+                  className="w-full rounded-xl border border-[#23303E] bg-[#0B1117] px-3.5 py-3 text-sm text-[#F8FAFC] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#D99B26] disabled:opacity-75"
                 />
 
                 {stt.error && <p className="text-xs text-amber-300">{stt.error}</p>}
