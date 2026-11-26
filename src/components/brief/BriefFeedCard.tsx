@@ -172,17 +172,19 @@ export const BriefFeedCard: React.FC<BriefFeedCardProps> = ({
             <BookOpen className="w-4 h-4" />
           </button>
 
-          {/* Publisher source external link */}
-          <a
-            href={item.sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={`Read original at ${item.sourceName}`}
-            aria-label={`Open source article on ${item.sourceName}`}
-            className="inline-flex items-center justify-center w-11 h-11 rounded-lg border border-[#23303E] bg-[#0B1117] text-[#94A3B8] hover:text-white hover:border-[#35495E] transition-colors"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </a>
+          {/* Publisher source external link (practice stories have none) */}
+          {item.sourceUrl && (
+            <a
+              href={item.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={`Read original at ${item.sourceName}`}
+              aria-label={`Open source article on ${item.sourceName}`}
+              className="inline-flex items-center justify-center w-11 h-11 rounded-lg border border-[#23303E] bg-[#0B1117] text-[#94A3B8] hover:text-white hover:border-[#35495E] transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          )}
         </div>
       </div>
     </article>

@@ -699,25 +699,32 @@ test('/api/brief routes return filtered feeds, DLPT drill questions, and study e
   const h = await startApp();
 
   // 1. GET /api/brief/feed
-  const feedRes = await fetch(`${h.url}/api/brief/feed?language=es&mediaType=audio`);
+  // Built-in stories are text-only practice stories (REVIEW C-1): no audio until real feeds are ingested.
+  const audioFeed = await (await fetch(`${h.url}/api/brief/feed?language=es&mediaType=audio`)).json();
+  assert.ok(audioFeed.items.every((i: {audioUrl?: string; sourceUrl: string}) => i.audioUrl && i.sourceUrl));
+
+  const feedRes = await fetch(`${h.url}/api/brief/feed?language=es&mediaType=text`);
   assert.equal(feedRes.status, 200);
   const feedBody = await feedRes.json();
   assert.ok(Array.isArray(feedBody.items));
   assert.ok(feedBody.items.length >= 1);
   assert.ok(feedBody.lastRefreshedAt);
 
-  const sample = feedBody.items[0];
+  const sample = feedBody.items.find((i: {id: string}) => i.id === 'es-seed-maritime-01');
+  assert.ok(sample);
   assert.equal(sample.language, 'es');
-  assert.equal(sample.mediaType, 'audio');
-  assert.ok(sample.orientationLine.startsWith('This passage is'));
-  assert.ok(sample.audioUrl);
+  assert.equal(sample.mediaType, 'text');
+  assert.equal(sample.sourceName, 'LinguaForge practice story');
+  assert.equal(sample.sourceUrl, '');
+  assert.equal(sample.audioUrl, undefined);
+  assert.ok(sample.orientationLine.startsWith('Practice passage written for LinguaForge'));
   // Legal safeguard: client items must not have raw full text/transcripts
   assert.equal(sample.rawContent, undefined);
   assert.equal(sample.transcript, undefined);
 
   // Filter by work domain
   const workRes = await fetch(
-    `${h.url}/api/brief/feed?language=es&mediaType=audio&workFilter=true&userDomain=maritime_surveillance`
+    `${h.url}/api/brief/feed?language=es&mediaType=text&workFilter=true&userDomain=maritime_surveillance`
   );
   assert.equal(workRes.status, 200);
   const workBody = await workRes.json();

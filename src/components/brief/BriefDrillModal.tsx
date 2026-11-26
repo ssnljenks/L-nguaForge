@@ -767,15 +767,19 @@ export const BriefDrillModal: React.FC<BriefDrillModalProps> = ({
                       <span className="font-mono text-[11px] uppercase tracking-wider text-[#94A3B8]">
                         Reading Passage Excerpt
                       </span>
-                      <a
-                        href={currentPassage.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-[#7DD3FC] hover:underline"
-                      >
-                        <span>Original at {currentPassage.sourceName}</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                      {currentPassage.sourceUrl ? (
+                        <a
+                          href={currentPassage.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-[#7DD3FC] hover:underline"
+                        >
+                          <span>Original at {currentPassage.sourceName}</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <span className="text-xs text-[#94A3B8]">{currentPassage.sourceName}</span>
+                      )}
                     </div>
                     <div className="p-3.5 sm:p-4 rounded-xl bg-[#111922] border border-[#23303E] text-sm sm:text-[15px] text-[#F8FAFC] leading-relaxed">
                       {showFeedbackOnCurrentPage ? (

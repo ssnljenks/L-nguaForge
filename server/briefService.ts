@@ -53,7 +53,7 @@ export interface StoredBriefItem extends BriefItem {
 const MAX_CACHE_SIZE = 150;
 const MAX_FEED_FETCH_TIMEOUT_MS = 5000;
 
-// Seed transcripts and authentic study excerpts for immediate zero-latency drills & study
+// Study excerpts for the built-in practice stories (written for LinguaForge, not real news reports).
 const SEED_EXTENDED_DATA: Record<string, {studyExcerpt: string; keyVocabulary: {term: string; english: string}[]}> = {
   'es-seed-maritime-01': {
     studyExcerpt:

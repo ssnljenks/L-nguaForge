@@ -32,4 +32,4 @@ Each entry in `sources.json` has the following format:
 
 3. **Placeholders**:
    - Entries with URLs starting with `https://example.com/placeholder-rss-...` are clearly marked placeholders. You can replace them with real RSS or podcast feeds from your preferred regional stations at any time.
-   - Built-in authentic fallback seed stories ensure that the feed remains populated and responsive even if external network access or DNS resolution is offline.
+   - Built-in **practice stories** keep the feed populated when external feeds are unreachable. They were written for LinguaForge, are labeled "LinguaForge practice story", and carry no outlet name, publisher link or audio. They are reading-only.
