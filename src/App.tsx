@@ -59,6 +59,7 @@ import type {TalkWorkRequest} from './components/FreeChatModule';
 import {OfflineIndicator, PWAInstallButton} from './components/PWAControls';
 import {ErrorBoundary} from './components/ErrorBoundary';
 import {createId} from './utils/ids';
+import {getStartupOverlays} from './utils/startupOverlays';
 import {setApiWorkFocus} from './services/requestContext';
 
 // Tab modules and modals are code-split: each loads on first use, keeping the initial bundle small.
@@ -116,7 +117,7 @@ export default function App() {
   ]);
   const [tabIntroOpen, setTabIntroOpen] = useState<ModuleTab | null>(null);
 
-  const showDataSafetyModal = !isAutostart && !dataSafetyAck;
+  const {showDataSafetyNotice: showDataSafetyModal, allowTabIntros} = getStartupOverlays({dataSafetyAck, isAutostart});
 
   const [apiSavedCount, setApiSavedCount] = useState<number>(() => getApiSavedCount());
 
@@ -145,7 +146,7 @@ export default function App() {
     }
     setActiveTab(tab);
     scrollViewportToTop();
-    if (!isAutostart && dataSafetyAck && !seenTabs.includes(tab)) {
+    if (allowTabIntros && !seenTabs.includes(tab)) {
       setTabIntroOpen(tab);
     }
   };
