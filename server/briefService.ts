@@ -36,6 +36,7 @@ import {extractReportedErrors} from './errorReporting.ts';
 import {UserFacingError} from './errors.ts';
 import {BUDGETS, type GenerateStructured, ThinkingLevel} from './gemini.ts';
 import {fetchFeedXml, type FeedFetchOptions, isSafeFeedUrl} from './feedFetch.ts';
+import {parseFeedXml, type RawFeedItem} from './feedParser.ts';
 import {clampText, createUntrustedFence} from './untrustedContent.ts';
 
 export interface SourceFeedConfig {
@@ -944,74 +945,13 @@ GRADING RULES (STRICT FIDELITY):
     return {fetchedCount, newItemsCount};
   }
 
-  private async fetchFeedItems(
-    source: SourceFeedConfig
-  ): Promise<{title: string; link: string; description: string; pubDate?: string; audioUrl?: string}[]> {
+  private async fetchFeedItems(source: SourceFeedConfig): Promise<RawFeedItem[]> {
     const xml = await fetchFeedXml(source.url, this.fetchOptions);
     return this.parseXmlFeed(xml, source.mediaType);
   }
 
-  public parseXmlFeed(
-    xml: string,
-    mediaType: BriefMediaType
-  ): {
-    title: string;
-    link: string;
-    description: string;
-    pubDate?: string;
-    audioUrl?: string;
-    durationSeconds?: number;
-  }[] {
-    const results: {
-      title: string;
-      link: string;
-      description: string;
-      pubDate?: string;
-      audioUrl?: string;
-      durationSeconds?: number;
-    }[] = [];
-    const itemRegex = /<(?:item|entry)[\s>]([\s\S]*?)<\/(?:item|entry)>/gi;
-    let match: RegExpExecArray | null;
-
-    while ((match = itemRegex.exec(xml)) !== null) {
-      const block = match[1];
-      const titleMatch = /<title[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i.exec(block);
-      const linkMatch =
-        /<link[^>]*href=["']([^"']+)["']/i.exec(block) ||
-        /<link[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/link>/i.exec(block);
-      const descMatch =
-        /<description[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/i.exec(block) ||
-        /<content[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/content>/i.exec(block);
-      const dateMatch =
-        /<pubDate[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/pubDate>/i.exec(block) ||
-        /<published[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/published>/i.exec(block) ||
-        /<updated[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/updated>/i.exec(block);
-      const encMatch = /<enclosure[^>]*url=["']([^"']+)["'][^>]*type=["']audio\/[^"']+["']/i.exec(block);
-      const durMatch = /<itunes:duration[^>]*>([\s\S]*?)<\/itunes:duration>/i.exec(block);
-
-      const title = this.stripHtml(titleMatch?.[1] || '').trim();
-      const link = (linkMatch?.[1] || '').trim();
-      const rawDescription = this.stripHtml(descMatch?.[1] || '').trim();
-      const description = this.capWords(rawDescription, 500);
-      const audioUrl = encMatch?.[1]?.trim();
-      const durationSeconds = this.parseDurationSeconds(durMatch?.[1]);
-
-      if (title && link) {
-        if (mediaType === 'audio' && !audioUrl) {
-          continue;
-        }
-        results.push({
-          title,
-          link,
-          description,
-          pubDate: dateMatch?.[1],
-          audioUrl: audioUrl || (mediaType === 'audio' ? link : undefined),
-          durationSeconds,
-        });
-      }
-    }
-
-    return results;
+  public parseXmlFeed(xml: string, mediaType: BriefMediaType): RawFeedItem[] {
+    return parseFeedXml(xml, mediaType);
   }
 
   private capWords(text: string, maxWords: number): string {
@@ -1020,38 +960,8 @@ GRADING RULES (STRICT FIDELITY):
     return `${words.slice(0, maxWords).join(' ')}…`;
   }
 
-  private parseDurationSeconds(raw: string | undefined): number | undefined {
-    if (!raw) return undefined;
-    const cleaned = raw.trim();
-    if (/^\d+$/.test(cleaned)) return Number(cleaned);
-    const parts = cleaned.split(':').map(Number);
-    if (parts.some((n) => Number.isNaN(n))) return undefined;
-    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-    if (parts.length === 2) return parts[0] * 60 + parts[1];
-    return undefined;
-  }
-
-  private stripHtml(raw: string): string {
-    return raw
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
   private async analyzeItem(
-    raw: {
-      title: string;
-      link: string;
-      description: string;
-      pubDate?: string;
-      audioUrl?: string;
-      durationSeconds?: number;
-    },
+    raw: RawFeedItem,
     source: SourceFeedConfig,
     id: string,
     generate?: GenerateStructured
