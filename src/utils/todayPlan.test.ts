@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type {BriefItem, DlptDrillResult, ErrorEvent, OpiSession, VocabItem} from '../types.ts';
 import {SEED_BRIEF_ITEMS} from './briefLogic.ts';
+import {SEED_SAMPLE_SESSIONS} from '../data/seedData.ts';
 import {computeIlrProfile, formatTestCountdown, generateTodayPlan, getDaysUntilTest} from './todayPlan.ts';
 
 const NOW = Date.parse('2026-11-24T15:00:00.000Z');
@@ -281,4 +282,30 @@ test('generateTodayPlan never picks a non-drillable item (feed audio without a t
     assert.notEqual(brief.briefItem.id, 'es-feed-audio-1');
     assert.notEqual(brief.briefItem.drillable, false);
   }
+});
+
+test('a new user with only the built-in sample session has no Speaking estimate (REVIEW H-7)', () => {
+  assert.ok(SEED_SAMPLE_SESSIONS.length > 0);
+  assert.ok(
+    SEED_SAMPLE_SESSIONS.every((s) => s.id.startsWith('sample-')),
+    'seed sessions must use the sample- prefix so estimates can exclude them'
+  );
+  const profile = computeIlrProfile({
+    language: 'es',
+    sessions: [...SEED_SAMPLE_SESSIONS],
+    dlptResults: [],
+    errorEvents: [],
+    nowMs: NOW,
+  });
+  assert.equal(profile.speaking.level, null, 'shows "—", not the sample debrief rating');
+
+  // The user's own debriefed session still counts.
+  const own = computeIlrProfile({
+    language: 'es',
+    sessions: [...SEED_SAMPLE_SESSIONS, makeOpiSession('2', 2)],
+    dlptResults: [],
+    errorEvents: [],
+    nowMs: NOW,
+  });
+  assert.equal(own.speaking.level, '2');
 });

@@ -15,7 +15,7 @@ import type {
 } from '../types.ts';
 import {isBriefItemDrillable, SEED_BRIEF_ITEMS} from './briefLogic.ts';
 import {computeDlptSkillEstimates} from './dlptRules.ts';
-import {deriveUserSkillProfile, getTopFix, type RankedErrorPattern} from './errorPatterns.ts';
+import {deriveUserSkillProfile, getTopFix, type RankedErrorPattern, isSampleSession} from './errorPatterns.ts';
 import {getDomainInfo} from './ilrLogic.ts';
 import {getDueVocabCards, sortVocabDeckByFsrs} from './vocabFsrs.ts';
 
@@ -93,7 +93,8 @@ export function computeSpeakingEstimate(
   language: TargetLanguage
 ): SpeakingSkillEstimate {
   const rated = sessions
-    .filter((s) => s.language === language && (Boolean(s.debrief) || Boolean(s.roleplayDebrief)))
+    // Seed demo sessions are not the user's own results (REVIEW H-7).
+    .filter((s) => s.language === language && !isSampleSession(s) && (Boolean(s.debrief) || Boolean(s.roleplayDebrief)))
     .sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt));
 
   if (rated.length === 0) {
