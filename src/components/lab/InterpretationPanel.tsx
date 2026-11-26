@@ -230,7 +230,7 @@ export const InterpretationPanel: React.FC<InterpretationPanelProps> = ({
                 type="button"
                 onClick={() => setDirection('target_to_en')}
                 aria-pressed={direction === 'target_to_en'}
-                className={`min-h-[38px] px-2.5 py-1.5 text-xs rounded-md ${
+                className={`min-h-[44px] px-2.5 py-1.5 text-xs rounded-md ${
                   direction === 'target_to_en' ? 'bg-[#1D2B3A] text-white font-medium' : 'text-[#8B9BB0]'
                 }`}
               >
@@ -240,7 +240,7 @@ export const InterpretationPanel: React.FC<InterpretationPanelProps> = ({
                 type="button"
                 onClick={() => setDirection('en_to_target')}
                 aria-pressed={direction === 'en_to_target'}
-                className={`min-h-[38px] px-2.5 py-1.5 text-xs rounded-md ${
+                className={`min-h-[44px] px-2.5 py-1.5 text-xs rounded-md ${
                   direction === 'en_to_target' ? 'bg-[#1D2B3A] text-white font-medium' : 'text-[#8B9BB0]'
                 }`}
               >
@@ -288,7 +288,7 @@ export const InterpretationPanel: React.FC<InterpretationPanelProps> = ({
                     onClick={() =>
                       setChunkNotes((prev) => `${prev}${prev && !prev.endsWith(' ') ? ' ' : ''}${item.symbol} `)
                     }
-                    className="min-h-[36px] min-w-[36px] px-2 py-1 rounded border border-[#23303E] bg-[#0B1117] text-xs text-[#CBD5E1] hover:border-[#D99B26] hover:text-[#F3C669] transition-colors"
+                    className="min-h-[44px] min-w-[44px] px-2 py-1 rounded border border-[#23303E] bg-[#0B1117] text-xs text-[#CBD5E1] hover:border-[#D99B26] hover:text-[#F3C669] transition-colors"
                   >
                     {item.symbol}
                   </button>
@@ -315,7 +315,7 @@ export const InterpretationPanel: React.FC<InterpretationPanelProps> = ({
               <button
                 type="button"
                 onClick={handleToggleRenditionMic}
-                className={`flex items-center gap-1.5 min-h-[40px] px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 min-h-[44px] px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   stt.isListening
                     ? 'bg-red-600 text-white'
                     : 'border border-[#2E4054] bg-[#16202B] text-[#E6EDF3] hover:bg-[#1E2C3A]'
@@ -345,7 +345,7 @@ export const InterpretationPanel: React.FC<InterpretationPanelProps> = ({
                 type="button"
                 onClick={handleGradeInterp}
                 disabled={interpLoading || !renditionText.trim()}
-                className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-lg bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-40 transition-colors"
+                className="flex items-center gap-2 px-5 py-2.5 min-h-[52px] rounded-lg bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-40 transition-colors"
               >
                 {interpLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                 <span>{interpLoading ? 'Evaluating Fidelity…' : 'Grade Interpretation'}</span>

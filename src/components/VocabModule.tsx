@@ -241,7 +241,7 @@ export const VocabModule: React.FC<VocabModuleProps> = ({
             <button
               type="button"
               onClick={() => setShowAddForm((s) => !s)}
-              className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[44px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors whitespace-nowrap"
+              className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[52px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors whitespace-nowrap"
             >
               <Plus className="w-4 h-4" />
               <span>Add Entry</span>

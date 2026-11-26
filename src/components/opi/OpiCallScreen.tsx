@@ -290,7 +290,7 @@ export const OpiCallScreen: React.FC<OpiCallScreenProps> = ({
                   type="submit"
                   disabled={!draftResponse.trim() || isThinking}
                   aria-label="Send response"
-                  className="min-h-[48px] min-w-[48px] px-4 rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-40 transition-colors inline-flex items-center justify-center gap-1.5 shrink-0"
+                  className="min-h-[52px] min-w-[48px] px-4 rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-40 transition-colors inline-flex items-center justify-center gap-1.5 shrink-0"
                 >
                   <Send className="w-4 h-4" />
                   <span className="hidden sm:inline">Send</span>
@@ -328,7 +328,7 @@ export const OpiCallScreen: React.FC<OpiCallScreenProps> = ({
                             type="button"
                             onClick={() => onSpeakText(msg.text)}
                             aria-label="Replay examiner turn"
-                            className="inline-flex items-center justify-center min-h-[32px] min-w-[32px] text-[#94A3B8] hover:text-[#F3C669]"
+                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-[#94A3B8] hover:text-[#F3C669]"
                           >
                             <Volume2 className="w-3.5 h-3.5" />
                           </button>
@@ -436,7 +436,7 @@ export const OpiCallScreen: React.FC<OpiCallScreenProps> = ({
             <button
               type="button"
               onClick={() => setShowKeyboard((s) => !s)}
-              className="inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-lg text-xs text-[#94A3B8] hover:text-[#E6EDF3] transition-colors"
+              className="inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg text-xs text-[#94A3B8] hover:text-[#E6EDF3] transition-colors"
             >
               <Keyboard className="w-3.5 h-3.5" />
               <span>{showKeyboard ? 'Hide keyboard input' : 'Type answer instead'}</span>

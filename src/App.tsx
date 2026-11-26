@@ -561,7 +561,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => navigateToTab('today')}
-                    className="inline-flex items-center gap-1 min-h-[36px] px-2.5 rounded-lg border border-[#23303E] bg-[#111922] text-xs font-medium text-[#CBD5E1] hover:text-white transition-colors"
+                    className="inline-flex items-center gap-1 min-h-[44px] px-2.5 rounded-lg border border-[#23303E] bg-[#111922] text-xs font-medium text-[#CBD5E1] hover:text-white transition-colors"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Today</span>
@@ -570,7 +570,7 @@ export default function App() {
                     type="button"
                     data-testid="complete-plan-step-return-btn"
                     onClick={handleCompleteActivePlanReturn}
-                    className="inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+                    className="inline-flex items-center gap-1.5 min-h-[52px] px-3 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Mark done &amp; return</span>

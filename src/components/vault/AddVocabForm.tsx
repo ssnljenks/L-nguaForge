@@ -69,7 +69,7 @@ export const AddVocabForm: React.FC<AddVocabFormProps> = ({config, onAdd, onClos
             value={newTerm}
             onChange={(e) => setNewTerm(e.target.value)}
             placeholder="e.g., cabe destacar que"
-            className="w-full min-h-[40px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
+            className="w-full min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
           />
         </div>
 
@@ -83,7 +83,7 @@ export const AddVocabForm: React.FC<AddVocabFormProps> = ({config, onAdd, onClos
             value={newEnglish}
             onChange={(e) => setNewEnglish(e.target.value)}
             placeholder="e.g., it should be highlighted that (formal framing)"
-            className="w-full min-h-[40px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
+            className="w-full min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
           />
         </div>
 
@@ -95,7 +95,7 @@ export const AddVocabForm: React.FC<AddVocabFormProps> = ({config, onAdd, onClos
             id="vocab-category"
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value as VocabCategory)}
-            className="w-full min-h-[40px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
+            className="w-full min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
           >
             {VALID_VOCAB_CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -114,7 +114,7 @@ export const AddVocabForm: React.FC<AddVocabFormProps> = ({config, onAdd, onClos
             type="text"
             value={newRegister}
             onChange={(e) => setNewRegister(e.target.value)}
-            className="w-full min-h-[40px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
+            className="w-full min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
           />
         </div>
       </div>
@@ -129,7 +129,7 @@ export const AddVocabForm: React.FC<AddVocabFormProps> = ({config, onAdd, onClos
           value={newContext}
           onChange={(e) => setNewContext(e.target.value)}
           placeholder="Full operational sentence illustrating usage…"
-          className="w-full min-h-[40px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
+          className="w-full min-h-[44px] rounded-lg border border-[#23303E] bg-[#0B1117] px-3 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
         />
       </div>
 
@@ -143,7 +143,7 @@ export const AddVocabForm: React.FC<AddVocabFormProps> = ({config, onAdd, onClos
         </button>
         <button
           type="submit"
-          className="px-4 py-2 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42]"
+          className="min-h-[52px] px-4 py-2 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42]"
         >
           Save to Vocab
         </button>

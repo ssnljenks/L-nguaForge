@@ -75,7 +75,7 @@ export const MilitaryGlossaryList: React.FC<MilitaryGlossaryListProps> = ({
                   type="button"
                   onClick={() => onSpeak(entry.term)}
                   aria-label={`Listen to ${entry.term}`}
-                  className="min-h-[38px] min-w-[38px] flex items-center justify-center rounded-lg border border-[#23303E] text-[#CBD5E1] hover:text-[#F3C669] hover:border-[#35495E] transition-colors"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[#23303E] text-[#CBD5E1] hover:text-[#F3C669] hover:border-[#35495E] transition-colors"
                 >
                   <Volume2 className="w-4 h-4" />
                 </button>

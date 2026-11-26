@@ -195,7 +195,7 @@ export const BriefModule: React.FC<BriefModuleProps> = ({
               role="radio"
               aria-checked={selectedLevel === 'all'}
               onClick={() => setSelectedLevel('all')}
-              className={`px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-semibold transition-colors ${
+              className={`px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold transition-colors ${
                 selectedLevel === 'all'
                   ? 'bg-[#7DD3FC] text-[#0B1117]'
                   : 'bg-[#111922] border border-[#23303E] text-[#94A3B8] hover:text-white'
@@ -210,7 +210,7 @@ export const BriefModule: React.FC<BriefModuleProps> = ({
                 role="radio"
                 aria-checked={selectedLevel === lvl}
                 onClick={() => setSelectedLevel(lvl)}
-                className={`px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-semibold transition-colors ${
+                className={`px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold transition-colors ${
                   selectedLevel === lvl
                     ? 'bg-[#7DD3FC] text-[#0B1117]'
                     : 'bg-[#111922] border border-[#23303E] text-[#94A3B8] hover:text-white'
@@ -229,7 +229,7 @@ export const BriefModule: React.FC<BriefModuleProps> = ({
               role="radio"
               aria-checked={selectedTopic === 'all'}
               onClick={() => setSelectedTopic('all')}
-              className={`px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-semibold transition-colors ${
+              className={`px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold transition-colors ${
                 selectedTopic === 'all'
                   ? 'bg-[#D99B26] text-[#0B1117]'
                   : 'bg-[#111922] border border-[#23303E] text-[#94A3B8] hover:text-white'
@@ -244,7 +244,7 @@ export const BriefModule: React.FC<BriefModuleProps> = ({
                 role="radio"
                 aria-checked={selectedTopic === top.id}
                 onClick={() => setSelectedTopic(top.id)}
-                className={`px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-semibold transition-colors ${
+                className={`px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold transition-colors ${
                   selectedTopic === top.id
                     ? 'bg-[#D99B26] text-[#0B1117]'
                     : 'bg-[#111922] border border-[#23303E] text-[#94A3B8] hover:text-white'
@@ -260,7 +260,7 @@ export const BriefModule: React.FC<BriefModuleProps> = ({
                 type="button"
                 onClick={() => setWorkFilterActive(!workFilterActive)}
                 aria-pressed={workFilterActive}
-                className={`inline-flex items-center gap-1 px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-semibold border transition-colors ${
+                className={`inline-flex items-center gap-1 px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold border transition-colors ${
                   workFilterActive
                     ? 'bg-[#D99B26] text-[#0B1117] border-[#D99B26]'
                     : 'bg-[#111922] border-[#D99B26]/40 text-[#F3C669] hover:bg-[#D99B26]/10'
@@ -291,7 +291,7 @@ export const BriefModule: React.FC<BriefModuleProps> = ({
             <button
               type="button"
               onClick={handleResetFilters}
-              className="inline-flex items-center px-4 py-2 min-h-[44px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+              className="inline-flex items-center px-4 py-2 min-h-[52px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
             >
               Reset all filters
             </button>

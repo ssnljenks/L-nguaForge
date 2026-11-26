@@ -16,7 +16,7 @@ export const PWAInstallButton: React.FC<{compact?: boolean}> = ({compact = false
       <button
         type="button"
         onClick={install}
-        className={`flex items-center justify-center gap-2 rounded-lg border border-[#D99B26]/40 bg-[#D99B26]/12 text-[#F3C669] hover:bg-[#D99B26]/20 transition-colors whitespace-nowrap shrink-0 min-h-[40px] ${
+        className={`flex items-center justify-center gap-2 rounded-lg border border-[#D99B26]/40 bg-[#D99B26]/12 text-[#F3C669] hover:bg-[#D99B26]/20 transition-colors whitespace-nowrap shrink-0 min-h-[44px] ${
           compact ? 'px-3 py-1.5 text-xs font-medium' : 'w-full px-4 py-2 text-sm font-medium'
         }`}
       >
@@ -32,7 +32,7 @@ export const PWAInstallButton: React.FC<{compact?: boolean}> = ({compact = false
         <button
           type="button"
           onClick={() => setShowGuide(true)}
-          className={`flex items-center justify-center gap-2 rounded-lg border border-[#23303E] bg-[#16202B] text-[#C9D4E0] hover:text-white hover:border-[#35495E] transition-colors whitespace-nowrap shrink-0 min-h-[40px] ${
+          className={`flex items-center justify-center gap-2 rounded-lg border border-[#23303E] bg-[#16202B] text-[#C9D4E0] hover:text-white hover:border-[#35495E] transition-colors whitespace-nowrap shrink-0 min-h-[44px] ${
             compact ? 'px-3 py-1.5 text-xs font-medium' : 'w-full px-4 py-2 text-sm font-medium'
           }`}
         >
@@ -56,7 +56,7 @@ export const PWAInstallButton: React.FC<{compact?: boolean}> = ({compact = false
                 type="button"
                 onClick={() => setShowGuide(false)}
                 aria-label="Close install instructions"
-                className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -69,7 +69,7 @@ export const PWAInstallButton: React.FC<{compact?: boolean}> = ({compact = false
             <button
               type="button"
               onClick={() => setShowGuide(false)}
-              className="mt-6 w-full rounded-lg bg-[#D99B26] py-2.5 text-sm font-semibold text-[#0B1117] hover:bg-[#E5AE42] transition-colors"
+              className="min-h-[52px] mt-6 w-full rounded-lg bg-[#D99B26] py-2.5 text-sm font-semibold text-[#0B1117] hover:bg-[#E5AE42] transition-colors"
             >
               Got it
             </button>

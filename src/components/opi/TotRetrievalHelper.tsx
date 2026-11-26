@@ -132,7 +132,7 @@ export const TotRetrievalHelper: React.FC<TotRetrievalHelperProps> = ({config, o
         <button
           type="submit"
           disabled={!query.trim() || loading}
-          className="px-4 py-2 min-h-[44px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
+          className="px-4 py-2 min-h-[52px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
         >
           Hold 5s for hint
         </button>
@@ -209,7 +209,7 @@ export const TotRetrievalHelper: React.FC<TotRetrievalHelperProps> = ({config, o
                 type="button"
                 onClick={handleSave}
                 disabled={saved}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-70"
+                className="min-h-[52px] flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] disabled:opacity-70"
               >
                 {saved ? <Check className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
                 <span>{saved ? 'Saved to Vocab' : 'Save to Vocab'}</span>

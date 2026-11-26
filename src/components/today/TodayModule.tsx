@@ -357,7 +357,7 @@ export const TodayModule: React.FC<TodayModuleProps> = ({
             <button
               type="button"
               onClick={onOpenSettings}
-              className="text-[#7DD3FC] hover:text-white transition-colors min-h-[36px] px-1"
+              className="text-[#7DD3FC] hover:text-white transition-colors min-h-[44px] px-1"
             >
               Edit goals
             </button>

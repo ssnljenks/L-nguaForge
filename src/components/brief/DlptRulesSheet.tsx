@@ -79,7 +79,7 @@ export const DlptRulesSheet: React.FC<DlptRulesSheetProps> = ({profile, onClose}
           <button
             type="button"
             onClick={onClose}
-            className="w-full min-h-[44px] rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
+            className="w-full min-h-[52px] rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
           >
             Got it
           </button>

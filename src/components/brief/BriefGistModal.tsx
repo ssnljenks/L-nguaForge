@@ -484,7 +484,7 @@ export const BriefGistModal: React.FC<BriefGistModalProps> = ({
                     data-testid="gist-play-once-btn"
                     disabled={hasPlayedOnce || isPlayingClip || !activeClip.audioUrl}
                     onClick={handlePlayOnce}
-                    className={`inline-flex items-center gap-2 px-5 py-3 min-h-[48px] rounded-xl text-sm font-semibold transition-colors ${
+                    className={`inline-flex items-center gap-2 px-5 py-3 min-h-[52px] rounded-xl text-sm font-semibold transition-colors ${
                       isPlayingClip
                         ? 'bg-[#7DD3FC]/20 text-[#7DD3FC] border border-[#7DD3FC]/40 cursor-wait'
                         : hasPlayedOnce
@@ -752,7 +752,7 @@ export const BriefGistModal: React.FC<BriefGistModalProps> = ({
                       <button
                         type="button"
                         onClick={handleToggleModelAudio}
-                        className="inline-flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-xl bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 min-h-[52px] rounded-xl bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
                       >
                         {isPlayingModelAudio ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
                         <span>{isPlayingModelAudio ? 'Pause clip' : 'Replay clip audio'}</span>
@@ -815,7 +815,7 @@ export const BriefGistModal: React.FC<BriefGistModalProps> = ({
                 type="button"
                 data-testid="gist-submit-btn"
                 onClick={() => void submitGist(false)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[52px] rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
               >
                 <Send className="w-4 h-4" />
                 <span>Submit gist</span>
@@ -843,7 +843,7 @@ export const BriefGistModal: React.FC<BriefGistModalProps> = ({
                     type="button"
                     data-testid="gist-next-clip-btn"
                     onClick={handleOpenNextClip}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 min-h-[44px] rounded-xl bg-[#D99B26] text-[#0B1117] text-xs sm:text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 min-h-[52px] rounded-xl bg-[#D99B26] text-[#0B1117] text-xs sm:text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
                   >
                     <span>Next clip</span>
                     <ArrowRight className="w-4 h-4" />

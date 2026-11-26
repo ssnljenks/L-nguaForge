@@ -828,7 +828,7 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
             type="button"
             onClick={() => setLatestRecastNote(null)}
             aria-label="Dismiss tip"
-            className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-md text-[#7DD3FC] hover:text-white shrink-0"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-md text-[#7DD3FC] hover:text-white shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
@@ -1019,7 +1019,7 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
             type="submit"
             disabled={!textInput.trim() || isSendingText}
             aria-label="Send message"
-            className="min-h-[44px] px-4 rounded-lg bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-40 transition-colors flex items-center gap-1.5 shrink-0"
+            className="min-h-[52px] px-4 rounded-lg bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-40 transition-colors flex items-center gap-1.5 shrink-0"
           >
             {isSendingText ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             <span className="hidden sm:inline">Send</span>

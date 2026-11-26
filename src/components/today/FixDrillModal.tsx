@@ -316,7 +316,7 @@ export const FixDrillModal: React.FC<FixDrillModalProps> = ({errorKey, config, o
               <button
                 type="button"
                 onClick={() => void loadDrill()}
-                className="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+                className="inline-flex items-center gap-2 min-h-[52px] px-4 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Retry</span>
@@ -383,7 +383,7 @@ export const FixDrillModal: React.FC<FixDrillModalProps> = ({errorKey, config, o
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="inline-flex items-center gap-1.5 min-h-[44px] px-5 rounded-xl bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+                  className="inline-flex items-center gap-1.5 min-h-[52px] px-5 rounded-xl bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
                 >
                   <span>Done</span>
                 </button>
@@ -401,7 +401,7 @@ export const FixDrillModal: React.FC<FixDrillModalProps> = ({errorKey, config, o
                   <button
                     type="button"
                     onClick={handleSpeakPrompt}
-                    className="inline-flex items-center gap-1.5 min-h-[36px] px-2.5 rounded-lg border border-[#23303E] bg-[#111922] text-xs font-medium text-[#CBD5E1] hover:text-white transition-colors"
+                    className="inline-flex items-center gap-1.5 min-h-[44px] px-2.5 rounded-lg border border-[#23303E] bg-[#111922] text-xs font-medium text-[#CBD5E1] hover:text-white transition-colors"
                   >
                     <Volume2 className="w-3.5 h-3.5 text-[#D99B26]" />
                     <span>Listen</span>
@@ -461,7 +461,7 @@ export const FixDrillModal: React.FC<FixDrillModalProps> = ({errorKey, config, o
                       type="submit"
                       data-testid="fix-submit-answer"
                       disabled={!answerText.trim() || grading}
-                      className="inline-flex items-center justify-center gap-2 min-h-[48px] px-5 rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-40 transition-colors"
+                      className="inline-flex items-center justify-center gap-2 min-h-[52px] px-5 rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-40 transition-colors"
                     >
                       {grading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       <span>{grading ? 'Checking structure…' : 'Check answer'}</span>
@@ -505,7 +505,7 @@ export const FixDrillModal: React.FC<FixDrillModalProps> = ({errorKey, config, o
                       type="button"
                       data-testid="fix-next-prompt"
                       onClick={handleNext}
-                      className="inline-flex items-center gap-1.5 min-h-[44px] px-4 rounded-xl bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+                      className="inline-flex items-center gap-1.5 min-h-[52px] px-4 rounded-xl bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
                     >
                       <span>{currentIndex + 1 >= prompts.length ? 'Finish 8 / 8' : 'Next prompt'}</span>
                       <ArrowRight className="w-3.5 h-3.5" />

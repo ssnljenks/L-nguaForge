@@ -517,7 +517,7 @@ export const BriefDrillModal: React.FC<BriefDrillModalProps> = ({
                   type="button"
                   disabled={modeLocked}
                   onClick={() => handleModeSwitch('practice')}
-                  className={`px-3 py-1.5 min-h-[36px] rounded-md text-xs font-semibold transition-colors ${
+                  className={`px-3 py-1.5 min-h-[44px] rounded-md text-xs font-semibold transition-colors ${
                     mode === 'practice'
                       ? 'bg-[#D99B26] text-[#0B1117]'
                       : 'text-[#94A3B8] hover:text-white disabled:opacity-50'
@@ -529,7 +529,7 @@ export const BriefDrillModal: React.FC<BriefDrillModalProps> = ({
                   type="button"
                   disabled={modeLocked}
                   onClick={() => handleModeSwitch('test')}
-                  className={`px-3 py-1.5 min-h-[36px] rounded-md text-xs font-semibold transition-colors ${
+                  className={`px-3 py-1.5 min-h-[44px] rounded-md text-xs font-semibold transition-colors ${
                     mode === 'test'
                       ? 'bg-[#7DD3FC] text-[#0B1117]'
                       : 'text-[#94A3B8] hover:text-white disabled:opacity-50'
@@ -544,7 +544,7 @@ export const BriefDrillModal: React.FC<BriefDrillModalProps> = ({
                 type="button"
                 data-testid="dlpt-rules-pill"
                 onClick={() => setRulesSheetOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-full border border-[#7DD3FC]/40 bg-[#7DD3FC]/10 text-[#7DD3FC] hover:bg-[#7DD3FC]/20 font-mono text-[11px] font-medium transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-full border border-[#7DD3FC]/40 bg-[#7DD3FC]/10 text-[#7DD3FC] hover:bg-[#7DD3FC]/20 font-mono text-[11px] font-medium transition-colors"
               >
                 <Info className="w-3.5 h-3.5 shrink-0" />
                 <span>{profile.pillLabel}</span>
@@ -665,7 +665,7 @@ export const BriefDrillModal: React.FC<BriefDrillModalProps> = ({
                         data-testid="dlpt-play-audio-btn"
                         disabled={hasPlayedAudioOnce || isPlayingCurrentAudio}
                         onClick={handlePlayAudioOnce}
-                        className={`inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl text-xs sm:text-sm font-semibold transition-colors ${
+                        className={`inline-flex items-center gap-2 px-4 py-2.5 min-h-[52px] rounded-xl text-xs sm:text-sm font-semibold transition-colors ${
                           hasPlayedAudioOnce
                             ? 'bg-[#16202B] text-[#94A3B8] border border-[#23303E] cursor-not-allowed'
                             : isPlayingCurrentAudio
@@ -841,7 +841,7 @@ export const BriefDrillModal: React.FC<BriefDrillModalProps> = ({
                   <button
                     type="button"
                     onClick={() => void loadDrillForPassage(currentPassage.id)}
-                    className="px-3 py-2 min-h-[44px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] shrink-0"
+                    className="px-3 py-2 min-h-[52px] rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] shrink-0"
                   >
                     Retry
                   </button>
@@ -969,7 +969,7 @@ export const BriefDrillModal: React.FC<BriefDrillModalProps> = ({
                                       onClick={() =>
                                         handleSaveVocabTerm(tv.term, tv.english, currentDrill.studyExcerpt)
                                       }
-                                      className={`inline-flex items-center gap-1 px-2.5 py-1 min-h-[32px] rounded-lg text-[11px] font-medium border transition-colors ${
+                                      className={`inline-flex items-center gap-1 px-2.5 py-1 min-h-[44px] rounded-lg text-[11px] font-medium border transition-colors ${
                                         saved
                                           ? 'border-[#23303E] bg-[#16202B] text-[#7DD3FC]'
                                           : 'border-[#D99B26]/40 bg-[#D99B26]/10 text-[#F3C669] hover:bg-[#D99B26]/20'
@@ -1273,7 +1273,7 @@ export const BriefDrillModal: React.FC<BriefDrillModalProps> = ({
                     type="button"
                     data-testid="dlpt-check-page-btn"
                     onClick={handleCheckPracticePage}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[52px] rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
                   >
                     <Sparkles className="w-4 h-4" />
                     <span>Check answers</span>
@@ -1290,7 +1290,7 @@ export const BriefDrillModal: React.FC<BriefDrillModalProps> = ({
                       type="button"
                       data-testid="dlpt-next-btn"
                       onClick={handleAdvancePassage}
-                      className={`inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl text-sm font-semibold transition-colors ${
+                      className={`inline-flex items-center gap-2 px-5 py-2.5 min-h-[52px] rounded-xl text-sm font-semibold transition-colors ${
                         mode === 'practice' && !isCurrentPageChecked
                           ? 'border border-[#23303E] bg-[#111922] text-[#CBD5E1] hover:text-white'
                           : 'bg-[#D99B26] text-[#0B1117] hover:bg-[#E5AE42]'
@@ -1361,7 +1361,7 @@ export const BriefDrillModal: React.FC<BriefDrillModalProps> = ({
                     onClose();
                     onBriefItBack(item);
                   }}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 min-h-[44px] rounded-xl bg-[#D99B26] text-[#0B1117] text-xs sm:text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 min-h-[52px] rounded-xl bg-[#D99B26] text-[#0B1117] text-xs sm:text-sm font-semibold hover:bg-[#E5AE42] transition-colors"
                 >
                   <MessageSquare className="w-4 h-4" />
                   <span>Brief it back in OPI</span>

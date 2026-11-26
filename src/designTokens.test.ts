@@ -39,7 +39,7 @@ const DARK_ON_LIGHT = new Set(['0B1117', '0D141C']);
 
 /** Opening JSX tags (with their attributes) that set a text color. */
 function* taggedTextColors(code: string): Generator<{hex: string; tag: string; line: number}> {
-  const tagRe = /<[A-Za-z][\w.]*\b(?:[^<>]|=>)*?>/g;
+  const tagRe = /<[A-Za-z][\w.]*\b(?:=>|[^<>])*?>/g;
   for (const m of code.matchAll(tagRe)) {
     for (const c of m[0].matchAll(/(?<![\w-])text-\[#([0-9a-fA-F]{6})\]/g)) {
       yield {hex: c[1].toUpperCase(), tag: m[0], line: code.slice(0, m.index).split('\n').length};
@@ -60,4 +60,66 @@ test('text colors on dark surfaces meet WCAG AA 4.5:1 (REVIEW L-8)', () => {
     }
   }
   assert.deepEqual(failures, []);
+});
+
+const INTERACTIVE_TAG = /<(button|a|select|input|textarea)\b(?:=>|[^<>])*?>/g;
+
+function* interactiveTags(code: string): Generator<{kind: string; tag: string; line: number}> {
+  for (const m of code.matchAll(INTERACTIVE_TAG)) {
+    yield {kind: m[1], tag: m[0], line: code.slice(0, m.index).split('\n').length};
+  }
+}
+
+/** Primary = a solid amber action button (amber in its static classes, or a text-sm amber CTA). */
+function isPrimaryButton(tag: string): boolean {
+  if (/aria-pressed|aria-selected|role="tab"|role="switch"/.test(tag)) return false;
+  if (/\bh-11 w-11\b|\bw-11 h-11\b/.test(tag)) return false; // round icon buttons: 44 px
+  const staticClasses = tag.replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/g, '');
+  if (/bg-\[#D99B26\](?!\/)/.test(staticClasses)) return true;
+  return /bg-\[#D99B26\](?!\/)/.test(tag) && /\btext-sm\b/.test(staticClasses);
+}
+
+test('controls are at least 44 px by default; inline words in running text are exempt (REVIEW M-12)', () => {
+  const css = fs.readFileSync(path.join(SRC, 'index.css'), 'utf8');
+  const base =
+    /button,\s*\[role='button'\],\s*a\[href\],\s*select,\s*textarea,[\s\S]*?\{\s*min-height:\s*44px;\s*\}/.exec(css);
+  assert.ok(base, 'index.css sets a 44 px min-height on controls');
+  assert.match(css, /button,\s*\[role='button'\]\s*\{\s*min-width:\s*44px;\s*\}/);
+
+  const failures: string[] = [];
+  for (const {file, code} of FILES) {
+    for (const {tag, line} of interactiveTags(code)) {
+      for (const m of tag.matchAll(/(?<![\w-])(min-h|min-w|max-h)-\[(\d+)px\]/g)) {
+        if (Number(m[2]) < 44) failures.push(`${file}:${line} ${m[0]}`);
+      }
+    }
+  }
+  assert.deepEqual(failures, []);
+});
+
+test('primary buttons are at least 52 px tall (REVIEW M-12)', () => {
+  const failures: string[] = [];
+  let primaries = 0;
+  for (const {file, code} of FILES) {
+    for (const {kind, tag, line} of interactiveTags(code)) {
+      if (kind !== 'button' || !isPrimaryButton(tag)) continue;
+      primaries++;
+      const minH = Math.max(0, ...[...tag.matchAll(/min-h-\[(\d+)px\]/g)].map((m) => Number(m[1])));
+      if (minH < 52) failures.push(`${file}:${line} min-h ${minH}px`);
+    }
+  }
+  assert.ok(primaries >= 25, `found ${primaries} primary buttons`);
+  assert.deepEqual(failures, []);
+});
+
+test('toggle switches have a 44 px hit area around the visual track (REVIEW M-12)', () => {
+  let switches = 0;
+  for (const {code} of FILES) {
+    for (const {tag} of interactiveTags(code)) {
+      if (!tag.includes('role="switch"')) continue;
+      switches++;
+      assert.match(tag, /\bh-11\b/);
+    }
+  }
+  assert.equal(switches, 3);
 });

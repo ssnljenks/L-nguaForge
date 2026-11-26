@@ -75,7 +75,7 @@ export const RoleplaySetupScreen: React.FC<RoleplaySetupScreenProps> = ({
           <button
             type="button"
             onClick={onRefreshScenario}
-            className="min-h-[36px] px-3 rounded-lg border border-[#F87171]/40 text-xs font-semibold text-white hover:bg-red-900/40 shrink-0"
+            className="min-h-[44px] px-3 rounded-lg border border-[#F87171]/40 text-xs font-semibold text-white hover:bg-red-900/40 shrink-0"
           >
             Retry
           </button>

@@ -137,7 +137,7 @@ export const CeilingRedoPanel: React.FC<CeilingRedoPanelProps> = ({
           <button
             type="button"
             onClick={handleListenPrompt}
-            className="inline-flex items-center gap-1.5 min-h-[36px] px-2.5 rounded-lg border border-[#23303E] bg-[#0B1117] text-xs font-medium text-[#CBD5E1] hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 min-h-[44px] px-2.5 rounded-lg border border-[#23303E] bg-[#0B1117] text-xs font-medium text-[#CBD5E1] hover:text-white transition-colors"
           >
             <Volume2 className="w-3.5 h-3.5 text-[#D99B26]" />
             <span>Play prompt</span>
@@ -187,7 +187,7 @@ export const CeilingRedoPanel: React.FC<CeilingRedoPanelProps> = ({
             type="submit"
             disabled={!redoText.trim() || isGrading}
             data-testid="redo-submit-btn"
-            className="inline-flex items-center justify-center gap-2 min-h-[48px] px-5 rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-40 transition-colors"
+            className="inline-flex items-center justify-center gap-2 min-h-[52px] px-5 rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42] disabled:opacity-40 transition-colors"
           >
             {isGrading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             <span>{isGrading ? 'Grading comparison…' : record ? 'Re-grade Redo' : 'Grade Redo vs Original'}</span>

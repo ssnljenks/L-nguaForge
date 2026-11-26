@@ -65,7 +65,7 @@ export const RecurringErrorsView: React.FC<RecurringErrorsViewProps> = ({
             <button
               type="button"
               onClick={() => onNavigateTab('test_prep')}
-              className="inline-flex items-center gap-1.5 min-h-[44px] px-4 rounded-xl bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
+              className="inline-flex items-center gap-1.5 min-h-[52px] px-4 rounded-xl bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] transition-colors"
             >
               <span>Start an OPI or Role-play</span>
               <ArrowRight className="w-3.5 h-3.5" />

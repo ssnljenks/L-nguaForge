@@ -1045,7 +1045,7 @@ export const DebriefModule: React.FC<DebriefModuleProps> = ({
                                   type="button"
                                   onClick={() => handleSaveConnector(conn, item.upgradedLevel2Plus, idx)}
                                   disabled={isSaved}
-                                  className="inline-flex items-center gap-1.5 min-h-[36px] px-2.5 py-1 rounded-md border border-[#2E4054] bg-[#16202B] text-xs font-medium text-[#E6EDF3] hover:border-[#D99B26] disabled:opacity-60 transition-colors"
+                                  className="inline-flex items-center gap-1.5 min-h-[44px] px-2.5 py-1 rounded-md border border-[#2E4054] bg-[#16202B] text-xs font-medium text-[#E6EDF3] hover:border-[#D99B26] disabled:opacity-60 transition-colors"
                                 >
                                   {isSaved ? (
                                     <Check className="w-3 h-3 text-emerald-400" />
