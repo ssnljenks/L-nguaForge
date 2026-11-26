@@ -6,7 +6,7 @@ import type {useWordLookup} from '../../../hooks/useWordLookup';
 import {TappableText} from '../../shared/TappableText';
 import {WordLookupPopover} from '../../shared/WordLookupPopover';
 import {DlptTrapCard} from '../DlptTrapCard';
-import {DrillBody, DrillFooter} from './drillLayout';
+import {ModalBody, ModalFooter} from '../modalLayout';
 
 interface DrillSummaryStageProps {
   result: DlptDrillResult;
@@ -35,7 +35,7 @@ export const DrillSummaryStage: React.FC<DrillSummaryStageProps> = ({
   onDone,
 }) => (
   <>
-    <DrillBody>
+    <ModalBody>
       <div className="space-y-6">
         {/* Summary Hero */}
         <div className="rounded-xl border border-[#D99B26]/45 bg-[#D99B26]/10 p-5 space-y-3">
@@ -158,9 +158,9 @@ export const DrillSummaryStage: React.FC<DrillSummaryStageProps> = ({
           )}
         </div>
       </div>
-    </DrillBody>
+    </ModalBody>
 
-    <DrillFooter>
+    <ModalFooter>
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -187,6 +187,6 @@ export const DrillSummaryStage: React.FC<DrillSummaryStageProps> = ({
       >
         Done
       </button>
-    </DrillFooter>
+    </ModalFooter>
   </>
 );

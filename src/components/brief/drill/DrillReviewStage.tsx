@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {AlertTriangle, ArrowLeft, ArrowRight, ClipboardCheck, Flag} from 'lucide-react';
 import type {BriefDrill, BriefItem} from '../../../types';
 import type {DlptRuleProfile} from '../../../utils/dlptRules';
-import {DrillBody, DrillFooter} from './drillLayout';
+import {ModalBody, ModalFooter} from '../modalLayout';
 
 export interface DrillReviewPage {
   passage: BriefItem;
@@ -45,7 +45,7 @@ export const DrillReviewStage: React.FC<DrillReviewStageProps> = ({
 
   return (
     <>
-      <DrillBody>
+      <ModalBody>
         <div className="space-y-5">
           <div className="rounded-xl border border-[#7DD3FC]/35 bg-[#7DD3FC]/8 p-4 space-y-1.5">
             <div className="flex items-center gap-2">
@@ -149,9 +149,9 @@ export const DrillReviewStage: React.FC<DrillReviewStageProps> = ({
             </div>
           )}
         </div>
-      </DrillBody>
+      </ModalBody>
 
-      <DrillFooter>
+      <ModalFooter>
         <button
           type="button"
           onClick={onBackToPassages}
@@ -170,7 +170,7 @@ export const DrillReviewStage: React.FC<DrillReviewStageProps> = ({
           <ClipboardCheck className="w-4 h-4" />
           <span>Submit test</span>
         </button>
-      </DrillFooter>
+      </ModalFooter>
     </>
   );
 };

@@ -3,7 +3,7 @@ import {AlertCircle, ArrowLeft, ArrowRight, Loader2, Sparkles} from 'lucide-reac
 import type {BriefDrill, BriefItem, DlptDrillMode, DlptSkill, VocabItem} from '../../../types';
 import type {DlptRuleProfile} from '../../../utils/dlptRules';
 import type {useWordLookup} from '../../../hooks/useWordLookup';
-import {DrillBody, DrillFooter} from './drillLayout';
+import {ModalBody, ModalFooter} from '../modalLayout';
 import {DrillPassageCard} from './DrillPassageCard';
 import {DrillQuestionCard} from './DrillQuestionCard';
 import type {DrillAudio} from './useDrillAudio';
@@ -77,7 +77,7 @@ export const DrillRunStage: React.FC<DrillRunStageProps> = ({
 
   return (
     <>
-      <DrillBody>
+      <ModalBody>
         {/* Adaptive step notice (Practice mode only) */}
         {adaptiveStepNote && mode === 'practice' && (
           <div className="px-3.5 py-2 rounded-lg border border-[#7DD3FC]/30 bg-[#7DD3FC]/8 text-xs text-[#7DD3FC]">
@@ -144,9 +144,9 @@ export const DrillRunStage: React.FC<DrillRunStageProps> = ({
             ))}
           </div>
         )}
-      </DrillBody>
+      </ModalBody>
 
-      <DrillFooter>
+      <ModalFooter>
         <div className="flex items-center gap-2">
           {canGoBack && (
             <button
@@ -207,7 +207,7 @@ export const DrillRunStage: React.FC<DrillRunStageProps> = ({
               </button>
             )}
         </div>
-      </DrillFooter>
+      </ModalFooter>
     </>
   );
 };
