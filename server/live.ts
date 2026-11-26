@@ -66,14 +66,19 @@ export const TALK_NOTE_LIMITS: Readonly<TalkNoteLimits> = {
 };
 
 export class TalkNoteBudget {
+  private readonly limits: Pick<TalkNoteLimits, 'burst' | 'refillMs' | 'maxPerSession'>;
+  private readonly now: () => number;
   private tokens: number;
   private used = 0;
   private lastRefill: number;
 
+  // Plain fields, no parameter properties: production runs `node server.ts` with type stripping only.
   constructor(
-    private readonly limits: Pick<TalkNoteLimits, 'burst' | 'refillMs' | 'maxPerSession'> = TALK_NOTE_LIMITS,
-    private readonly now: () => number = Date.now
+    limits: Pick<TalkNoteLimits, 'burst' | 'refillMs' | 'maxPerSession'> = TALK_NOTE_LIMITS,
+    now: () => number = Date.now
   ) {
+    this.limits = limits;
+    this.now = now;
     this.tokens = limits.burst;
     this.lastRefill = now();
   }
