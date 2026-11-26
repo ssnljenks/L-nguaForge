@@ -1,6 +1,6 @@
 import test, {afterEach} from 'node:test';
 import assert from 'node:assert/strict';
-import {getJson, postJson} from './http.ts';
+import {getJson, NETWORK_ERROR_MESSAGE, OFFLINE_MESSAGE, postJson} from './http.ts';
 
 const originalFetch = globalThis.fetch;
 afterEach(() => {
@@ -30,4 +30,19 @@ test('getJson and postJson time out with a retryable message (REVIEW L-5)', asyn
     })) as typeof fetch;
   await assert.rejects(getJson('/api/brief/feed', 20), /Request timed out\. Tap Retry/);
   await assert.rejects(postJson('/api/brief/refresh', {}, 20), /Request timed out\. Tap Retry/);
+});
+
+test('network failures say the user is offline instead of "Failed to fetch"', async () => {
+  globalThis.fetch = (async () => {
+    throw new TypeError('Failed to fetch');
+  }) as typeof fetch;
+  const nav = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  try {
+    Object.defineProperty(globalThis, 'navigator', {value: {onLine: false}, configurable: true});
+    await assert.rejects(getJson('/api/brief/feed'), {message: OFFLINE_MESSAGE});
+    Object.defineProperty(globalThis, 'navigator', {value: {onLine: true}, configurable: true});
+    await assert.rejects(postJson('/api/chat/turn', {}), {message: NETWORK_ERROR_MESSAGE});
+  } finally {
+    if (nav) Object.defineProperty(globalThis, 'navigator', nav);
+  }
 });

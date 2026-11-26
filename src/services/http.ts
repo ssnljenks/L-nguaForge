@@ -2,6 +2,9 @@ import {withWorkFocus} from './requestContext';
 
 export const DEFAULT_REQUEST_TIMEOUT_MS = 45_000;
 
+export const OFFLINE_MESSAGE = "You're offline. Reconnect to the internet and try again — saved Vocab still works.";
+export const NETWORK_ERROR_MESSAGE = "Can't reach LinguaForge right now. Check your connection and try again.";
+
 /**
  * Sends a request with a timeout and returns the parsed JSON body, or throws with the server's
  * `error` message (falling back to the status) so screens can show it.
@@ -15,6 +18,11 @@ async function requestJson<T>(url: string, init: RequestInit, timeoutMs: number)
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
       throw new Error('Request timed out. Tap Retry to try again.', {cause: err});
+    }
+    // fetch() rejects with a TypeError ("Failed to fetch") when the network is down.
+    if (err instanceof TypeError) {
+      const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+      throw new Error(offline ? OFFLINE_MESSAGE : NETWORK_ERROR_MESSAGE, {cause: err});
     }
     throw err;
   } finally {
