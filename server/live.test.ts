@@ -5,7 +5,7 @@ import type {AddressInfo} from 'net';
 import type {GoogleGenAI} from '@google/genai';
 import {WebSocket} from 'ws';
 import {loadConfig, type ServerConfig} from './config.ts';
-import {attachLiveBridge, type LiveBridgeDeps} from './live.ts';
+import {attachLiveBridge, type LiveBridgeDeps, TALK_NOTE_LIMITS, TalkNoteBudget} from './live.ts';
 
 interface FakeLive {
   connectCalls: Array<{config: {systemInstruction?: string}}>;
@@ -171,5 +171,73 @@ test('typed live text with classification markings is rejected without ending th
   ws.send(JSON.stringify({type: 'text', text: 'Hola, ¿qué tal?'}));
   await waitFor(() => fake.sentText.length === 1, 'clean text forwarded');
   assert.equal(fake.sentText[0], 'Hola, ¿qué tal?');
+  ws.close();
+});
+
+test('TalkNoteBudget allows a burst, refills slowly and has a hard cap (REVIEW M-8)', () => {
+  let now = 0;
+  const budget = new TalkNoteBudget({burst: 2, refillMs: 1000, maxPerSession: 3}, () => now);
+  assert.equal(budget.tryTake(), true);
+  assert.equal(budget.tryTake(), true);
+  assert.equal(budget.tryTake(), false, 'burst spent');
+  now = 999;
+  assert.equal(budget.tryTake(), false, 'not refilled yet');
+  now = 1000;
+  assert.equal(budget.tryTake(), true, 'one refilled');
+  now = 100_000;
+  assert.equal(budget.tryTake(), false, 'hard cap per session');
+});
+
+async function startTalk(analyzeTalkTurn: LiveBridgeDeps['analyzeTalkTurn']) {
+  const bridge = await startBridge({maxLiveSessionsPerIp: 8}, analyzeTalkTurn);
+  const {ws, received} = await connect(bridge.url, bridge.origin);
+  ws.send(JSON.stringify({type: 'start', language: 'es', dialect: 'rioplatense', tutorId: 'es-ba-mateo'}));
+  await waitFor(() => received.json.some((m) => m.type === 'ready'), 'ready');
+  const turn = (user: string, tutor = '¡Qué bueno, che! Contame más.') => {
+    bridge.fake.emit({serverContent: {inputTranscription: {text: user}}});
+    bridge.fake.emit({serverContent: {outputTranscription: {text: tutor}}});
+    bridge.fake.emit({serverContent: {turnComplete: true}});
+  };
+  return {ws, received, turn};
+}
+
+test('very short learner turns get no Talk note model call (REVIEW M-8)', async () => {
+  let calls = 0;
+  const {ws, turn} = await startTalk(async () => {
+    calls++;
+    return {pickedUp: []};
+  });
+  for (const short of ['Sí.', 'Ok', 'No sé', '  ', '¡Claro!']) turn(short);
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(calls, 0);
+  turn('Ayer fui al mercado con mi hermana.');
+  await waitFor(() => calls === 1, 'note for a real turn');
+  ws.close();
+});
+
+test('Talk notes are capped per connection, with one in flight at a time (REVIEW M-8)', async () => {
+  let calls = 0;
+  let release: () => void = () => {};
+  const {ws, turn} = await startTalk(async () => {
+    calls++;
+    await new Promise<void>((r) => (release = r));
+    return {pickedUp: []};
+  });
+  turn('Primera frase bastante larga.');
+  turn('Segunda frase bastante larga.');
+  await waitFor(() => calls === 1, 'first note');
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(calls, 1, 'second turn skipped while a note is in flight');
+
+  // Rapid turns: only the burst is spent, however many turns arrive.
+  for (let i = 0; i < 20; i++) {
+    release();
+    await new Promise((r) => setTimeout(r, 2));
+    turn(`Otra frase número ${i} con varias palabras.`);
+    await new Promise((r) => setTimeout(r, 2));
+  }
+  release();
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(calls, TALK_NOTE_LIMITS.burst);
   ws.close();
 });
