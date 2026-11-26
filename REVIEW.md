@@ -47,6 +47,26 @@ Line numbers refer to `883e95d`.
 
 There were no baseline failures. Every problem below passes the current CI.
 
+### Fix status (branch `review/phases-1-9`)
+
+All Critical and High findings are fixed, one commit each, each with a regression test. Medium and Low findings are left open (§5).
+
+| Finding | Commit    | Regression test                                                                   |
+| ------- | --------- | --------------------------------------------------------------------------------- |
+| C-1     | `815c7ed` | `src/utils/briefLogic.test.ts` (seeds labeled as practice stories, no audio/URL)  |
+| C-2     | `7daed39` | `server/briefService.test.ts`, `server/app.test.ts` (409 when not drillable)      |
+| H-1     | `a6ae952` | `server/app.test.ts` (CSP `media-src` header)                                     |
+| H-2     | `63540d6` | `server/briefService.test.ts` (single-flight + cooldown)                          |
+| H-3     | `0a0ce01` | `server/app.test.ts` (no military framing), `src/services/requestContext.test.ts` |
+| H-4     | `94e3159` | `server/live.test.ts`, `server/app.test.ts`                                       |
+| H-5     | `0afe011` | `src/utils/classificationGuard.test.ts` (bypass strings)                          |
+| H-6     | `609da56` | `src/utils/opiLogic.test.ts` (fails on the old logic)                             |
+| H-7     | `d5e37f6` | `src/utils/todayPlan.test.ts` (fails on the old logic)                            |
+| H-8     | `0a72ee6` | `src/utils/todayPlan.test.ts` (28-day sweep: old 14/28 days, fixed 0/28)          |
+| M-11    | `feaaf85` | `src/utils/storageMigration.test.ts` (pre-883e95d snapshot, no data loss)         |
+
+After the fixes: format ✅ · typecheck ✅ · lint ✅ (0 errors, 37 warnings, unchanged) · tests ✅ 174/174 · build ✅ (554.52 kB / 160.90 kB gzip) · production `/api/health` 200, CSP `media-src 'self' blob: https:`.
+
 ---
 
 ## 2. Phase checklist
@@ -55,36 +75,36 @@ Legend: ✅ Done · 🟡 Partial · ❌ Missing · ⛔ Wrong
 
 ### P1 Shell
 
-| Item                                                          | Status | Evidence                                                                                                                                                           |
-| ------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 5 tabs Today/Talk/Test prep/Brief/Vocab; Today default        | ✅     | `src/App.tsx:89-93`, `:100`                                                                                                                                        |
-| Debrief auto-opens after OPI, under Test prep → Past sessions | ✅     | `src/App.tsx:363`; `src/components/TestPrepModule.tsx:165-169`                                                                                                     |
-| Old activeTab values migrated                                 | ✅     | `src/utils/storageSchemas.ts:108-123` (activeTab wasn't persisted before; seen tabs migrate `v1→v2`, `src/App.tsx:111-113`)                                        |
-| Vault → Vocab everywhere user-visible, data preserved         | ✅     | Only a code comment remains (`src/utils/localDictionary.ts:1661`); `linguaforge_vocab_v1` reused                                                                   |
-| Mission chip = language + dialect only                        | ⛔     | Chip always shows the domain: `src/App.tsx:513`; aria-label `:502`                                                                                                 |
-| Bottom sheet for language/dialect/voice                       | 🟡     | `src/components/MissionSheet.tsx` also always shows an "Operational Domain" select (`:156-171`), even with Work focus off                                          |
-| Work focus setting (default OFF incl. migration)              | ✅     | `src/data/seedData.ts:7`; `src/utils/storageSchemas.ts:201`; toggle `src/components/SettingsModal.tsx:166`                                                         |
-| Domain optional on every endpoint                             | ✅     | `resolveTrainingContext` defaults it; no endpoint requires it (§3 contract check)                                                                                  |
-| Empty pre-session panels hidden                               | ✅     | Setup screens render only configured sections (spot-checked OPI/Talk/Role-play)                                                                                    |
-| Sticky start buttons                                          | ✅     | `today/TodayModule.tsx:590`, `opi/OpiSetupScreen.tsx:346`, `opi/RoleplaySetupScreen.tsx:238`, `talk/TalkSetupScreen.tsx:331`                                       |
-| Data-safety notice                                            | 🟡     | `src/components/DataSafetyModal.tsx`; skipped entirely with `?autostart=1` (`src/App.tsx:107-116`)                                                                 |
-| Server 422 on markings before Gemini                          | 🟡     | `server/validation.ts:16-21` used on all REST free text, **but**: not on `/ws/live` text, OPI `briefStory`, or debrief assessment evidence (H-4); bypassable (H-5) |
+| Item                                                          | Status | Evidence                                                                                                                                                                                  |
+| ------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 5 tabs Today/Talk/Test prep/Brief/Vocab; Today default        | ✅     | `src/App.tsx:89-93`, `:100`                                                                                                                                                               |
+| Debrief auto-opens after OPI, under Test prep → Past sessions | ✅     | `src/App.tsx:363`; `src/components/TestPrepModule.tsx:165-169`                                                                                                                            |
+| Old activeTab values migrated                                 | ✅     | `src/utils/storageSchemas.ts:108-123` (activeTab wasn't persisted before; seen tabs migrate `v1→v2`, `src/App.tsx:111-113`)                                                               |
+| Vault → Vocab everywhere user-visible, data preserved         | ✅     | Only a code comment remains (`src/utils/localDictionary.ts:1661`); `linguaforge_vocab_v1` reused                                                                                          |
+| Mission chip = language + dialect only                        | ✅     | Chip always shows the domain: `src/App.tsx:513`; aria-label `:502` **→ fixed (H-3): domain shown only with Work focus on**                                                                |
+| Bottom sheet for language/dialect/voice                       | ✅     | `src/components/MissionSheet.tsx` also always shows an "Operational Domain" select (`:156-171`), even with Work focus off **→ fixed (H-3): domain select only with Work focus on**        |
+| Work focus setting (default OFF incl. migration)              | ✅     | `src/data/seedData.ts:7`; `src/utils/storageSchemas.ts:201`; toggle `src/components/SettingsModal.tsx:166`                                                                                |
+| Domain optional on every endpoint                             | ✅     | `resolveTrainingContext` defaults it; no endpoint requires it (§3 contract check)                                                                                                         |
+| Empty pre-session panels hidden                               | ✅     | Setup screens render only configured sections (spot-checked OPI/Talk/Role-play)                                                                                                           |
+| Sticky start buttons                                          | ✅     | `today/TodayModule.tsx:590`, `opi/OpiSetupScreen.tsx:346`, `opi/RoleplaySetupScreen.tsx:238`, `talk/TalkSetupScreen.tsx:331`                                                              |
+| Data-safety notice                                            | 🟡     | `src/components/DataSafetyModal.tsx`; skipped entirely with `?autostart=1` (`src/App.tsx:107-116`)                                                                                        |
+| Server 422 on markings before Gemini                          | ✅     | `server/validation.ts:16-21` used on all REST free text, **but**: not on `/ws/live` text, OPI `briefStory`, or debrief assessment evidence (H-4); bypassable (H-5) **→ fixed (H-4, H-5)** |
 
 ### P2 OPI
 
-| Item                                                      | Status | Evidence                                                                              |
-| --------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------- |
-| `ilrSpeakingLevels.ts` L1/2/3 topics, functions, accuracy | ✅     | `src/data/ilrSpeakingLevels.ts:36-253`                                                |
-| Phases warmup→level_check→probe→roleplay→wind_down        | ✅     | `src/types.ts:19`; `src/utils/opiLogic.ts:24`                                         |
-| workingLevel/probeLevel replace ProbeLevel, migrated      | ✅     | `migrateLegacyLevels` (`server/routes/opi.ts:69`); sessions migrate (verified, M-11)  |
-| Adaptive both directions                                  | 🟡     | Steps 2→1, 3→2, 2→3 only; **no 1→2 recovery** (`src/utils/opiLogic.ts:425-435`) — H-6 |
-| Ends on success                                           | ✅     | `src/utils/opiLogic.ts:314-347`                                                       |
-| Exam vs Practice; Focus 1/2/3/Adaptive; transcript + hint | ✅     | `opi/OpiSetupScreen.tsx:23,123`; `opi/OpiCallScreen.tsx:149-169`                      |
-| Phone-call screen Mute/End/Repeat                         | ✅     | `opi/OpiCallScreen.tsx:381-390`                                                       |
-| opiRating floor/ceiling/plus, 0+ to 3                     | 🟡     | `src/utils/opiRating.ts:38-131`; thresholds are fragile (M-5)                         |
-| Debrief ceiling moment, Play clip (IndexedDB, last only)  | ✅     | `src/utils/opiAudioStore.ts:1-40`; `DebriefModule.tsx:338-340`                        |
-| Redo this answer (`/api/opi/redo-turn`)                   | ✅     | `server/routes/opi.ts:295-357`; `debrief/CeilingRedoPanel.tsx`                        |
-| Functions grid for level above floor; accuracy notes      | ✅     | `src/utils/opiRating.ts:110-114,142,202`                                              |
+| Item                                                      | Status | Evidence                                                                                                                    |
+| --------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `ilrSpeakingLevels.ts` L1/2/3 topics, functions, accuracy | ✅     | `src/data/ilrSpeakingLevels.ts:36-253`                                                                                      |
+| Phases warmup→level_check→probe→roleplay→wind_down        | ✅     | `src/types.ts:19`; `src/utils/opiLogic.ts:24`                                                                               |
+| workingLevel/probeLevel replace ProbeLevel, migrated      | ✅     | `migrateLegacyLevels` (`server/routes/opi.ts:69`); sessions migrate (verified, M-11)                                        |
+| Adaptive both directions                                  | ✅     | Steps 2→1, 3→2, 2→3 only; **no 1→2 recovery** (`src/utils/opiLogic.ts:425-435`) — H-6 **→ fixed (H-6): 1→2 recovery added** |
+| Ends on success                                           | ✅     | `src/utils/opiLogic.ts:314-347`                                                                                             |
+| Exam vs Practice; Focus 1/2/3/Adaptive; transcript + hint | ✅     | `opi/OpiSetupScreen.tsx:23,123`; `opi/OpiCallScreen.tsx:149-169`                                                            |
+| Phone-call screen Mute/End/Repeat                         | ✅     | `opi/OpiCallScreen.tsx:381-390`                                                                                             |
+| opiRating floor/ceiling/plus, 0+ to 3                     | 🟡     | `src/utils/opiRating.ts:38-131`; thresholds are fragile (M-5)                                                               |
+| Debrief ceiling moment, Play clip (IndexedDB, last only)  | ✅     | `src/utils/opiAudioStore.ts:1-40`; `DebriefModule.tsx:338-340`                                                              |
+| Redo this answer (`/api/opi/redo-turn`)                   | ✅     | `server/routes/opi.ts:295-357`; `debrief/CeilingRedoPanel.tsx`                                                              |
+| Functions grid for level above floor; accuracy notes      | ✅     | `src/utils/opiRating.ts:110-114,142,202`                                                                                    |
 
 ### P3 Role-play
 
@@ -111,34 +131,34 @@ Legend: ✅ Done · 🟡 Partial · ❌ Missing · ⛔ Wrong
 
 ### P5 Brief
 
-| Item                                                                       | Status | Evidence                                                                                                                                  |
-| -------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `server/sources.json` feeds                                                | 🟡     | 15 feeds, **8 are `example.com` placeholders** (silently skipped)                                                                         |
-| Background ingestion, cache + size cap                                     | ✅     | `server.ts:47-55`; `server/briefService.ts:53,1149-1160`                                                                                  |
-| One Gemini call per item, cached by URL hash                               | ✅     | `server/briefService.ts:871-882`                                                                                                          |
-| …producing ILR level, topic, orientation, summary, domains, **transcript** | ⛔     | The "transcript" is model-written from the RSS description; the model never hears the audio (`briefService.ts:1046-1060,1115-1136`) — C-2 |
-| Audio ≤ ~2.5 min, text ≤ ~500 words                                        | 🟡     | Text is capped (`:951`); audio duration is only a label, and the client streams the whole file                                            |
-| Never serve full article text/audio to the client                          | ✅     | Only ≤250-word excerpts and metadata are returned; no audio bytes are fetched or stored                                                   |
-| Stream from the publisher                                                  | ⛔     | Blocked by the production CSP `media-src 'self' blob:` (`server/security.ts:19`) — H-1                                                    |
-| Default All topics; Work chip only when Work focus ON                      | ✅     | `brief/BriefModule.tsx` (seen in browser)                                                                                                 |
+| Item                                                                       | Status | Evidence                                                                                                                                                                                                                                                                         |
+| -------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `server/sources.json` feeds                                                | 🟡     | 15 feeds, **8 are `example.com` placeholders** (silently skipped)                                                                                                                                                                                                                |
+| Background ingestion, cache + size cap                                     | ✅     | `server.ts:47-55`; `server/briefService.ts:53,1149-1160`                                                                                                                                                                                                                         |
+| One Gemini call per item, cached by URL hash                               | ✅     | `server/briefService.ts:871-882`                                                                                                                                                                                                                                                 |
+| …producing ILR level, topic, orientation, summary, domains, **transcript** | 🟡     | The "transcript" is model-written from the RSS description; the model never hears the audio (`briefService.ts:1046-1060,1115-1136`) — C-2 **→ fixed (C-2): reading uses publisher text; audio items without a real transcript are not drillable (transcription is a follow-up)** |
+| Audio ≤ ~2.5 min, text ≤ ~500 words                                        | 🟡     | Text is capped (`:951`); audio duration is only a label, and the client streams the whole file                                                                                                                                                                                   |
+| Never serve full article text/audio to the client                          | ✅     | Only ≤250-word excerpts and metadata are returned; no audio bytes are fetched or stored                                                                                                                                                                                          |
+| Stream from the publisher                                                  | ✅     | Blocked by the production CSP `media-src 'self' blob:` (`server/security.ts:19`) — H-1 **→ fixed (H-1)**                                                                                                                                                                         |
+| Default All topics; Work chip only when Work focus ON                      | ✅     | `brief/BriefModule.tsx` (seen in browser)                                                                                                                                                                                                                                        |
 
 ### P6 DLPT drill
 
-| Item                                         | Status | Evidence                                                                                                                                   |
-| -------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| DLPT format with the 5 trap tags             | ✅     | `src/utils/dlptRules.ts:22`; `server/briefService.ts:233-375`                                                                              |
-| Correct answers validated against the source | ⛔     | The validation is real (`:203-221,278`), but for feed items the "source" is model-written (C-2), so the check is circular                  |
-| es = DLPT5-CA rules                          | ✅     | `src/utils/dlptRules.ts:104-150`; `canAdvancePage` `:315`                                                                                  |
-| pt = Lower-Range rules                       | 🟡     | `src/utils/dlptRules.ts:151-191`; a practice-mode "Replay with transcript" exists for both languages (`brief/BriefDrillModal.tsx:713-734`) |
-| Practice vs test feedback                    | ✅     | `brief/BriefDrillModal.tsx` (`showFeedbackOnCurrentPage`)                                                                                  |
-| Listening/reading practice estimates         | ✅     | `src/utils/dlptRules.ts:506`                                                                                                               |
+| Item                                         | Status | Evidence                                                                                                                                                              |
+| -------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DLPT format with the 5 trap tags             | ✅     | `src/utils/dlptRules.ts:22`; `server/briefService.ts:233-375`                                                                                                         |
+| Correct answers validated against the source | ✅     | The validation is real (`:203-221,278`), but for feed items the "source" is model-written (C-2), so the check is circular **→ fixed (C-2): source is publisher text** |
+| es = DLPT5-CA rules                          | ✅     | `src/utils/dlptRules.ts:104-150`; `canAdvancePage` `:315`                                                                                                             |
+| pt = Lower-Range rules                       | 🟡     | `src/utils/dlptRules.ts:151-191`; a practice-mode "Replay with transcript" exists for both languages (`brief/BriefDrillModal.tsx:713-734`)                            |
+| Practice vs test feedback                    | ✅     | `brief/BriefDrillModal.tsx` (`showFeedbackOnCurrentPage`)                                                                                                             |
+| Listening/reading practice estimates         | ✅     | `src/utils/dlptRules.ts:506`                                                                                                                                          |
 
 ### P7 Gist
 
-| Item                                                                                         | Status | Evidence                                                                                                      |
-| -------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
-| Audio once, 60 s, 3 English sentences, auto-submit                                           | 🟡     | `src/utils/gistLogic.ts:10`; `brief/BriefGistModal.tsx:293,538`; the audio is CSP-blocked in production (H-1) |
-| Grading: main point, details, omissions, additions, distortions with quotes; additions first | 🟡     | `server/briefService.ts:679-853`; graded against model-written text (C-2)                                     |
+| Item                                                                                         | Status | Evidence                                                                                                                                                                              |
+| -------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Audio once, 60 s, 3 English sentences, auto-submit                                           | ✅     | `src/utils/gistLogic.ts:10`; `brief/BriefGistModal.tsx:293,538`; the audio is CSP-blocked in production (H-1) **→ audio fixed (H-1); Gist offered only with a real transcript (C-2)** |
+| Grading: main point, details, omissions, additions, distortions with quotes; additions first | ✅     | `server/briefService.ts:679-853`; graded against model-written text (C-2) **→ fixed (C-2)**                                                                                           |
 
 ### P8 Errors
 
@@ -152,14 +172,14 @@ Legend: ✅ Done · 🟡 Partial · ❌ Missing · ⛔ Wrong
 
 ### P9 Today
 
-| Item                                                                 | Status | Evidence                                                                                                                                               |
-| -------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| ILR profile: L/R from drills, S from OPI/role-play, "—" without data | ⛔     | Speaking uses the **seed sample session**, so a new user sees "2+" (`src/utils/todayPlan.ts:91-117`; seed `src/data/seedData.ts:139`) — H-7            |
-| Weakest-link line                                                    | ✅     | `today/TodayModule.tsx`                                                                                                                                |
-| 3-item plan generated locally                                        | ✅     | `src/utils/todayPlan.ts:537+`                                                                                                                          |
-| Work items only when Work focus ON                                   | 🟡     | Gated by `workDomain`, but with Work focus off the "Brief it back" OPI can still pick a domain/military story (`src/utils/todayPlan.ts:392-430`) — H-8 |
-| FSRS via ts-fsrs with migration                                      | ✅     | `src/utils/vocabFsrs.ts`; migration verified (M-11)                                                                                                    |
-| Sticky "Start today's plan"; optional test date                      | ✅     | `today/TodayModule.tsx:589-614,345`                                                                                                                    |
+| Item                                                                 | Status | Evidence                                                                                                                                                                 |
+| -------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ILR profile: L/R from drills, S from OPI/role-play, "—" without data | ✅     | Speaking uses the **seed sample session**, so a new user sees "2+" (`src/utils/todayPlan.ts:91-117`; seed `src/data/seedData.ts:139`) — H-7 **→ fixed (H-7)**            |
+| Weakest-link line                                                    | ✅     | `today/TodayModule.tsx`                                                                                                                                                  |
+| 3-item plan generated locally                                        | ✅     | `src/utils/todayPlan.ts:537+`                                                                                                                                            |
+| Work items only when Work focus ON                                   | ✅     | Gated by `workDomain`, but with Work focus off the "Brief it back" OPI can still pick a domain/military story (`src/utils/todayPlan.ts:392-430`) — H-8 **→ fixed (H-8)** |
+| FSRS via ts-fsrs with migration                                      | ✅     | `src/utils/vocabFsrs.ts`; migration verified (M-11)                                                                                                                      |
+| Sticky "Start today's plan"; optional test date                      | ✅     | `today/TodayModule.tsx:589-614,345`                                                                                                                                      |
 
 ---
 
@@ -167,14 +187,14 @@ Legend: ✅ Done · 🟡 Partial · ❌ Missing · ⛔ Wrong
 
 ### Critical
 
-**C-1 — Invented Brief stories are credited to real news outlets.**
+**C-1 — ✅ Fixed in `815c7ed`. Invented Brief stories are credited to real news outlets.**
 
 - **Where:** `src/utils/briefLogic.ts:120-360` (`SEED_BRIEF_ITEMS`); `server/briefService.ts:57-186` (`SEED_EXTENDED_DATA`); the header `src/components/brief/BriefModule.tsx:112` says "Authentic Open-Source Feed".
 - **What's wrong:** the seed stories were written for the app. They're shown as published by Caracol Radio, Clarín, El Nuevo Día, Radio Educación, CBN, A Tarde, Público and Rádio Gaúcha, with links to those outlets. Four different "broadcasts" share one MP3 URL (`traffic.libsyn.com/secure/rtve/lasnoticias.mp3`), and two use an RSS _feed_ URL as their audio (`www.rtp.pt/play/podcast/420.rss`).
 - **Failure scenario:** a user (or one of those outlets) sees invented news (for example a naval interdiction story) attributed to a real newspaper. Listening seeds play unrelated audio, or none at all, while the questions are about text that was never broadcast.
 - **Fix:** label seeds as "LinguaForge practice story" with no outlet name or link, and drop the fabricated `audioUrl`s. The seed listening items then need a real audio source. **Needs a product decision.**
 
-**C-2 — Listening/reading passages and transcripts for live feeds are written by the model, and drills and gists are graded against them.**
+**C-2 — ✅ Fixed in `7daed39`. Listening/reading passages and transcripts for live feeds are written by the model, and drills and gists are graded against them.**
 
 - **Where:** `server/briefService.ts:1046-1060` (prompt: _"studyExcerpt: A short authentic target-language excerpt of ~150-250 words"_, generated from the title and RSS description only), `:1115-1136` (that text becomes `transcript`/`rawContent`), `:556-565` (drill passage), `:645` (validation against it), `:685` (gist source).
 - **What's wrong:** the model never sees the article body or the audio. It writes a "transcript", then writes questions that `validateDlptQuestions` "verifies" against its own output.
@@ -187,20 +207,20 @@ Legend: ✅ Done · 🟡 Partial · ❌ Missing · ⛔ Wrong
 
 ### High
 
-**H-1 — The production CSP blocks all Brief audio.**
+**H-1 — ✅ Fixed in `a6ae952`. The production CSP blocks all Brief audio.**
 
 - **Where:** `server/security.ts:19` (`media-src 'self' blob:`); players at `brief/BriefFeedCard.tsx:83-99`, `brief/BriefDrillModal.tsx:638-658,715-724`, `brief/BriefGistModal.tsx:459-463,739-744`.
 - **Failure scenario:** confirmed in Chromium against the production build: _"Loading media from 'https://traffic.libsyn.com/…' violates … media-src 'self' blob:. The action has been blocked."_ Every card shows "Stream unavailable inline", so DLPT Listening and Gist can't be done in production.
 - **Fix:** allow publisher audio, e.g. `media-src 'self' blob: https:`. Media can't run scripts, so the risk is low. A regression test should check the header.
 
-**H-2 — `POST /api/brief/refresh` is public, with no lock and no cooldown.**
+**H-2 — ✅ Fixed in `63540d6`. `POST /api/brief/refresh` is public, with no lock and no cooldown.**
 
 - **Where:** `server/routes/brief.ts:113-124`; `server/briefService.ts:858-892`.
 - **What's wrong:** any visitor can trigger it, up to 40 times a minute per IP under the API limiter. Each call fetches all 7 live feeds and runs a Gemini analysis for every new item. Concurrent calls analyze the same new items twice.
 - **Failure scenario:** a single script sends about 280 outbound requests a minute to BBC, RTVE and other outlets from the server's IP, and multiplies Gemini cost whenever the feeds have new items.
 - **Fix:** run refreshes one at a time (concurrent callers share the same in-flight run) and enforce a minimum interval between refreshes. Return the cached state otherwise.
 
-**H-3 — Military/work framing is used with Work focus OFF.**
+**H-3 — ✅ Fixed in `0a0ce01`. Military/work framing is used with Work focus OFF.**
 
 - **Where:**
   - Server prompts: `server/routes/lab.ts:28` ("…monologue prompt … for the military domain"), `lab.ts:132` ("…military/diplomatic briefing clip"), `server/routes/vocab.ts:74` ("A military linguist…within '${domainLabel}'"), `vocab.ts:123` ("…operational register").
@@ -208,7 +228,7 @@ Legend: ✅ Done · 🟡 Partial · ❌ Missing · ⛔ Wrong
 - **Failure scenario:** a new user, with Work focus off by default, sees "Maritime & Interdiction" on every screen. The PREP Lab generates naval policy prompts, and "How do I say…" frames them as a military linguist.
 - **Fix:** send `workFocus` from the client. The server uses domain framing only when it's true, and general framing otherwise. The chip shows language + dialect only, and the domain selector only appears when Work focus is on.
 
-**H-4 — The classification guard doesn't cover three input paths.**
+**H-4 — ✅ Fixed in `94e3159`. The classification guard doesn't cover three input paths.**
 
 - **Where:**
   - `server/live.ts:313-318`: typed `/ws/live` text goes to `sendClientContent` unchecked.
@@ -217,25 +237,25 @@ Legend: ✅ Done · 🟡 Partial · ❌ Missing · ⛔ Wrong
 - **Failure scenario:** `SECRET//NOFORN …` typed into the Live Voice keyboard field, or posted as `briefStory.summary`, reaches Gemini.
 - **Fix:** apply the guard on all three paths; over WebSocket, return the 422 message as an error frame. Add regression tests.
 
-**H-5 — The classification guard can be bypassed with Unicode and spacing tricks.**
+**H-5 — ✅ Fixed in `0afe011`. The classification guard can be bypassed with Unicode and spacing tricks.**
 
 - **Where:** `src/utils/classificationGuard.ts:20-100`. Matching runs on the raw string.
 - **Failure scenario:** verified to pass the guard: `SEC​RET`, `NO­FORN`, fullwidth `ＳＥＣＲＥＴ`, Cyrillic `ЅECRET`/`NОFORN`, `N.O.F.O.R.N`, `S E C R E T`, `( S )`, `rel to usa`.
 - **Fix:** normalize before matching: NFKC, strip zero-width and soft-hyphen characters, map Cyrillic/Greek lookalikes to Latin, collapse dotted or spaced capital letters and padded portion marks. Keep ordinary lowercase prose like "secret"/"secreto" allowed. Add bypass tests.
 
-**H-6 — The adaptive OPI can't recover from Level 1.**
+**H-6 — ✅ Fixed in `609da56`. The adaptive OPI can't recover from Level 1.**
 
 - **Where:** `src/utils/opiLogic.ts:425-435` (no 1→2 branch; `l2Breakdowns > 0` counts across the whole session).
 - **Failure scenario:** reproduced with `determineNextOpiStep`. After one early Level 2 breakdown, the candidate sustains 9 straight checks and probes, but `working` stays 1 and Level 3 is never probed, so the session's rating ceiling is capped.
 - **Fix:** base level changes on recent Level 2 evidence. Step up 1→2 once the Level 1 floor holds and the last two Level 2 probes were sustained; step down only when the most recent Level 2 assessment broke down.
 
-**H-7 — The Speaking estimate counts the seed sample session.**
+**H-7 — ✅ Fixed in `d5e37f6`. The Speaking estimate counts the seed sample session.**
 
 - **Where:** `src/utils/todayPlan.ts:91-117` (`computeSpeakingEstimate`) and `deriveUserSkillProfile` (`src/utils/errorPatterns.ts`) include `sample-*` sessions from `SEED_SAMPLE_SESSIONS`.
 - **Failure scenario:** a brand-new user's Today profile shows "Speaking 2+ · OPI-style", where the spec requires "—". The plan then picks "OPI · Brief it back" because "speaking ≥ 2+".
 - **Fix:** exclude sample sessions from estimates.
 
-**H-8 — With Work focus off, the "Brief it back" OPI can use a military story.**
+**H-8 — ✅ Fixed in `0a72ee6`. With Work focus off, the "Brief it back" OPI can use a military story.**
 
 - **Where:** `src/utils/todayPlan.ts:392-430` (`pickBriefStory` only filters by domain when `workDomain` is set).
 - **Failure scenario:** with the default seeds and Work focus off, the day's OPI topic can be the naval interdiction story (`topic: 'security'`, `matchingDomains: ['maritime_surveillance']`). That breaks "the OPI NEVER uses domain/military content".
