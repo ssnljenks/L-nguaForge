@@ -32,6 +32,9 @@ async function startServer() {
       fakeGenerator?.reset();
       res.json({ok: true});
     });
+    app.get('/__fixtures/calls', (_req, res) => {
+      res.json(fakeGenerator?.callCounts() ?? {});
+    });
     attachLiveBridge(httpServer, config, {
       getClient: createFakeLiveClient(),
       analyzeTalkTurn: (ctx, userText, tutorText) => analyzeLiveTalkTurn({ctx, userText, tutorText, generate}),

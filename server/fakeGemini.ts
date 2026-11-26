@@ -109,6 +109,8 @@ export function checkAgainstSchema(value: unknown, schema: Schema, at = '$'): st
 export type FakeGenerator = GenerateStructured & {
   /** Starts every fixture sequence over (POST /__fixtures/reset, called before each e2e test). */
   reset: () => void;
+  /** Model calls answered since the last reset, by fixture file (GET /__fixtures/calls). */
+  callCounts: () => Record<string, number>;
 };
 
 export function createFakeGenerator(dir = FIXTURES_DIR): FakeGenerator {
@@ -126,7 +128,7 @@ export function createFakeGenerator(dir = FIXTURES_DIR): FakeGenerator {
     }
     return response as Record<string, unknown>;
   };
-  return Object.assign(generate, {reset: () => calls.clear()});
+  return Object.assign(generate, {reset: () => calls.clear(), callCounts: () => Object.fromEntries(calls)});
 }
 
 // ---------------------------------------------------------------------------

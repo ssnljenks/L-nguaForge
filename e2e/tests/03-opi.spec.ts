@@ -1,17 +1,5 @@
-import type {Page} from '@playwright/test';
+import {answerTurns} from '../flows';
 import {checkScreen, expect, gotoTab, test} from '../support';
-
-/** Answers examiner turns: the speech stub "hears" the next utterance, then the learner taps Send. */
-async function answerTurns(page: Page, turns: number) {
-  for (let i = 0; i < turns; i++) {
-    const send = page.getByRole('button', {name: 'Send response'});
-    await expect(send).toBeEnabled({timeout: 15_000});
-    await send.click();
-    await expect(page.getByTestId('call-status-line')).not.toHaveText(/Thinking|Examiner is speaking/i, {
-      timeout: 15_000,
-    });
-  }
-}
 
 test('OPI Exam mode: phone-call screen, debrief auto-opens, redo, past sessions', async ({page}, testInfo) => {
   await page.goto('/');

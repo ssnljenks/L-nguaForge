@@ -6,7 +6,7 @@ import {expect, type Page, type Request, test as base, type TestInfo} from '@pla
 /**
  * Shared fixtures for the e2e suite.
  * - Browser speech APIs are stubbed: SpeechRecognition "hears" the next queued utterance shortly after
- *   start() (window.__e2eSpeech.say(...) queues more), and speechSynthesis finishes each utterance at
+ *   start() (window.e2eSpeech.say(...) queues more), and speechSynthesis finishes each utterance at
  *   once, so OPI and role-play calls move on without real audio.
  * - The data-safety notice is pre-acknowledged unless a test opts out with `freshInstall`.
  * - `api` records every /api request and response body, for assertions on real network payloads.
@@ -23,7 +23,7 @@ export const DEFAULT_UTTERANCES = [
 function installSpeechStubs(utterances: string[]) {
   type Listener = ((event?: unknown) => void) | null;
   const queue = [...utterances];
-  (window as unknown as {__e2eSpeech: unknown}).__e2eSpeech = {
+  (window as unknown as {e2eSpeech: unknown}).e2eSpeech = {
     say: (text: string) => queue.unshift(text),
     remaining: () => queue.length,
   };
@@ -199,3 +199,17 @@ export async function checkScreen(page: Page, testInfo: TestInfo, name: string) 
 
 export const isWebKit = (testInfo: TestInfo) => testInfo.project.name.startsWith('webkit');
 export const isMobile = (testInfo: TestInfo) => testInfo.project.name.endsWith('mobile');
+
+/** Switches the target language through the mission chip sheet. */
+export async function setLanguage(page: Page, language: 'es' | 'pt') {
+  await page.getByRole('button', {name: /change mission context/i}).click();
+  await page
+    .getByRole('group', {name: 'Target language'})
+    .getByRole('button')
+    .nth(language === 'es' ? 0 : 1)
+    .click();
+  await page.getByRole('button', {name: 'Apply Mission Context'}).click();
+  await expect(page.getByRole('button', {name: /change mission context/i})).toHaveAccessibleName(
+    new RegExp(`^${language.toUpperCase()} `)
+  );
+}
