@@ -1,8 +1,13 @@
 import React from 'react';
 
-/** Scrollable body of a Brief dialog (DLPT drill, gist drill). */
+/**
+ * Scrollable body of a Brief dialog (DLPT drill, gist drill). Focusable so keyboard users can scroll it
+ * even when it holds no controls, e.g. the gist result (WCAG 2.1.1).
+ */
 export const ModalBody: React.FC<{children: React.ReactNode}> = ({children}) => (
-  <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">{children}</div>
+  <div tabIndex={0} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+    {children}
+  </div>
 );
 
 /** Bottom action bar of a Brief dialog. */
