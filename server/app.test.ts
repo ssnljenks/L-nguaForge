@@ -62,6 +62,9 @@ test('health check and security headers', async () => {
   const csp = (await fetch(`${prod.url}/api/health`)).headers.get('content-security-policy') ?? '';
   assert.match(csp, /script-src 'self'/);
   assert.match(csp, /frame-ancestors 'self' https:\/\/aistudio\.google\.com/);
+  // Publisher audio must be playable in production (REVIEW H-1); scripts stay same-origin.
+  assert.match(csp, /media-src 'self' blob: https:/);
+  assert.match(csp, /script-src 'self'(;|$)/);
 });
 
 test('rejects missing input with 400 without calling the model', async () => {
