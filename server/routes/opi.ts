@@ -147,6 +147,8 @@ export function registerOpiRoutes(router: Router, {generate}: RouteDeps): void {
               topic: sanitizeString(rawStory.topic, 40),
             }
           : undefined;
+      // Client-supplied story text goes into the prompt, so it must pass the guard too (REVIEW H-4).
+      assertUnclassifiedText(briefStory?.title, briefStory?.summary, briefStory?.orientationLine, briefStory?.topic);
 
       const briefTopicNote =
         topicSource === 'brief'

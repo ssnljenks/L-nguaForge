@@ -13,9 +13,9 @@ import type {
   TodayPlanStepId,
   VocabItem,
 } from '../types.ts';
-import {SEED_BRIEF_ITEMS} from './briefLogic.ts';
+import {isBriefItemDrillable, SEED_BRIEF_ITEMS} from './briefLogic.ts';
 import {computeDlptSkillEstimates} from './dlptRules.ts';
-import {deriveUserSkillProfile, getTopFix, type RankedErrorPattern} from './errorPatterns.ts';
+import {deriveUserSkillProfile, getTopFix, type RankedErrorPattern, isSampleSession} from './errorPatterns.ts';
 import {getDomainInfo} from './ilrLogic.ts';
 import {getDueVocabCards, sortVocabDeckByFsrs} from './vocabFsrs.ts';
 
@@ -93,7 +93,8 @@ export function computeSpeakingEstimate(
   language: TargetLanguage
 ): SpeakingSkillEstimate {
   const rated = sessions
-    .filter((s) => s.language === language && (Boolean(s.debrief) || Boolean(s.roleplayDebrief)))
+    // Seed demo sessions are not the user's own results (REVIEW H-7).
+    .filter((s) => s.language === language && !isSampleSession(s) && (Boolean(s.debrief) || Boolean(s.roleplayDebrief)))
     .sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt));
 
   if (rated.length === 0) {
@@ -389,6 +390,15 @@ function levelDistance(a: BriefIlrLevel, b: BriefIlrLevel): number {
   return Math.abs(BRIEF_LEVELS_ORDER.indexOf(a) - BRIEF_LEVELS_ORDER.indexOf(b));
 }
 
+/**
+ * Work/military content: security stories or stories tagged with a work domain other than the
+ * generic `general_policy`. Kept out of the plan unless Work focus asks for it, and never used for
+ * the OPI (REVIEW H-8).
+ */
+export function isWorkTaggedStory(item: Pick<BriefItem, 'topic' | 'matchingDomains'>): boolean {
+  return item.topic === 'security' || (item.matchingDomains ?? []).some((d) => d !== 'general_policy');
+}
+
 function pickBriefStory(params: {
   pool: readonly BriefItem[];
   language: TargetLanguage;
@@ -398,11 +408,20 @@ function pickBriefStory(params: {
   workDomain?: MilitaryDomain;
 }): BriefItem {
   const {pool, language, mediaType, targetLevel, dayNumber, workDomain} = params;
-  const langItems = pool.filter((item) => item.language === language);
+  // Only items with real source text can be drilled (REVIEW C-2).
+  const langItems = pool.filter((item) => item.language === language && isBriefItemDrillable(item));
   const sourcePool = langItems.length > 0 ? langItems : SEED_BRIEF_ITEMS.filter((item) => item.language === language);
 
   let candidates = sourcePool.filter((item) => item.mediaType === mediaType);
   if (candidates.length === 0) candidates = sourcePool;
+
+  if (!workDomain) {
+    // General proficiency first: prefer general-interest stories (fall back only if none exist).
+    const general = candidates.filter((item) => !isWorkTaggedStory(item));
+    const generalAnyMedia = sourcePool.filter((item) => !isWorkTaggedStory(item));
+    if (general.length > 0) candidates = general;
+    else if (generalAnyMedia.length > 0) candidates = generalAnyMedia;
+  }
 
   if (workDomain) {
     const domainExact = candidates.filter((item) => item.matchingDomains?.includes(workDomain));
@@ -597,14 +616,24 @@ export function generateTodayPlan(params: {
       highlightAmber: true,
     };
   } else if (profile.speaking.numeric !== null && profile.speaking.numeric >= 2.5) {
+    // The OPI never uses work/military content, even when Item 2 is a Work brief (REVIEW H-8).
+    const opiStory = isWorkTaggedStory(chosenStory)
+      ? pickBriefStory({
+          pool: briefPool.length > 0 ? briefPool : SEED_BRIEF_ITEMS,
+          language,
+          mediaType: chosenStory.mediaType,
+          targetLevel,
+          dayNumber,
+        })
+      : chosenStory;
     speakingItem = {
       id: 'speaking',
       stepNumber: 3,
       kind: 'opi_brief_back',
       title: 'OPI · Brief it back',
-      subtitle: `Defend and analyze today's Brief story: "${chosenStory.title}"`,
+      subtitle: `Defend and analyze today's Brief story: "${opiStory.title}"`,
       minutes: 10,
-      briefItem: chosenStory,
+      briefItem: opiStory,
       isWorkAddon: false,
       highlightAmber: true,
     };

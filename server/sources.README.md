@@ -29,7 +29,8 @@ Each entry in `sources.json` has the following format:
    - The client UI displays only the headline, DLPT-style orientation line, short 2-sentence summary, unboxed metadata, and direct link to the publisher's site.
    - Audio is streamed directly from the publisher's public enclosure URL in the browser.
    - Full transcripts and text excerpts remain strictly server-side for question generation and are shown only as a brief excerpt after a drill or during study lookup.
+   - **Passages are always real source text.** A text item's passage is the publisher's own feed text (≤500 words), never model-written; Gemini only supplies metadata (level, topic, orientation line, summary, vocabulary that occurs in the text). Audio items have no transcript yet, so they are marked `drillable: false`: the feed links to the source but offers no DLPT drill or Gist until a real transcript exists. Text shorter than 40 words is not drillable either.
 
 3. **Placeholders**:
    - Entries with URLs starting with `https://example.com/placeholder-rss-...` are clearly marked placeholders. You can replace them with real RSS or podcast feeds from your preferred regional stations at any time.
-   - Built-in authentic fallback seed stories ensure that the feed remains populated and responsive even if external network access or DNS resolution is offline.
+   - Built-in **practice stories** keep the feed populated when external feeds are unreachable. They were written for LinguaForge, are labeled "LinguaForge practice story", and carry no outlet name, publisher link or audio. They are reading-only.

@@ -66,6 +66,11 @@ const MARKING_RULES: readonly MarkingRule[] = [
     category: 'control_marking',
     pattern: /\b(?:CUI|REL\s+TO)\b/,
   },
+  // REL TO in any case when followed by a releasability code (e.g. "rel to usa", "Rel To FVEY")
+  {
+    category: 'control_marking',
+    pattern: /\bREL\s+TO\s+(?:USA|FVEY|NATO|[A-Z]{3}(?:\s*,\s*[A-Z]{3})*)\b/i,
+  },
   // Classification authority block headers
   {
     category: 'classification_block',
@@ -84,6 +89,75 @@ export const CLASSIFICATION_REJECT_MESSAGE =
  */
 export function detectClassificationMarking(text: string): ClassificationMatch | null {
   if (typeof text !== 'string' || !text.trim()) return null;
+  return matchRules(text) ?? matchRules(normalizeForMarkingDetection(text));
+}
+
+// Cyrillic and Greek letters that look like Latin ones, as used to dodge keyword filters.
+const CONFUSABLES: Record<string, string> = {
+  А: 'A',
+  В: 'B',
+  Е: 'E',
+  К: 'K',
+  М: 'M',
+  Н: 'H',
+  О: 'O',
+  Р: 'P',
+  С: 'C',
+  Т: 'T',
+  Х: 'X',
+  Ѕ: 'S',
+  І: 'I',
+  Ј: 'J',
+  У: 'Y',
+  а: 'a',
+  е: 'e',
+  о: 'o',
+  р: 'p',
+  с: 'c',
+  у: 'y',
+  х: 'x',
+  ѕ: 's',
+  і: 'i',
+  ј: 'j',
+  Α: 'A',
+  Β: 'B',
+  Ε: 'E',
+  Ζ: 'Z',
+  Η: 'H',
+  Ι: 'I',
+  Κ: 'K',
+  Μ: 'M',
+  Ν: 'N',
+  Ο: 'O',
+  Ρ: 'P',
+  Τ: 'T',
+  Υ: 'Y',
+  Χ: 'X',
+  ο: 'o',
+  ν: 'v',
+};
+const CONFUSABLE_RE = new RegExp(`[${Object.keys(CONFUSABLES).join('')}]`, 'g');
+
+/**
+ * Canonical form used to catch obfuscated markings (REVIEW H-5): NFKC (fullwidth -> ASCII), invisible
+ * format characters removed (zero-width, soft hyphen), Cyrillic/Greek lookalikes mapped to Latin,
+ * dotted or letter-spaced capitals collapsed ("N.O.F.O.R.N", "S E C R E T"), padded portion marks
+ * trimmed ("( S )"). Lowercase prose is untouched, so ordinary words like "secreto" stay allowed.
+ */
+export function normalizeForMarkingDetection(text: string): string {
+  return (
+    text
+      .normalize('NFKC')
+      .replace(/\p{Cf}/gu, '')
+      .replace(CONFUSABLE_RE, (ch) => CONFUSABLES[ch] ?? ch)
+      .replace(/\b(?:[A-Z][\s.\-_·]{1,2}){2,}[A-Z]\b\.?/g, (run) => run.replace(/[^A-Z]/g, ''))
+      // A spaced-out "T-O-P S-E-C-R-E-T" collapses to one run; restore the word gap.
+      .replace(/\bTOPSECRET\b/g, 'TOP SECRET')
+      .replace(/\(\s*([^()]{1,40}?)\s*\)/g, '($1)')
+  );
+}
+
+function matchRules(text: string): ClassificationMatch | null {
   for (const rule of MARKING_RULES) {
     const match = rule.pattern.exec(text);
     if (match) {

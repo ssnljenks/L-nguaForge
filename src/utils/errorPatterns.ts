@@ -113,6 +113,13 @@ function parseIlrNumeric(label: string | null | undefined): number | null {
  * Estimates the user's current ILR floor (0..3) and weakest skill area from OPI sessions,
  * DLPT listening/reading estimates, and recent gist error density.
  */
+/** Built-in demo sessions (seed data) use this ID prefix; they must never count as the user's progress. */
+export const SAMPLE_SESSION_ID_PREFIX = 'sample-';
+
+export function isSampleSession(session: Pick<OpiSession, 'id'>): boolean {
+  return session.id.startsWith(SAMPLE_SESSION_ID_PREFIX);
+}
+
 export function deriveUserSkillProfile(params: {
   language: TargetLanguage;
   sessions?: readonly OpiSession[];
@@ -124,7 +131,7 @@ export function deriveUserSkillProfile(params: {
 
   // 1. Speaking floor from latest debriefed OPI session for active language
   const langSessions = sessions
-    .filter((s) => s.language === language && s.debrief)
+    .filter((s) => s.language === language && s.debrief && !isSampleSession(s))
     .sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt));
   const latestDebrief = langSessions[0]?.debrief;
 

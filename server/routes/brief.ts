@@ -113,7 +113,7 @@ export function registerBriefRoutes(router: Router, deps: RouteDeps, service: Br
   router.post(
     '/brief/refresh',
     handleAsync(async (_req, res) => {
-      const outcome = await service.refreshFeeds(deps.generate);
+      const outcome = await service.requestRefresh(deps.generate);
       res.json({
         ok: true,
         lastRefreshedAt: service.getLastRefreshedAt(),

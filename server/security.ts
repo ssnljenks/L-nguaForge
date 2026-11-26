@@ -16,7 +16,9 @@ export function createSecurityHeaders(options: {isProduction: boolean; frameAnce
             'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
             'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'],
             'img-src': ["'self'", 'data:', 'blob:'],
-            'media-src': ["'self'", 'blob:'],
+            // Brief streams audio directly from publishers (feed enclosures on many CDNs). Media can't run
+            // script, so allowing any HTTPS media source is low-risk (REVIEW H-1).
+            'media-src': ["'self'", 'blob:', 'https:'],
             // 'self' covers same-origin ws:/wss: for /ws/live; font hosts are fetched by the service worker.
             'connect-src': ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
             'worker-src': ["'self'"],

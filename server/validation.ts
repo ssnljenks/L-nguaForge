@@ -78,7 +78,15 @@ export interface TrainingContext {
   dialectLabel: string;
   domainId: MilitaryDomain;
   domainLabel: string;
+  /** True only when the client sends `workFocus: true` (Settings "Work focus" toggle). */
+  workFocus: boolean;
+  /** What to center content on: the work domain with Work focus ON, general topics otherwise. */
+  topicLabel: string;
 }
+
+/** Topic framing used whenever Work focus is OFF: general proficiency first, no military content. */
+export const GENERAL_TOPICS_LABEL =
+  'everyday and general-interest topics (society, economy, culture, science, public life)';
 
 /**
  * Resolves language/dialect/domain from client-supplied IDs into server-owned labels.
@@ -96,5 +104,7 @@ export function resolveTrainingContext(source: unknown): TrainingContext {
     dialectLabel: dialect.label,
     domainId: domain.id,
     domainLabel: domain.label,
+    workFocus: body.workFocus === true,
+    topicLabel: body.workFocus === true ? domain.label : GENERAL_TOPICS_LABEL,
   };
 }

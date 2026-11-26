@@ -109,7 +109,7 @@ export const BriefModule: React.FC<BriefModuleProps> = ({
       <div className="space-y-1.5 pb-4 border-b border-[#23303E]">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs font-medium text-[#94A3B8]">
-            Authentic Open-Source Feed · {LANGUAGE_LABELS[config.language]} ({dialect.short})
+            Open-source news + practice stories · {LANGUAGE_LABELS[config.language]} ({dialect.short})
           </p>
           {lastRefreshedAt && (
             <p className="text-[11px] text-[#7D8FA3]">

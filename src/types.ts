@@ -377,6 +377,11 @@ export interface BriefItem {
   matchingDomains: MilitaryDomain[];
   estimatedMinutes: number;
   lengthLabel: string;
+  /**
+   * False when the item has no real source text to drill or grade against (e.g. a feed audio item
+   * with no transcript). DLPT drills and Gist are only offered for drillable items. Absent = drillable.
+   */
+  drillable?: boolean;
 }
 
 export type DlptQuestionType = 'main_idea' | 'detail' | 'inference' | 'vocabulary_in_context' | 'speaker_attitude';

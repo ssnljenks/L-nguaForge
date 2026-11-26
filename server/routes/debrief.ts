@@ -98,7 +98,7 @@ export function registerDebriefRoutes(router: Router, {generate}: RouteDeps): vo
   router.post(
     '/debrief/analyze',
     handleAsync(async (req, res, signal) => {
-      const {language, langName, dialectLabel, domainLabel} = resolveTrainingContext(req.body);
+      const {language, langName, dialectLabel, topicLabel} = resolveTrainingContext(req.body);
       const sessionType =
         req.body?.sessionType === 'prep_monologue'
           ? 'prep_monologue'
@@ -128,7 +128,8 @@ export function registerDebriefRoutes(router: Router, {generate}: RouteDeps): vo
       }
       const fullTranscript = transcriptLines.join('\n');
 
-      assertUnclassifiedText(fullTranscript);
+      // Client-supplied assessment evidence is also placed in the prompt (REVIEW H-4).
+      assertUnclassifiedText(fullTranscript, ...clientAssessments.map((a) => a.evidence));
 
       const ratedClientAssessments = clientAssessments.filter((a) => a.phase !== 'warmup');
       const ratingEnginePreview = ratedClientAssessments.length > 0 ? calculateOpiRating(ratedClientAssessments) : null;
@@ -144,7 +145,7 @@ export function registerDebriefRoutes(router: Router, {generate}: RouteDeps): vo
 
       const scopeHeader =
         sessionType === 'prep_monologue'
-          ? `Perform a rigorous ILR diagnostic debrief (practice estimate, not an official rating) for a ${langName} (${dialectLabel}) monologue on "${domainLabel}".`
+          ? `Perform a rigorous ILR diagnostic debrief (practice estimate, not an official rating) for a ${langName} (${dialectLabel}) monologue on ${topicLabel}.`
           : sessionType === 'roleplay'
             ? `Perform a rigorous everyday civilian ILR role-play diagnostic debrief (practice estimate, not an official rating) for a speaker using ${langName} (${dialectLabel}). Do NOT assume or inject military topics.`
             : `Perform a rigorous general ILR Oral Proficiency Interview (OPI) post-session diagnostic debrief (practice estimate, not an official rating) for a speaker using ${langName} (${dialectLabel}). Do NOT assume or inject military topics unless the candidate raised them.`;

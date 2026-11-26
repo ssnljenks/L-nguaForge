@@ -53,6 +53,7 @@ import {type SaveVocabFn, useWordLookup} from '../../hooks/useWordLookup';
 import {TappableText} from '../shared/TappableText';
 import {WordLookupPopover} from '../shared/WordLookupPopover';
 import {createId} from '../../utils/ids';
+import {isBriefItemDrillable} from '../../utils/briefLogic';
 import {DlptRulesSheet} from './DlptRulesSheet';
 import {DlptTrapCard} from './DlptTrapCard';
 
@@ -91,7 +92,8 @@ export const BriefDrillModal: React.FC<BriefDrillModalProps> = ({
     const map = new Map<string, BriefItem>();
     map.set(item.id, item);
     for (const p of allPassages) {
-      if (p.language === item.language && p.mediaType === item.mediaType) {
+      // Only passages with real source text can join a drill session (REVIEW C-2).
+      if (p.language === item.language && p.mediaType === item.mediaType && isBriefItemDrillable(p)) {
         map.set(p.id, p);
       }
     }
@@ -767,15 +769,19 @@ export const BriefDrillModal: React.FC<BriefDrillModalProps> = ({
                       <span className="font-mono text-[11px] uppercase tracking-wider text-[#94A3B8]">
                         Reading Passage Excerpt
                       </span>
-                      <a
-                        href={currentPassage.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-[#7DD3FC] hover:underline"
-                      >
-                        <span>Original at {currentPassage.sourceName}</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                      {currentPassage.sourceUrl ? (
+                        <a
+                          href={currentPassage.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-[#7DD3FC] hover:underline"
+                        >
+                          <span>Original at {currentPassage.sourceName}</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <span className="text-xs text-[#94A3B8]">{currentPassage.sourceName}</span>
+                      )}
                     </div>
                     <div className="p-3.5 sm:p-4 rounded-xl bg-[#111922] border border-[#23303E] text-sm sm:text-[15px] text-[#F8FAFC] leading-relaxed">
                       {showFeedbackOnCurrentPage ? (

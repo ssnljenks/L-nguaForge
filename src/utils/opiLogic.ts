@@ -416,18 +416,33 @@ export function determineNextOpiStep(input: DetermineNextOpiStepInput): Determin
   const l2Items = rated.filter((a) => (a.targetLevel ?? getFunctionLevel(a.functionKey)) === 2);
   const l3Items = rated.filter((a) => (a.targetLevel ?? getFunctionLevel(a.functionKey)) === 3);
   const l2SustainedCount = l2Items.filter((a) => a.outcome === 'sustained').length;
-  const l2Breakdowns = l2Items.filter((a) => a.outcome === 'breakdown').length;
   const l3SustainedCount = l3Items.filter((a) => a.outcome === 'sustained').length;
   const l3Breakdowns = l3Items.filter((a) => a.outcome === 'breakdown').length;
 
   let workingLevel: OpiWorkingLevel = prevWorking;
 
-  // Drop to Level 1 if Level 2 checks broke down
+  // Level moves use RECENT Level 2 evidence (assessments are chronological), so one early breakdown
+  // doesn't cap the rest of the interview (REVIEW H-6).
+  const lastL2 = l2Items[l2Items.length - 1];
+  const lastTwoL2Sustained = l2Items.length >= 2 && l2Items.slice(-2).every((a) => a.outcome === 'sustained');
+  const l1SustainedSoFar = rated.filter(
+    (a) => getFunctionLevel(a.functionKey) === 1 && a.outcome === 'sustained'
+  ).length;
+
+  // Drop to Level 1 if the latest Level 2 evidence broke down
   if (
     workingLevel === 2 &&
-    (l2Breakdowns > 0 || (currentPhase === 'level_check' && effectiveOutcome === 'breakdown'))
+    (lastL2?.outcome === 'breakdown' || (currentPhase === 'level_check' && effectiveOutcome === 'breakdown'))
   ) {
     workingLevel = 1;
+  } else if (
+    // Recover to Level 2 once the Level 1 floor holds and the last two Level 2 probes were sustained
+    workingLevel === 1 &&
+    l1SustainedSoFar >= 2 &&
+    lastTwoL2Sustained &&
+    effectiveOutcome !== 'breakdown'
+  ) {
+    workingLevel = 2;
   } else if (workingLevel === 3 && (effectiveOutcome === 'breakdown' || l3Breakdowns > 0)) {
     workingLevel = 2;
   } else if (workingLevel === 2 && l3SustainedCount >= 4 && l3Breakdowns === 0 && l2SustainedCount >= 2) {

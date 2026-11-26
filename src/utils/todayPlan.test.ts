@@ -1,7 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import type {DlptDrillResult, ErrorEvent, OpiSession, VocabItem} from '../types.ts';
-import {computeIlrProfile, formatTestCountdown, generateTodayPlan, getDaysUntilTest} from './todayPlan.ts';
+import type {BriefItem, DlptDrillResult, ErrorEvent, OpiSession, VocabItem} from '../types.ts';
+import {SEED_BRIEF_ITEMS} from './briefLogic.ts';
+import {SEED_SAMPLE_SESSIONS} from '../data/seedData.ts';
+import {
+  computeIlrProfile,
+  formatTestCountdown,
+  generateTodayPlan,
+  getDaysUntilTest,
+  isWorkTaggedStory,
+} from './todayPlan.ts';
 
 const NOW = Date.parse('2026-11-24T15:00:00.000Z');
 
@@ -249,4 +257,109 @@ test('generateTodayPlan alternates Work focus add-on every other day between Ite
   assert.equal(workTalkPlan.items[2].kind, 'talk_work');
   assert.equal(workTalkPlan.items[2].isWorkAddon, true);
   assert.equal(workTalkPlan.items[1].isWorkAddon, false);
+});
+
+test('generateTodayPlan never picks a non-drillable item (feed audio without a transcript) for the Brief drill (REVIEW C-2)', () => {
+  const audioNoTranscript: BriefItem = {
+    ...SEED_BRIEF_ITEMS.find((i) => i.language === 'es')!,
+    id: 'es-feed-audio-1',
+    mediaType: 'audio',
+    audioUrl: 'https://audio.example.test/a.mp3',
+    sourceName: 'Test Radio',
+    sourceUrl: 'https://radio.example.test',
+    drillable: false,
+  };
+  for (const dateKey of ['2026-11-25', '2026-11-26', '2026-11-27']) {
+    const {plan} = generateTodayPlan({
+      language: 'es',
+      domain: 'maritime_surveillance',
+      workFocusEnabled: false,
+      vocabItems: [],
+      sessions: [],
+      // Listening is weaker, so the plan wants an audio item.
+      dlptResults: [makeDlptResult('listening', '2', 1), makeDlptResult('reading', '3', 3)],
+      errorEvents: [],
+      briefPool: [audioNoTranscript, ...SEED_BRIEF_ITEMS],
+      dateKey,
+      nowMs: NOW,
+    });
+    const brief = plan.items.find((i) => 'briefItem' in i && i.briefItem) as {briefItem: BriefItem} | undefined;
+    assert.ok(brief, 'plan includes a Brief item');
+    assert.notEqual(brief.briefItem.id, 'es-feed-audio-1');
+    assert.notEqual(brief.briefItem.drillable, false);
+  }
+});
+
+test('a new user with only the built-in sample session has no Speaking estimate (REVIEW H-7)', () => {
+  assert.ok(SEED_SAMPLE_SESSIONS.length > 0);
+  assert.ok(
+    SEED_SAMPLE_SESSIONS.every((s) => s.id.startsWith('sample-')),
+    'seed sessions must use the sample- prefix so estimates can exclude them'
+  );
+  const profile = computeIlrProfile({
+    language: 'es',
+    sessions: [...SEED_SAMPLE_SESSIONS],
+    dlptResults: [],
+    errorEvents: [],
+    nowMs: NOW,
+  });
+  assert.equal(profile.speaking.level, null, 'shows "—", not the sample debrief rating');
+
+  // The user's own debriefed session still counts.
+  const own = computeIlrProfile({
+    language: 'es',
+    sessions: [...SEED_SAMPLE_SESSIONS, makeOpiSession('2', 2)],
+    dlptResults: [],
+    errorEvents: [],
+    nowMs: NOW,
+  });
+  assert.equal(own.speaking.level, '2');
+});
+
+test('Today plan keeps work/military stories out of the Brief drill and the OPI without Work focus (REVIEW H-8)', () => {
+  for (let day = 1; day <= 28; day++) {
+    const dateKey = `2026-11-${String(day).padStart(2, '0')}`;
+    const {plan} = generateTodayPlan({
+      language: 'es',
+      domain: 'maritime_surveillance',
+      workFocusEnabled: false,
+      vocabItems: [],
+      sessions: [makeOpiSession('2+', 2)], // speaking >= 2+ -> Item 3 is "OPI · Brief it back"
+      dlptResults: [makeDlptResult('listening', '3', 3), makeDlptResult('reading', '2', 2)],
+      errorEvents: [],
+      dateKey,
+      nowMs: NOW,
+    });
+    for (const item of plan.items) {
+      const story = (item as {briefItem?: BriefItem}).briefItem;
+      if (story) assert.equal(isWorkTaggedStory(story), false, `${dateKey} ${item.id}: ${story.id}`);
+    }
+  }
+});
+
+test('the OPI never uses a work/military story, even when Item 2 is a Work brief (REVIEW H-8)', () => {
+  let sawOpiOnWorkBriefDay = false;
+  for (let day = 1; day <= 28; day++) {
+    const dateKey = `2026-11-${String(day).padStart(2, '0')}`;
+    const {plan} = generateTodayPlan({
+      language: 'es',
+      domain: 'maritime_surveillance',
+      workFocusEnabled: true,
+      vocabItems: [],
+      sessions: [makeOpiSession('2+', 2)],
+      dlptResults: [makeDlptResult('listening', '3', 3), makeDlptResult('reading', '2', 2)],
+      errorEvents: [],
+      dateKey,
+      nowMs: NOW,
+    });
+    const brief = plan.items.find((i) => i.id !== 'speaking' && (i as {briefItem?: BriefItem}).briefItem) as
+      {briefItem: BriefItem} | undefined;
+    const opi = plan.items.find((i) => (i as {kind?: string}).kind === 'opi_brief_back') as
+      {briefItem: BriefItem} | undefined;
+    if (opi) {
+      assert.equal(isWorkTaggedStory(opi.briefItem), false, `${dateKey}: OPI story ${opi.briefItem.id}`);
+      if (brief && isWorkTaggedStory(brief.briefItem)) sawOpiOnWorkBriefDay = true;
+    }
+  }
+  assert.ok(sawOpiOnWorkBriefDay, 'covers a day where Item 2 is a work story and Item 3 is the OPI');
 });

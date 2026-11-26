@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'http';
 import type {AddressInfo} from 'net';
 import {createApp, jsonErrorHandler} from './app.ts';
-import {validateDlptQuestions} from './briefService.ts';
+import {globalBriefService, type StoredBriefItem, validateDlptQuestions} from './briefService.ts';
 import {loadConfig, type ServerConfig} from './config.ts';
 import {UserFacingError} from './errors.ts';
 import type {GenerateStructured, StructuredPromptRequest} from './gemini.ts';
@@ -62,6 +62,9 @@ test('health check and security headers', async () => {
   const csp = (await fetch(`${prod.url}/api/health`)).headers.get('content-security-policy') ?? '';
   assert.match(csp, /script-src 'self'/);
   assert.match(csp, /frame-ancestors 'self' https:\/\/aistudio\.google\.com/);
+  // Publisher audio must be playable in production (REVIEW H-1); scripts stay same-origin.
+  assert.match(csp, /media-src 'self' blob: https:/);
+  assert.match(csp, /script-src 'self'(;|$)/);
 });
 
 test('rejects missing input with 400 without calling the model', async () => {
@@ -699,25 +702,32 @@ test('/api/brief routes return filtered feeds, DLPT drill questions, and study e
   const h = await startApp();
 
   // 1. GET /api/brief/feed
-  const feedRes = await fetch(`${h.url}/api/brief/feed?language=es&mediaType=audio`);
+  // Built-in stories are text-only practice stories (REVIEW C-1): no audio until real feeds are ingested.
+  const audioFeed = await (await fetch(`${h.url}/api/brief/feed?language=es&mediaType=audio`)).json();
+  assert.ok(audioFeed.items.every((i: {audioUrl?: string; sourceUrl: string}) => i.audioUrl && i.sourceUrl));
+
+  const feedRes = await fetch(`${h.url}/api/brief/feed?language=es&mediaType=text`);
   assert.equal(feedRes.status, 200);
   const feedBody = await feedRes.json();
   assert.ok(Array.isArray(feedBody.items));
   assert.ok(feedBody.items.length >= 1);
   assert.ok(feedBody.lastRefreshedAt);
 
-  const sample = feedBody.items[0];
+  const sample = feedBody.items.find((i: {id: string}) => i.id === 'es-seed-maritime-01');
+  assert.ok(sample);
   assert.equal(sample.language, 'es');
-  assert.equal(sample.mediaType, 'audio');
-  assert.ok(sample.orientationLine.startsWith('This passage is'));
-  assert.ok(sample.audioUrl);
+  assert.equal(sample.mediaType, 'text');
+  assert.equal(sample.sourceName, 'LinguaForge practice story');
+  assert.equal(sample.sourceUrl, '');
+  assert.equal(sample.audioUrl, undefined);
+  assert.ok(sample.orientationLine.startsWith('Practice passage written for LinguaForge'));
   // Legal safeguard: client items must not have raw full text/transcripts
   assert.equal(sample.rawContent, undefined);
   assert.equal(sample.transcript, undefined);
 
   // Filter by work domain
   const workRes = await fetch(
-    `${h.url}/api/brief/feed?language=es&mediaType=audio&workFilter=true&userDomain=maritime_surveillance`
+    `${h.url}/api/brief/feed?language=es&mediaType=text&workFilter=true&userDomain=maritime_surveillance`
   );
   assert.equal(workRes.status, 200);
   const workBody = await workRes.json();
@@ -929,6 +939,21 @@ test('/api/brief routes return filtered feeds, DLPT drill questions, and study e
   assert.ok(refreshBody.lastRefreshedAt);
 
   // 5. Phase 7: POST /api/brief/grade-gist
+  // Gist needs an audio item with a real transcript (REVIEW C-2). The text-only practice story is refused...
+  const textOnlyGist = await post(`${h.url}/api/brief/grade-gist`, {briefId: sample.id, summary: 'A gist.'});
+  assert.equal(textOnlyGist.status, 409);
+  // ...so register an audio item whose transcript is known (the case a future transcription step enables).
+  const storedSample = globalBriefService.getItemById(sample.id) as StoredBriefItem;
+  const gistItem: StoredBriefItem = {
+    ...storedSample,
+    id: 'test-audio-with-transcript',
+    mediaType: 'audio',
+    audioUrl: 'https://audio.example.test/clip.mp3',
+    transcript: storedSample.studyExcerpt,
+    rawContent: undefined,
+    drillable: true,
+  };
+  (globalBriefService as unknown as {cache: Map<string, StoredBriefItem>}).cache.set(gistItem.id, gistItem);
   h.setResponse(async () => ({
     mainPoint: 'partial',
     keyDetails: {
@@ -961,13 +986,13 @@ test('/api/brief routes return filtered feeds, DLPT drill questions, and study e
   }));
 
   const gistRes = await post(`${h.url}/api/brief/grade-gist`, {
-    briefId: sample.id,
+    briefId: gistItem.id,
     summary:
       'The Coast Guard intercepted a semi-submersible 180 nautical miles off the coast. The crew later surrendered to customs officers in Panama.',
   });
   assert.equal(gistRes.status, 200);
   const gistBody = await gistRes.json();
-  assert.equal(gistBody.briefId, sample.id);
+  assert.equal(gistBody.briefId, gistItem.id);
   assert.equal(gistBody.mainPoint, 'partial');
   assert.equal(gistBody.keyDetails.found, 2);
   assert.equal(gistBody.keyDetails.total, 4);
@@ -981,7 +1006,7 @@ test('/api/brief routes return filtered feeds, DLPT drill questions, and study e
 
   // Empty auto-submit at 0:00 returns deterministic missed evaluation without failing
   const emptyGistRes = await post(`${h.url}/api/brief/grade-gist`, {
-    briefId: sample.id,
+    briefId: gistItem.id,
     summary: '   ',
   });
   assert.equal(emptyGistRes.status, 200);
@@ -993,7 +1018,7 @@ test('/api/brief routes return filtered feeds, DLPT drill questions, and study e
 
   // Classification guard returns 422 before calling Gemini
   const classifiedGist = await post(`${h.url}/api/brief/grade-gist`, {
-    briefId: sample.id,
+    briefId: gistItem.id,
     summary: 'SECRET//NOFORN maritime patrol summary.',
   });
   assert.equal(classifiedGist.status, 422);
@@ -1148,4 +1173,91 @@ test('Phase 8: grading endpoints drop unknown error keys and /api/fix routes gen
     userAnswer: 'SECRET//NOFORN test answer',
   });
   assert.equal(classifiedFixGrade.status, 422);
+});
+
+test('Work focus OFF keeps military/work framing out of Lab, Vocab and grader prompts (REVIEW H-3)', async () => {
+  const h = await startApp();
+  h.setResponse(async () => ({
+    promptTarget: '¿Qué harías si…?',
+    promptEnglish: 'What would you do if…?',
+    recommendedConnectors: ['no obstante'],
+    speakerRole: 'Speaker',
+    scenarioTitle: 'Title',
+    briefingText: 'Texto del anuncio público con varios datos concretos.',
+    estimatedSeconds: 30,
+    keyFacts: ['a'],
+    targetPhrase: 'lidiar con',
+    registerNote: 'Neutral',
+    exampleSentence: 'Hay que lidiar con eso.',
+    category: 'Regional Idioms',
+    isNatural: true,
+    feedback: 'Bien.',
+    polishedVersion: 'Bien.',
+    fidelityScore: 80,
+    registerScore: 80,
+    capturedPoints: [],
+    missedOrDistorted: [],
+    terminologyFeedback: 'ok',
+    modelRendition: 'ok',
+    errors: [],
+  }));
+  const MILITARY = /military|naval|colonel|attaché|operational register|maritime|interdiction/i;
+  const requests: [string, Record<string, unknown>][] = [
+    ['/api/lab/prep-prompt', {}],
+    ['/api/lab/interp-briefing', {}],
+    ['/api/lab/grade-interp', {briefingText: 'Texto fuente del anuncio.', candidateRendition: 'My rendition.'}],
+    ['/api/vocab/tot', {englishQuery: 'to deal with'}],
+    ['/api/vocab/evaluate-sentence', {targetTerm: 'lidiar con', userSentence: 'Hay que lidiar con eso.'}],
+  ];
+  for (const [path, body] of requests) {
+    for (const workFocus of [undefined, false]) {
+      h.calls.length = 0;
+      const res = await post(`${h.url}${path}`, {
+        language: 'es',
+        domain: 'maritime_surveillance',
+        ...(workFocus === undefined ? {} : {workFocus}),
+        ...body,
+      });
+      assert.equal(res.status, 200, path);
+      // "Operational/Military Terms" is a fixed vocab category name from the taxonomy, not framing.
+      const prompt = `${h.calls[0].systemInstruction ?? ''}\n${h.calls[0].contents}`.replaceAll(
+        'Operational/Military Terms',
+        ''
+      );
+      assert.doesNotMatch(prompt, MILITARY, `${path} (workFocus=${workFocus})`);
+    }
+  }
+  // With Work focus ON the user's chosen domain is used.
+  h.calls.length = 0;
+  await post(`${h.url}/api/lab/prep-prompt`, {language: 'es', domain: 'maritime_surveillance', workFocus: true});
+  assert.match(String(h.calls[0].contents), /Maritime/);
+});
+
+test('client-supplied briefStory and debrief evidence pass the classification guard (REVIEW H-4)', async () => {
+  const h = await startApp();
+  const opi = await post(`${h.url}/api/opi/turn`, {
+    language: 'es',
+    isOpening: true,
+    topicSource: 'brief',
+    briefStory: {
+      title: 'Noticia',
+      summary: 'Resumen TOP SECRET//SI del operativo',
+      orientationLine: 'x',
+      topic: 'society',
+    },
+  });
+  assert.equal(opi.status, 422);
+
+  const debrief = await post(`${h.url}/api/debrief/analyze`, {
+    language: 'es',
+    messages: [
+      {role: 'examiner', text: '¿Qué hiciste ayer?'},
+      {role: 'candidate', text: 'Fui al mercado con mi familia.'},
+    ],
+    assessments: [
+      {functionKey: 'l2_narrate_past', outcome: 'sustained', evidence: 'Mentioned (S//NF) details', phase: 'probe'},
+    ],
+  });
+  assert.equal(debrief.status, 422);
+  assert.equal(h.calls.length, 0, 'no model call for either request');
 });

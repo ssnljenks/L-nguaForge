@@ -200,15 +200,19 @@ export const BriefStudySheet: React.FC<BriefStudySheetProps> = ({item, config, v
         {/* Footer */}
         <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-t border-[#23303E] bg-[#0B1117] text-xs">
           <p className="italic text-[#7D8FA3]">Sources are linked or embedded, never copied.</p>
-          <a
-            href={item.sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[#7DD3FC] hover:underline font-medium min-h-[44px]"
-          >
-            <span>Read full story at {item.sourceName}</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+          {item.sourceUrl ? (
+            <a
+              href={item.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[#7DD3FC] hover:underline font-medium min-h-[44px]"
+            >
+              <span>Read full story at {item.sourceName}</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          ) : (
+            <span className="text-[#94A3B8]">{item.sourceName}: written for practice, not a real news report.</span>
+          )}
         </div>
       </div>
     </div>

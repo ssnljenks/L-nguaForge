@@ -393,6 +393,12 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
             return;
           }
 
+          if (payload.type === 'text_rejected' && typeof payload.error === 'string') {
+            // Typed text blocked by the server's classification guard; the call keeps running.
+            setError(payload.error);
+            return;
+          }
+
           if (payload.type === 'error' && typeof payload.error === 'string') {
             userEndedRef.current = true;
             flushUserDraft();
