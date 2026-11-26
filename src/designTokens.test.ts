@@ -103,9 +103,17 @@ function isPrimaryButton(tag: string): boolean {
 test('controls are at least 44 px by default; inline words in running text are exempt (REVIEW M-12)', () => {
   const css = fs.readFileSync(path.join(SRC, 'index.css'), 'utf8');
   const base =
-    /button,\s*\[role='button'\],\s*a\[href\],\s*select,\s*textarea,[\s\S]*?\{\s*min-height:\s*44px;\s*\}/.exec(css);
+    /button:not\(\.inline\),\s*\[role='button'\],\s*a\[href\],\s*select,\s*textarea,[\s\S]*?\{\s*min-height:\s*44px;\s*\}/.exec(
+      css
+    );
   assert.ok(base, 'index.css sets a 44 px min-height on controls');
-  assert.match(css, /button,\s*\[role='button'\]\s*\{\s*min-width:\s*44px;\s*\}/);
+  assert.match(css, /button:not\(\.inline\),\s*\[role='button'\]\s*\{\s*min-width:\s*44px;\s*\}/);
+  // Tappable words in running text keep the line height: <button> is inline-block even with
+  // display:inline, so the 44 px floor must exclude them explicitly.
+  for (const file of ['shared/TappableText.tsx', 'talk/ColloquialTranscriptText.tsx']) {
+    const code = FILES.find((f) => f.file === path.join('components', file))?.code ?? '';
+    assert.match(code, /className=\{?[`"]inline rounded/, `${file} word buttons use the "inline" class`);
+  }
 
   const failures: string[] = [];
   for (const {file, code} of FILES) {
