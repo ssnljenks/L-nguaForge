@@ -103,3 +103,37 @@ test('findClassificationMarkingInTexts scans mixed inputs and stops on first hit
   assert.ok(hit);
   assert.equal(hit.matchedText, '(S//NF)');
 });
+
+test('obfuscated markings are still detected (REVIEW H-5)', () => {
+  const obfuscated = [
+    'SEC​RET', // zero-width space
+    'NO­FORN', // soft hyphen
+    'ＳＥＣＲＥＴ', // fullwidth
+    'ЅECRET', // Cyrillic S
+    'NОFORN', // Cyrillic O
+    'N.O.F.O.R.N',
+    'S E C R E T',
+    'T-O-P S-E-C-R-E-T',
+    '( S )',
+    '( TS//SI )',
+    'rel to usa',
+    'Rel To FVEY',
+  ];
+  for (const text of obfuscated) {
+    assert.ok(detectClassificationMarking(text), `should detect ${JSON.stringify(text)}`);
+  }
+});
+
+test('normalization adds no false positives on prose with abbreviations (REVIEW H-5)', () => {
+  const prose = [
+    'La O.N.U. y la O.E.A. se reunieron en EE. UU. con representantes de la U.E.',
+    'A C.I.A. e o F.B.I. aparecem no filme; a S.A. anunciou lucros.',
+    'T. S. Eliot escribió poemas; el 1º de mayo hubo desfile.',
+    'Los barco(s) llegaron ( a tiempo ) al puerto.',
+    'O segredo está na preparação; el secreto es practicar.',
+    'Eu relato ao chefe; the relation to the budget is unclear.',
+  ];
+  for (const text of prose) {
+    assert.equal(detectClassificationMarking(text), null, `false positive on ${JSON.stringify(text)}`);
+  }
+});
