@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {BookmarkPlus, Check, Loader2, X} from 'lucide-react';
 import type {MissionConfig, VocabCategory} from '../../types';
 import type {SaveVocabFn} from '../../hooks/useWordLookup';
-import {requestTotPhrase} from '../../services/api';
+import {requestTotPhrase} from '../../services/dictionaryApi';
 import {LANGUAGE_LABELS, normalizeVocabCategory} from '../../utils/ilrLogic';
 import type {EnrichedTotResult} from '../../utils/localDictionary';
 import {totSourceLabel} from '../shared/lookupLabels';

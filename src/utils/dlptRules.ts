@@ -10,32 +10,11 @@ import type {
   DlptTrapType,
   TargetLanguage,
 } from '../types.ts';
+import {isDlptTrapType} from './dlptTypes.ts';
 
-export const DLPT_QUESTION_TYPES: readonly DlptQuestionType[] = [
-  'main_idea',
-  'detail',
-  'inference',
-  'vocabulary_in_context',
-  'speaker_attitude',
-];
-
-export const DLPT_TRAP_TYPES: readonly DlptTrapType[] = [
-  'mentioned_not_answer',
-  'not_in_passage',
-  'true_not_answer',
-  'wrong_detail',
-  'over_inference',
-];
+export {DLPT_QUESTION_TYPES, DLPT_TRAP_TYPES, isDlptQuestionType, isDlptTrapType} from './dlptTypes.ts';
 
 export const CHOICE_LETTERS = ['A', 'B', 'C', 'D'] as const;
-
-export function isDlptQuestionType(val: unknown): val is DlptQuestionType {
-  return typeof val === 'string' && (DLPT_QUESTION_TYPES as readonly string[]).includes(val);
-}
-
-export function isDlptTrapType(val: unknown): val is DlptTrapType {
-  return typeof val === 'string' && (DLPT_TRAP_TYPES as readonly string[]).includes(val);
-}
 
 export const QUESTION_TYPE_LABELS: Record<DlptQuestionType, string> = {
   main_idea: 'Main idea',

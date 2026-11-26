@@ -34,14 +34,15 @@ import type {
   TodayPlanCompletionStore,
   TodayPlanDayCompletion,
   TurnAssessment,
+  VocabFsrsState,
   VocabItem,
 } from '../types.ts';
 import {normalizeErrorTaxonomyKey} from '../data/errorTaxonomy.ts';
 import {getFunctionLevel, getFunctionSpec, type IlrBaseLevel, isIlrFunctionKey} from '../data/ilrSpeakingLevels.ts';
 import {getTutorById} from '../data/tutors.ts';
-import {isBriefIlrLevel} from './briefLogic.ts';
-import {isDlptQuestionType, isDlptTrapType} from './dlptRules.ts';
-import {pruneErrorEvents} from './errorPatterns.ts';
+import {isBriefIlrLevel} from './briefLevels.ts';
+import {isDlptQuestionType, isDlptTrapType} from './dlptTypes.ts';
+import {pruneErrorEvents} from './errorEventStore.ts';
 import {CHAT_REGISTER_MODES, DIALECTS_BY_LANGUAGE, isVocabCategory, MILITARY_DOMAINS} from './ilrLogic.ts';
 import {
   migrateLegacyLevels,
@@ -51,9 +52,28 @@ import {
   normalizeTurnOutcome,
 } from './opiLogic.ts';
 import {clampSlangLevel, isValidTalkVocabKind} from './talkLogic.ts';
-import {isValidVocabFsrsState, migrateVocabItemToFsrs} from './vocabFsrs.ts';
+import {createInitialVocabFsrs, isValidVocabFsrsState} from './vocabFsrsCore.ts';
 
 export type Sanitizer<T> = (raw: unknown) => T | undefined;
+
+type LegacyFsrsMigrator = (item: Pick<VocabItem, 'mastery' | 'reviewCount' | 'createdAt' | 'fsrs'>) => VocabFsrsState;
+
+/**
+ * Converts pre-FSRS vocab items (mastery + review count) into FSRS state. The real migrator replays
+ * reviews with ts-fsrs, which is not in the startup bundle (REVIEW M-7): `main.tsx` installs it
+ * before the first render whenever stored vocab still needs migrating (see `loadLegacyFsrsMigrator`).
+ * Without it, such items start as new cards.
+ */
+let legacyFsrsMigrator: LegacyFsrsMigrator = () => createInitialVocabFsrs();
+
+export function setLegacyFsrsMigrator(migrator: LegacyFsrsMigrator): void {
+  legacyFsrsMigrator = migrator;
+}
+
+/** True when raw stored vocab has an item without a valid FSRS state, i.e. needs the migrator. */
+export function storedVocabNeedsFsrsMigration(raw: unknown): boolean {
+  return Array.isArray(raw) && raw.some((v) => isRecord(v) && !isValidVocabFsrsState(v.fsrs));
+}
 
 // ---------------------------------------------------------------------------
 // Primitive helpers
@@ -249,7 +269,7 @@ function vocabItem(raw: unknown): VocabItem | undefined {
   if (isValidTalkVocabKind(raw.kind)) {
     item.kind = raw.kind;
   }
-  item.fsrs = isValidVocabFsrsState(raw.fsrs) ? raw.fsrs : migrateVocabItemToFsrs(item);
+  item.fsrs = isValidVocabFsrsState(raw.fsrs) ? raw.fsrs : legacyFsrsMigrator(item);
   return item;
 }
 

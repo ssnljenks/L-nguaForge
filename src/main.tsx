@@ -2,6 +2,7 @@ import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import {ErrorBoundary} from './components/ErrorBoundary.tsx';
 import './index.css';
+import {prepareVocabFsrsMigration} from './utils/vocabFsrsLoader.ts';
 
 if (import.meta.env.DEV && typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
   navigator.serviceWorker
@@ -29,8 +30,13 @@ window.addEventListener('vite:preloadError', (event) => {
   }
 });
 
-createRoot(document.getElementById('root')!).render(
-  <ErrorBoundary scopeLabel="LinguaForge ILR">
-    <App />
-  </ErrorBoundary>
-);
+function render() {
+  createRoot(document.getElementById('root')!).render(
+    <ErrorBoundary scopeLabel="LinguaForge ILR">
+      <App />
+    </ErrorBoundary>
+  );
+}
+
+// Pre-FSRS vocab (and the seed deck on first run) needs ts-fsrs to migrate; it is loaded only then.
+prepareVocabFsrsMigration(window.localStorage).then(render, render);

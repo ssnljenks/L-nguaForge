@@ -17,7 +17,7 @@ import {
   VALID_VOCAB_CATEGORIES,
 } from '../utils/ilrLogic';
 import {getOfflineMilitaryEntries, normalizeLookupKey} from '../utils/localDictionary';
-import {getDueVocabCards, sortVocabDeckByFsrs} from '../utils/vocabFsrs';
+import {getDueVocabCards, sortVocabDeckByFsrs} from '../utils/vocabFsrsCore';
 import {useSpeechSynthesis} from '../hooks/useSpeech';
 import type {SaveVocabFn} from '../hooks/useWordLookup';
 import {createId} from '../utils/ids';

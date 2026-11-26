@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import type {MissionConfig, VocabItem, VocabSource} from '../types';
-import {lookupContextualWord} from '../services/api';
+import {lookupContextualWord} from '../services/dictionaryApi';
 import {normalizeVocabCategory} from '../utils/ilrLogic';
 import {type EnrichedWordLookup, incrementApiSavedCount, lookupLocalWord} from '../utils/localDictionary';
 

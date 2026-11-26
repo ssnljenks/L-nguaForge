@@ -8,9 +8,14 @@ import {
 import type {DlptDrillResult, ErrorEvent, ErrorEventSource, OpiSession, TargetLanguage} from '../types.ts';
 import {computeDlptSkillEstimates} from './dlptRules.ts';
 
-export const ERROR_EVENT_RETENTION_DAYS = 60;
 export const ERROR_RANKING_WINDOW_DAYS = 14;
-export const MAX_STORED_ERROR_EVENTS = 500;
+
+export {
+  appendErrorEventsToStore,
+  ERROR_EVENT_RETENTION_DAYS,
+  MAX_STORED_ERROR_EVENTS,
+  pruneErrorEvents,
+} from './errorEventStore.ts';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -65,35 +70,6 @@ export interface RankErrorOptions {
   nowMs?: number;
   /** Ranking window in days (defaults to 14). */
   windowDays?: number;
-}
-
-/**
- * Keeps only events within the rolling 60-day retention window.
- */
-export function pruneErrorEvents(
-  events: readonly ErrorEvent[],
-  nowMs = Date.now(),
-  retentionDays = ERROR_EVENT_RETENTION_DAYS
-): ErrorEvent[] {
-  const cutoff = nowMs - retentionDays * MS_PER_DAY;
-  return events
-    .filter((ev) => {
-      const ts = Date.parse(ev.at);
-      return Number.isFinite(ts) && ts >= cutoff;
-    })
-    .slice(-MAX_STORED_ERROR_EVENTS);
-}
-
-/**
- * Append-only event store helper: appends new events and enforces the 60-day window.
- */
-export function appendErrorEventsToStore(
-  existing: readonly ErrorEvent[],
-  incoming: readonly ErrorEvent[],
-  nowMs = Date.now()
-): ErrorEvent[] {
-  if (incoming.length === 0) return pruneErrorEvents(existing, nowMs);
-  return pruneErrorEvents([...existing, ...incoming], nowMs);
 }
 
 function parseIlrNumeric(label: string | null | undefined): number | null {

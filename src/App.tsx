@@ -32,12 +32,14 @@ import type {
   VocabItem,
 } from './types';
 import {DEFAULT_MISSION_CONFIG, SEED_SAMPLE_SESSIONS, SEED_VOCAB} from './data/seedData';
-import {appendErrorEventsToStore} from './utils/errorPatterns';
+import {appendErrorEventsToStore} from './utils/errorEventStore';
 import {filterItemsByLanguage, getDialectInfo, getDomainInfo} from './utils/ilrLogic';
 import {API_SAVED_EVENT, clearLocalLookupCaches, getApiSavedCount} from './utils/lookupCacheStore';
 import {clearLastOpiAudio} from './utils/opiAudioStore';
-import {getLocalDateKey, getPlanCompletionKey, type TodayPlanSpeakingItem} from './utils/todayPlan';
-import {createInitialVocabFsrs, legacyMasteryToFsrsRating, reviewVocabCardWithFsrs} from './utils/vocabFsrs';
+import {getLocalDateKey, getPlanCompletionKey} from './utils/planKeys';
+import type {TodayPlanSpeakingItem} from './utils/todayPlan';
+import {createInitialVocabFsrs, legacyMasteryToFsrsRating} from './utils/vocabFsrsCore';
+import {LEGACY_VOCAB_STORAGE_KEYS, loadVocabReviewer, VOCAB_STORAGE_KEY} from './utils/vocabFsrsLoader';
 import {useLocalStorage} from './hooks/useLocalStorage';
 import {
   sanitizeActiveTab,
@@ -54,7 +56,6 @@ import {
 } from './utils/storageSchemas';
 import type {RoleplayLevelRequest, TestPrepView} from './components/TestPrepModule';
 import type {TalkWorkRequest} from './components/FreeChatModule';
-import {TodayModule} from './components/today/TodayModule';
 import {OfflineIndicator, PWAInstallButton} from './components/PWAControls';
 import {ErrorBoundary} from './components/ErrorBoundary';
 import {createId} from './utils/ids';
@@ -62,6 +63,7 @@ import {setApiWorkFocus} from './services/requestContext';
 
 // Tab modules and modals are code-split: each loads on first use, keeping the initial bundle small.
 // (All chunks are still precached by the service worker, so tabs work offline after the first visit.)
+const TodayModule = lazy(() => import('./components/today/TodayModule').then((m) => ({default: m.TodayModule})));
 const FreeChatModule = lazy(() => import('./components/FreeChatModule').then((m) => ({default: m.FreeChatModule})));
 const TestPrepModule = lazy(() => import('./components/TestPrepModule').then((m) => ({default: m.TestPrepModule})));
 const BriefModule = lazy(() => import('./components/brief/BriefModule').then((m) => ({default: m.BriefModule})));
@@ -174,11 +176,12 @@ export default function App() {
   useEffect(() => {
     setApiWorkFocus(config.workFocusEnabled);
   }, [config.workFocusEnabled]);
+  // Seeds go through the sanitizer too, so they get FSRS state from their mastery (REVIEW M-7).
   const [vocabItems, setVocabItems] = useLocalStorage<VocabItem[]>(
-    'linguaforge_vocab_v2',
-    SEED_VOCAB,
+    VOCAB_STORAGE_KEY,
+    () => sanitizeVocabItems(SEED_VOCAB) ?? SEED_VOCAB,
     sanitizeVocabItems,
-    ['linguaforge_vocab_v1']
+    LEGACY_VOCAB_STORAGE_KEYS
   );
   const [sessions, setSessions] = useLocalStorage<OpiSession[]>(
     'linguaforge_sessions_v1',
@@ -298,7 +301,10 @@ export default function App() {
   const handleReviewVocabFsrs = useCallback(
     (id: string, rating: VocabFsrsRating) => {
       const nowMs = Date.now();
-      setVocabItems((prev) => prev.map((v) => (v.id === id ? reviewVocabCardWithFsrs(v, rating, nowMs) : v)));
+      // ts-fsrs is loaded on first review instead of in the startup bundle (REVIEW M-7).
+      void loadVocabReviewer().then((review) =>
+        setVocabItems((prev) => prev.map((v) => (v.id === id ? review(v, rating, nowMs) : v)))
+      );
     },
     [setVocabItems]
   );
