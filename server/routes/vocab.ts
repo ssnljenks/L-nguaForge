@@ -61,7 +61,7 @@ Return concise contextual English meaning, crisp registerTag, 1-sentence grammar
   router.post(
     '/vocab/tot',
     handleAsync(async (req, res, signal) => {
-      const {langName, dialectLabel, domainLabel} = resolveTrainingContext(req.body);
+      const {langName, dialectLabel, workFocus, topicLabel} = resolveTrainingContext(req.body);
       const englishQuery = sanitizeString(req.body?.englishQuery, 400);
 
       if (!englishQuery) {
@@ -71,9 +71,10 @@ Return concise contextual English meaning, crisp registerTag, 1-sentence grammar
 
       const data = await generate({
         model: MODELS.fastLookup,
-        contents: `A military linguist targeting ILR 2+/3 in ${langName} (${dialectLabel}) within "${domainLabel}" needs a natural, high-register way to say:
+        // Military/work framing only with Work focus ON (REVIEW H-3).
+        contents: `${workFocus ? `A professional linguist targeting ILR 2+/3 in ${langName} (${dialectLabel}) working in "${topicLabel}"` : `A language learner targeting ILR 2+/3 in ${langName} (${dialectLabel})`} needs a natural, high-register way to say:
 "${englishQuery}"
-Return the strongest idiomatic high-register target phrase, an optional formal diplomatic alternative, a concise register/grammar note (mentioning subjunctive triggers if relevant), a natural operational example sentence, and the best category from: ${CATEGORY_CHOICES}.`,
+Return the strongest idiomatic high-register target phrase, an optional formal alternative, a concise register/grammar note (mentioning subjunctive triggers if relevant), a natural ${workFocus ? 'work-context' : 'everyday'} example sentence, and the best category from: ${CATEGORY_CHOICES}.`,
         thinkingLevel: ThinkingLevel.MINIMAL,
         responseSchema: {
           type: Type.OBJECT,
@@ -109,7 +110,7 @@ Return the strongest idiomatic high-register target phrase, an optional formal d
   router.post(
     '/vocab/evaluate-sentence',
     handleAsync(async (req, res, signal) => {
-      const {langName, domainLabel} = resolveTrainingContext(req.body);
+      const {langName, workFocus, topicLabel} = resolveTrainingContext(req.body);
       const targetTerm = sanitizeString(req.body?.targetTerm, 150);
       const userSentence = sanitizeString(req.body?.userSentence, 800);
 
@@ -120,7 +121,7 @@ Return the strongest idiomatic high-register target phrase, an optional formal d
 
       const data = await generate({
         model: MODELS.chat,
-        contents: `Evaluate whether the linguist used the ${langName} expression "${targetTerm}" accurately and at an ILR 2+/3 operational register in this sentence (domain: ${domainLabel}):
+        contents: `Evaluate whether the learner used the ${langName} expression "${targetTerm}" accurately and at a natural ILR 2+/3 register in this sentence (${workFocus ? `work context: ${topicLabel}` : 'general context'}):
 "${userSentence}"
 Be concise and tactical.`,
         thinkingLevel: ThinkingLevel.LOW,

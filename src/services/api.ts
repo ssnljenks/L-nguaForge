@@ -47,6 +47,7 @@ import {
   saveTotToLocalCache,
   saveWordToLocalCache,
 } from '../utils/localDictionary';
+import {withWorkFocus} from './requestContext';
 
 const inflightWordLookups = new Map<string, Promise<EnrichedWordLookup>>();
 
@@ -58,7 +59,7 @@ async function postJson<T>(url: string, body: Record<string, unknown>, timeoutMs
     response = await fetch(url, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(body),
+      body: JSON.stringify(withWorkFocus(body)),
       signal: controller.signal,
     });
   } catch (err) {

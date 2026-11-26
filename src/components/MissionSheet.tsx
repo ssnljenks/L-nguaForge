@@ -66,7 +66,7 @@ export const MissionSheet: React.FC<MissionSheetProps> = ({open, onClose, config
             Mission Context
           </h2>
           <p className="text-xs text-[#94A3B8] mt-0.5">
-            Set target language, regional dialect, domain, and partner voice.
+            Set target language, regional dialect, and partner voice. Work focus adds a work domain.
           </p>
         </div>
         <button
@@ -152,24 +152,27 @@ export const MissionSheet: React.FC<MissionSheetProps> = ({open, onClose, config
             </button>
           </div>
 
-          <div className="space-y-1.5">
-            <label htmlFor="mission-sheet-domain" className="block text-xs font-medium text-[#CBD5E1]">
-              Operational Domain
-            </label>
-            <select
-              id="mission-sheet-domain"
-              value={config.domain}
-              onChange={(e) => onUpdateConfig({domain: e.target.value as MilitaryDomain})}
-              className="w-full min-h-[44px] rounded-xl border border-[#23303E] bg-[#0B1117] px-3 py-2.5 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
-            >
-              {MILITARY_DOMAINS.map((dom) => (
-                <option key={dom.id} value={dom.id}>
-                  {dom.label}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-[#94A3B8] leading-relaxed">{domainInfo.description}</p>
-          </div>
+          {/* The work domain only applies with Work focus ON (REVIEW H-3). */}
+          {config.workFocusEnabled && (
+            <div className="space-y-1.5">
+              <label htmlFor="mission-sheet-domain" className="block text-xs font-medium text-[#CBD5E1]">
+                Operational Domain
+              </label>
+              <select
+                id="mission-sheet-domain"
+                value={config.domain}
+                onChange={(e) => onUpdateConfig({domain: e.target.value as MilitaryDomain})}
+                className="w-full min-h-[44px] rounded-xl border border-[#23303E] bg-[#0B1117] px-3 py-2.5 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#D99B26]"
+              >
+                {MILITARY_DOMAINS.map((dom) => (
+                  <option key={dom.id} value={dom.id}>
+                    {dom.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-[#94A3B8] leading-relaxed">{domainInfo.description}</p>
+            </div>
+          )}
         </div>
 
         {/* Live AI Voice */}

@@ -21,11 +21,13 @@ export function registerLabRoutes(router: Router, {generate}: RouteDeps): void {
   router.post(
     '/lab/prep-prompt',
     handleAsync(async (req, res, signal) => {
-      const {language, langName, dialectLabel, domainId, domainLabel} = resolveTrainingContext(req.body);
+      const {language, langName, dialectLabel, domainId, workFocus, topicLabel} = resolveTrainingContext(req.body);
+      // Military/work framing only with Work focus ON (REVIEW H-3).
+      const topicScope = workFocus ? `for the work domain "${topicLabel}"` : `on ${topicLabel}`;
 
       const data = await generate({
         model: MODELS.standard,
-        contents: `Create one realistic ILR 2+/3 OPI abstract policy or hypothetical monologue prompt in ${langName} (${dialectLabel}) for the military domain "${domainLabel}".
+        contents: `Create one realistic ILR 2+/3 OPI abstract or hypothetical monologue prompt in ${langName} (${dialectLabel}) ${topicScope}.
 The prompt should be answerable in 90 seconds using the PREP structure (Point -> Reason -> Example -> Pivot/Conclusion) and naturally invite subjunctive/conditional structures.
 Provide the prompt in ${langName}, an English summary, and 4 recommended high-register connectors in ${langName}.`,
         thinkingLevel: ThinkingLevel.LOW,
@@ -125,12 +127,19 @@ Evaluate Point (0:00–0:15), Reason (0:15–0:40), Example (0:40–1:10), and P
   router.post(
     '/lab/interp-briefing',
     handleAsync(async (req, res, signal) => {
-      const {language, langName, dialectId, dialectLabel, domainId, domainLabel} = resolveTrainingContext(req.body);
+      const {language, langName, dialectId, dialectLabel, domainId, workFocus, topicLabel} = resolveTrainingContext(
+        req.body
+      );
+      // Military/diplomatic framing only with Work focus ON (REVIEW H-3).
+      const briefingScope = workFocus
+        ? `military/diplomatic briefing clip (75–105 words) in ${langName} (${dialectLabel}) for consecutive interpretation practice in the domain "${topicLabel}".
+Example speaker: a Colonel, Naval Attaché, or Joint Staff Deputy addressing a visiting foreign delegation. Include 3–4 concrete operational details (numbers, timelines, unit coordination, policy caveats)`
+        : `public announcement or news briefing clip (75–105 words) in ${langName} (${dialectLabel}) for consecutive interpretation practice on ${topicLabel}.
+Example speaker: a city official, company spokesperson, or university director addressing journalists or visitors. Include 3–4 concrete details (numbers, dates, places, conditions or caveats)`;
 
       const data = await generate({
         model: MODELS.standard,
-        contents: `Write a realistic 25-to-45 second spoken military/diplomatic briefing clip (75–105 words) in ${langName} (${dialectLabel}) for consecutive interpretation practice in the domain "${domainLabel}".
-Example speaker: a Colonel, Naval Attaché, or Joint Staff Deputy addressing a visiting foreign delegation. Include 3–4 concrete operational details (numbers, timelines, unit coordination, policy caveats) that require disciplined idea-chunking notes. Also list 4 keyFacts in English.`,
+        contents: `Write a realistic 25-to-45 second spoken ${briefingScope} that require disciplined idea-chunking notes. Also list 4 keyFacts in English.`,
         thinkingLevel: ThinkingLevel.LOW,
         responseSchema: {
           type: Type.OBJECT,
@@ -170,7 +179,7 @@ Example speaker: a Colonel, Naval Attaché, or Joint Staff Deputy addressing a v
   router.post(
     '/lab/grade-interp',
     handleAsync(async (req, res, signal) => {
-      const {language, langName} = resolveTrainingContext(req.body);
+      const {language, langName, workFocus} = resolveTrainingContext(req.body);
       const briefingText = sanitizeString(req.body?.briefingText, 2500);
       const candidateRendition = sanitizeString(req.body?.candidateRendition, 2500);
       const chunkNotes = sanitizeString(req.body?.chunkNotes, 1500);
@@ -184,7 +193,7 @@ Example speaker: a Colonel, Naval Attaché, or Joint Staff Deputy addressing a v
 
       const data = await generate({
         model: MODELS.standard,
-        contents: `Grade this consecutive military/diplomatic interpretation (${direction}, source language: ${langName}).
+        contents: `Grade this consecutive ${workFocus ? 'military/diplomatic ' : ''}interpretation (${direction}, source language: ${langName}).
 
 SOURCE BRIEFING:
 ${briefingText}

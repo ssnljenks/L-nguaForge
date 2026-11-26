@@ -58,6 +58,7 @@ import {TodayModule} from './components/today/TodayModule';
 import {OfflineIndicator, PWAInstallButton} from './components/PWAControls';
 import {ErrorBoundary} from './components/ErrorBoundary';
 import {createId} from './utils/ids';
+import {setApiWorkFocus} from './services/requestContext';
 
 // Tab modules and modals are code-split: each loads on first use, keeping the initial bundle small.
 // (All chunks are still precached by the service worker, so tabs work offline after the first visit.)
@@ -168,6 +169,11 @@ export default function App() {
     DEFAULT_MISSION_CONFIG,
     sanitizeStoredConfig
   );
+
+  // Every API request carries the Work focus setting (REVIEW H-3).
+  useEffect(() => {
+    setApiWorkFocus(config.workFocusEnabled);
+  }, [config.workFocusEnabled]);
   const [vocabItems, setVocabItems] = useLocalStorage<VocabItem[]>(
     'linguaforge_vocab_v2',
     SEED_VOCAB,
@@ -499,18 +505,26 @@ export default function App() {
               type="button"
               data-testid="mission-chip"
               onClick={() => setMissionSheetOpen(true)}
-              aria-label={`Change mission context: ${config.language.toUpperCase()} ${dialectInfo.short} ${domainInfo.shortLabel}`}
+              aria-label={`Change mission context: ${config.language.toUpperCase()} ${dialectInfo.short}${
+                config.workFocusEnabled ? ` ${domainInfo.shortLabel}` : ''
+              }`}
               className="inline-flex items-center gap-2 min-h-[44px] max-w-full px-3 rounded-lg border border-[#23303E] bg-[#111922] hover:border-[#D99B26]/60 text-left transition-colors"
             >
               <span className="px-1.5 py-0.5 rounded bg-[#D99B26] text-[#0B1117] font-mono text-[11px] font-bold shrink-0">
                 {config.language.toUpperCase()}
               </span>
               <span className="text-xs sm:text-sm font-medium text-[#E6EDF3] truncate">
-                {dialectInfo.short}{' '}
-                <span aria-hidden="true" className="text-[#7D8FA3] mx-0.5">
-                  ·
-                </span>{' '}
-                {domainInfo.shortLabel}
+                {dialectInfo.short}
+                {/* Domain is work content: shown only with Work focus ON (REVIEW H-3). */}
+                {config.workFocusEnabled && (
+                  <>
+                    {' '}
+                    <span aria-hidden="true" className="text-[#7D8FA3] mx-0.5">
+                      ·
+                    </span>{' '}
+                    {domainInfo.shortLabel}
+                  </>
+                )}
               </span>
               <ChevronDown className="w-4 h-4 text-[#94A3B8] shrink-0" />
             </button>

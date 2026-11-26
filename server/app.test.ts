@@ -1174,3 +1174,61 @@ test('Phase 8: grading endpoints drop unknown error keys and /api/fix routes gen
   });
   assert.equal(classifiedFixGrade.status, 422);
 });
+
+test('Work focus OFF keeps military/work framing out of Lab, Vocab and grader prompts (REVIEW H-3)', async () => {
+  const h = await startApp();
+  h.setResponse(async () => ({
+    promptTarget: '¿Qué harías si…?',
+    promptEnglish: 'What would you do if…?',
+    recommendedConnectors: ['no obstante'],
+    speakerRole: 'Speaker',
+    scenarioTitle: 'Title',
+    briefingText: 'Texto del anuncio público con varios datos concretos.',
+    estimatedSeconds: 30,
+    keyFacts: ['a'],
+    targetPhrase: 'lidiar con',
+    registerNote: 'Neutral',
+    exampleSentence: 'Hay que lidiar con eso.',
+    category: 'Regional Idioms',
+    isNatural: true,
+    feedback: 'Bien.',
+    polishedVersion: 'Bien.',
+    fidelityScore: 80,
+    registerScore: 80,
+    capturedPoints: [],
+    missedOrDistorted: [],
+    terminologyFeedback: 'ok',
+    modelRendition: 'ok',
+    errors: [],
+  }));
+  const MILITARY = /military|naval|colonel|attaché|operational register|maritime|interdiction/i;
+  const requests: [string, Record<string, unknown>][] = [
+    ['/api/lab/prep-prompt', {}],
+    ['/api/lab/interp-briefing', {}],
+    ['/api/lab/grade-interp', {briefingText: 'Texto fuente del anuncio.', candidateRendition: 'My rendition.'}],
+    ['/api/vocab/tot', {englishQuery: 'to deal with'}],
+    ['/api/vocab/evaluate-sentence', {targetTerm: 'lidiar con', userSentence: 'Hay que lidiar con eso.'}],
+  ];
+  for (const [path, body] of requests) {
+    for (const workFocus of [undefined, false]) {
+      h.calls.length = 0;
+      const res = await post(`${h.url}${path}`, {
+        language: 'es',
+        domain: 'maritime_surveillance',
+        ...(workFocus === undefined ? {} : {workFocus}),
+        ...body,
+      });
+      assert.equal(res.status, 200, path);
+      // "Operational/Military Terms" is a fixed vocab category name from the taxonomy, not framing.
+      const prompt = `${h.calls[0].systemInstruction ?? ''}\n${h.calls[0].contents}`.replaceAll(
+        'Operational/Military Terms',
+        ''
+      );
+      assert.doesNotMatch(prompt, MILITARY, `${path} (workFocus=${workFocus})`);
+    }
+  }
+  // With Work focus ON the user's chosen domain is used.
+  h.calls.length = 0;
+  await post(`${h.url}/api/lab/prep-prompt`, {language: 'es', domain: 'maritime_surveillance', workFocus: true});
+  assert.match(String(h.calls[0].contents), /Maritime/);
+});
