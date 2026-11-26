@@ -103,7 +103,7 @@ test('rejects text containing classification or control markings with 422 withou
       },
     ],
     ['/api/vocab/lookup', {word: 'patrulla', contextSentence: 'CONFIDENTIAL//ORCON briefing text'}],
-    ['/api/vocab/tot', {englishQuery: 'CUI distribution statement'}],
+    ['/api/vocab/tot', {englishQuery: 'CUI//SP-PRVCY distribution statement'}],
     ['/api/vocab/evaluate-sentence', {targetTerm: 'no obstante', userSentence: '(U//FOUO) El informe indicó...'}],
     ['/api/debrief/analyze', {messages: [{role: 'candidate', text: 'REL TO USA, GBR operational note'}]}],
     ['/api/lab/grade-prep', {promptTarget: 'Topic', transcript: 'FOR OFFICIAL USE ONLY monologue'}],

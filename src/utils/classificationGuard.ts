@@ -4,7 +4,17 @@
  * Used by server routes before calling Gemini so controlled or work material is rejected with
  * HTTP 422 instead of leaving the server. Designed to avoid false positives on normal English,
  * Spanish, and Portuguese prose (e.g., lowercase "secret", "secreto", "confidencial", "sí",
- * "(c)" copyright notices, or "vessel(s)").
+ * "relido", "(c)" copyright notices, "vessel(s)", "(A)… (B)… (C)" option lists, "Copyright (C)",
+ * or "CUI" as the Guatemalan ID number).
+ *
+ * Ambiguous tokens only count as markings in marking context (REVIEW M-6):
+ * - single-letter portion marks "(S)" / "(C)" and "(TS)", "(CUI)", "(SBU)" must sit where a portion
+ *   mark goes (start of a line or right after a sentence end), and single letters are ignored when
+ *   the text also uses other lettered labels like "(A)" or "(B)";
+ * - a bare uppercase "CUI" counts only as a banner line of its own;
+ * - uppercase "SECRET"/"CONFIDENTIAL" count except mid-line inside capitalized prose ("THE SECRET LIFE");
+ * - "RELIDO"/"PROPIN" (Portuguese "relido", Spanish "propina") and "For Official Use Only" only in
+ *   marking case.
  */
 
 export interface ClassificationMatch {
@@ -14,67 +24,196 @@ export interface ClassificationMatch {
 
 interface MarkingRule {
   category: ClassificationMatch['category'];
+  /** Must carry the `g` flag: every occurrence is checked against `accept`. */
   pattern: RegExp;
+  /** Extra context check for ambiguous tokens; the match counts only when this returns true. */
+  accept?: (text: string, match: RegExpExecArray) => boolean;
 }
+
+/** Words that make up classification banners and caveat lines. */
+const BANNER_VOCABULARY = new Set([
+  'TOP',
+  'SECRET',
+  'CONFIDENTIAL',
+  'UNCLASSIFIED',
+  'CLASSIFICATION',
+  'CLASSIFIED',
+  'RESTRICTED',
+  'CUI',
+  'NOFORN',
+  'NF',
+  'FOUO',
+  'ORCON',
+  'PROPIN',
+  'RELIDO',
+  'IMCON',
+  'LIMDIS',
+  'EXDIS',
+  'NODIS',
+  'REL',
+  'TO',
+  'USA',
+  'FVEY',
+  'NATO',
+  'SI',
+  'TK',
+  'HCS',
+  'SCI',
+  'SAP',
+  'TS',
+  'S',
+  'C',
+  'U',
+  'SP',
+  'MIL',
+  'SBU',
+  'LES',
+]);
+
+function lineAround(text: string, index: number): {line: string; column: number} {
+  const start = Math.max(text.lastIndexOf('\n', index - 1) + 1, text.lastIndexOf('\r', index - 1) + 1);
+  const nl = text.slice(index).search(/[\r\n]/);
+  const end = nl === -1 ? text.length : index + nl;
+  return {line: text.slice(start, end), column: index - start};
+}
+
+/** Start of the text or a line (after an optional bullet), or right after a sentence end. */
+function atPortionPosition(text: string, index: number): boolean {
+  const before = text.slice(0, index).replace(/[ \t]+$/, '');
+  if (before === '') return true;
+  if (/(?:^|[\r\n])[ \t]*[-*•·]?$/.test(before)) return true;
+  return /[.!?]["'”»]?$/.test(before);
+}
+
+/** Lettered labels other than the S/C/U portion letters, as in "(A)… (B)… (C)". */
+function hasLetteredOptionLabels(text: string): boolean {
+  return /\((?![SCU]\))[A-Z]\)/.test(text);
+}
+
+/** A line made only of banner words and separators, e.g. "CUI", "TOP SECRET", "SECRET - NOFORN". */
+function isBannerLine(line: string): boolean {
+  const words = line.split(/[^A-Za-z0-9]+/).filter(Boolean);
+  return words.length > 0 && words.every((w) => BANNER_VOCABULARY.has(w));
+}
+
+/**
+ * Inside a run of capitalized prose ("THE SECRET LIFE OF PETS", "el documental TOP SECRET ROSIES"),
+ * as opposed to a banner: the uppercase words around the match include a non-marking word.
+ */
+function inCapitalizedProse(line: string, column: number, length: number): boolean {
+  const left = /[\p{Lu}\d'’ \t,.!?¡¿-]*$/u.exec(line.slice(0, column))?.[0] ?? '';
+  const right = /^[\p{Lu}\d'’ \t,.!?¡¿-]*/u.exec(line.slice(column + length))?.[0] ?? '';
+  const words = `${left} ${right}`.match(/\p{Lu}{2,}/gu) ?? [];
+  return words.some((w) => !BANNER_VOCABULARY.has(w));
+}
+
+const portionMarkInPosition = (text: string, m: RegExpExecArray): boolean => {
+  if (!atPortionPosition(text, m.index)) return false;
+  const after = text.slice(m.index + m[0].length);
+  if (after !== '' && !/^\s/.test(after)) return false;
+  const inner = m[0].slice(1, -1);
+  if (inner.length === 1) {
+    if (hasLetteredOptionLabels(text)) return false;
+    // "(C) 2026 Open Maritime Atlas" is a copyright line.
+    if (inner === 'C' && /^\s*\d{4}\b/.test(after)) return false;
+  }
+  return true;
+};
 
 const MARKING_RULES: readonly MarkingRule[] = [
   // Portion markings with caveats: (TS//SI//NOFORN), (S//NF), (C//REL TO USA), (U//FOUO), (U//CUI), (CUI//SP-MIL)
   {
     category: 'portion_marking',
     pattern:
-      /(?<![A-Za-zÀ-ÿ])\((?:TS|S|C|U|CUI|TOP\s+SECRET|SECRET|CONFIDENTIAL)\s*\/\/\s*[A-Za-z0-9\s,/-]{1,64}\)(?![A-Za-zÀ-ÿ])/i,
+      /(?<![A-Za-zÀ-ÿ])\((?:TS|S|C|U|CUI|TOP\s+SECRET|SECRET|CONFIDENTIAL)\s*\/\/\s*[A-Za-z0-9\s,/-]{1,64}\)(?![A-Za-zÀ-ÿ])/gi,
   },
-  // Standalone portion markings: (TS), (S), (C), (CUI), (FOUO), (SBU), (NOFORN), (ORCON), (REL TO ...)
+  // Unambiguous standalone portion markings: (FOUO), (NOFORN), (ORCON), (REL TO ...)
   {
     category: 'portion_marking',
-    pattern: /(?<![A-Za-zÀ-ÿ])\((?:TS|S|C|CUI|FOUO|SBU|NOFORN|ORCON|PROPIN|RELIDO)\)(?![A-Za-zÀ-ÿ])/,
+    pattern: /(?<![A-Za-zÀ-ÿ])\((?:FOUO|NOFORN|ORCON|PROPIN|RELIDO|REL\s+TO(?:\s+[A-Z0-9,\s-]+)?)\)(?![A-Za-zÀ-ÿ])/g,
   },
   {
     category: 'portion_marking',
-    pattern: /(?<![A-Za-zÀ-ÿ])\((?:CUI|FOUO|NOFORN|ORCON|REL\s+TO(?:\s+[A-Z0-9,\s-]+)?)\)(?![A-Za-zÀ-ÿ])/i,
+    pattern: /(?<![A-Za-zÀ-ÿ])\((?:FOUO|NOFORN|ORCON)\)(?![A-Za-zÀ-ÿ])/gi,
+  },
+  // Ambiguous standalone portion markings, only where a portion mark goes: (TS), (S), (C), (CUI), (SBU)
+  {
+    category: 'portion_marking',
+    pattern: /(?<![A-Za-zÀ-ÿ])\((?:TS|S|C|CUI|SBU)\)(?![A-Za-zÀ-ÿ])/g,
+    accept: portionMarkInPosition,
   },
   // Slash-delimited banners: TOP SECRET//..., SECRET//..., CONFIDENTIAL//..., UNCLASSIFIED//FOUO, TS//SI, S//NF, C//NOFORN, U//FOUO, CUI//...
   {
     category: 'classification_banner',
     pattern:
-      /\b(?:TOP\s+SECRET|SECRET|CONFIDENTIAL|TS|S|C)\s*\/\/\s*(?:SI|TK|HCS|SCI|SAP|NF|NOFORN|ORCON|PROPIN|REL\s+TO|RELIDO|FVEY|EYES\s+ONLY|IMCON|LIMDIS|EXDIS|NODIS|FOUO|CUI)\b/i,
+      /\b(?:TOP\s+SECRET|SECRET|CONFIDENTIAL|TS|S|C)\s*\/\/\s*(?:SI|TK|HCS|SCI|SAP|NF|NOFORN|ORCON|PROPIN|REL\s+TO|RELIDO|FVEY|EYES\s+ONLY|IMCON|LIMDIS|EXDIS|NODIS|FOUO|CUI)\b/gi,
   },
   {
     category: 'classification_banner',
-    pattern: /\b(?:UNCLASSIFIED|U)\s*\/\/\s*(?:FOUO|FOR\s+OFFICIAL\s+USE\s+ONLY|CUI|LES|SBU)\b/i,
+    pattern: /\b(?:UNCLASSIFIED|U)\s*\/\/\s*(?:FOUO|FOR\s+OFFICIAL\s+USE\s+ONLY|CUI|LES|SBU)\b/gi,
   },
   {
     category: 'classification_banner',
-    pattern: /\bCUI\s*\/\/\s*[A-Z0-9-]{2,}\b/i,
+    pattern: /\bCUI\s*\/\/\s*[A-Z0-9-]{2,}\b/gi,
   },
-  // Uppercase classification banner words (case-sensitive to avoid normal lowercase prose)
+  // Uppercase classification banner words (case-sensitive to avoid normal lowercase prose), except
+  // mid-line inside capitalized prose such as a shouted sentence or a title.
   {
     category: 'classification_banner',
-    pattern: /\b(?:TOP\s+SECRET|SECRET|CONFIDENTIAL)\b/,
+    pattern: /\b(?:TOP\s+SECRET|SECRET|CONFIDENTIAL)\b/g,
+    accept: (text, m) => {
+      const {line, column} = lineAround(text, m.index);
+      if (/^[\s\p{P}]*$/u.test(line.slice(0, column))) return true;
+      return !inCapitalizedProse(line, column, m[0].length);
+    },
   },
-  // Control & dissemination markings (unambiguous words/phrases)
+  // Control & dissemination markings that are not words in English, Spanish, or Portuguese
   {
     category: 'control_marking',
-    pattern: /\b(?:NOFORN|FOUO|ORCON|PROPIN|RELIDO|IMCON|LIMDIS|EXDIS|NODIS)\b/i,
+    pattern: /\b(?:NOFORN|FOUO|ORCON|IMCON|LIMDIS|EXDIS|NODIS)\b/gi,
+  },
+  // "relido" (pt "reread") and "propin(a)" are real words; only the uppercase caveat counts.
+  {
+    category: 'control_marking',
+    pattern: /\b(?:PROPIN|RELIDO)\b/g,
   },
   {
     category: 'control_marking',
-    pattern: /\b(?:FOR\s+OFFICIAL\s+USE\s+ONLY|CONTROLLED\s+UNCLASSIFIED\s+INFORMATION)\b/i,
+    pattern: /\b(?:FOR\s+OFFICIAL\s+USE\s+ONLY|For\s+Official\s+Use\s+Only)\b/g,
   },
-  // Uppercase CUI and REL TO control markings
   {
     category: 'control_marking',
-    pattern: /\b(?:CUI|REL\s+TO)\b/,
+    pattern: /\bCONTROLLED\s+UNCLASSIFIED\s+INFORMATION\b/gi,
   },
-  // REL TO in any case when followed by a releasability code (e.g. "rel to usa", "Rel To FVEY")
+  // A bare "CUI" is also the Guatemalan ID number ("Mi CUI es…"); it counts only as a banner line.
   {
     category: 'control_marking',
-    pattern: /\bREL\s+TO\s+(?:USA|FVEY|NATO|[A-Z]{3}(?:\s*,\s*[A-Z]{3})*)\b/i,
+    pattern: /\bCUI\b/g,
+    accept: (text, m) => isBannerLine(lineAround(text, m.index).line),
   },
-  // Classification authority block headers
+  // Uppercase REL TO control marking
+  {
+    category: 'control_marking',
+    pattern: /\bREL\s+TO\b/g,
+  },
+  // REL TO in any case when followed by a releasability code (e.g. "rel to usa", "Rel To FVEY", "rel to GBR")
+  {
+    category: 'control_marking',
+    pattern: /\bREL\s+TO\s+(?:USA|FVEY|NATO)\b/gi,
+  },
+  {
+    category: 'control_marking',
+    pattern: /\b[Rr][Ee][Ll]\s+[Tt][Oo]\s+[A-Z]{3}(?:\s*,\s*[A-Z]{3})*\b/g,
+  },
+  // Classification authority block lines ("Classified By: …", "Derived From: …", "Declassify On: …",
+  // "CUI Category: …") at the start of a line.
   {
     category: 'classification_block',
-    pattern: /\b(?:CLASSIFIED\s+BY|DERIVED\s+FROM|DECLASSIFY\s+ON)\s*:/i,
+    pattern: /^[ \t]*(?:Classified\s+By|CLASSIFIED\s+BY|Derived\s+From|DERIVED\s+FROM|CUI\s+Categor(?:y|ies))\s*:/gm,
+  },
+  {
+    category: 'classification_block',
+    pattern: /^[ \t]*Declassify\s+On\s*:/gim,
   },
 ];
 
@@ -159,8 +298,8 @@ export function normalizeForMarkingDetection(text: string): string {
 
 function matchRules(text: string): ClassificationMatch | null {
   for (const rule of MARKING_RULES) {
-    const match = rule.pattern.exec(text);
-    if (match) {
+    for (const match of text.matchAll(rule.pattern)) {
+      if (rule.accept && !rule.accept(text, match)) continue;
       return {
         matchedText: match[0],
         category: rule.category,
