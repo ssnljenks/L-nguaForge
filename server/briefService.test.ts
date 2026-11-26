@@ -1,6 +1,12 @@
 import test, {afterEach} from 'node:test';
 import assert from 'node:assert/strict';
-import {BriefService, NOT_DRILLABLE_MESSAGE, type SourceFeedConfig, type StoredBriefItem} from './briefService.ts';
+import {
+  BriefService,
+  NOT_DRILLABLE_MESSAGE,
+  type SourceFeedConfig,
+  type StoredBriefItem,
+  toIsoDateOrNow,
+} from './briefService.ts';
 import type {GenerateStructured} from './gemini.ts';
 
 const PUBLISHER_TEXT =
@@ -317,4 +323,22 @@ test('parseXmlFeed keeps only audio items with an audio enclosure for audio feed
     items.map((i) => [i.title, i.audioUrl, i.durationSeconds]),
     [['Con audio', 'https://radio.test/1.mp3', 125]]
   );
+});
+
+test('unparseable feed dates fall back to now instead of dropping the feed (REVIEW L-1)', async () => {
+  assert.equal(toIsoDateOrNow('Tue, 03 Nov 2026 10:00:00 GMT'), '2026-11-03T10:00:00.000Z');
+  assert.equal(toIsoDateOrNow('ayer por la tarde', Date.parse('2026-11-26T00:00:00Z')), '2026-11-26T00:00:00.000Z');
+  assert.equal(toIsoDateOrNow(undefined, 0), '1970-01-01T00:00:00.000Z');
+
+  const svc = serviceWith([textSource], {
+    [textSource.url]: rss(
+      `<item><title>Fecha rota</title><link>https://news.test/bad-date</link><description>${PUBLISHER_TEXT}</description><pubDate>32/13/2026 25:61</pubDate></item>` +
+        `<item><title>Fecha buena</title><link>https://news.test/good-date</link><description>${PUBLISHER_TEXT}</description><pubDate>Tue, 03 Nov 2026 10:00:00 GMT</pubDate></item>`
+    ),
+  });
+  // Without AI analysis (no generate), one bad date used to throw and lose every item in the feed.
+  const outcome = await svc.refreshFeeds();
+  assert.equal(outcome.newItemsCount, 2);
+  const titles = svc.getFeed({language: 'es', mediaType: 'text'}).items.map((i) => i.title);
+  assert.ok(titles.includes('Fecha rota') && titles.includes('Fecha buena'));
 });

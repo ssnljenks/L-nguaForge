@@ -403,6 +403,15 @@ function assertDrillable(item: StoredBriefItem): void {
   if (!isBriefItemDrillable(item)) throw new UserFacingError(409, NOT_DRILLABLE_MESSAGE);
 }
 
+/**
+ * Feed dates are free text; an unparseable one falls back to "now" instead of throwing a RangeError
+ * that would drop the whole feed (REVIEW L-1).
+ */
+export function toIsoDateOrNow(raw: string | undefined, nowMs = Date.now()): string {
+  const parsed = raw ? Date.parse(raw.trim()) : Number.NaN;
+  return new Date(Number.isFinite(parsed) ? parsed : nowMs).toISOString();
+}
+
 function countWords(text: string): number {
   return text.split(/\s+/).filter(Boolean).length;
 }
@@ -1073,7 +1082,7 @@ GRADING RULES (STRICT FIDELITY):
         mediaType: source.mediaType,
         language: source.language,
         dialectId: source.dialectId,
-        publishedAt: raw.pubDate ? new Date(raw.pubDate).toISOString() : new Date().toISOString(),
+        publishedAt: toIsoDateOrNow(raw.pubDate),
         ilrLevel: '2+',
         topic: 'society',
         orientationLine: `This passage is from a ${source.language === 'es' ? 'Spanish' : 'Portuguese'} news source.`,
@@ -1172,7 +1181,7 @@ Produce a structured evaluation:
         mediaType: source.mediaType,
         language: source.language,
         dialectId: source.dialectId,
-        publishedAt: raw.pubDate ? new Date(raw.pubDate).toISOString() : new Date().toISOString(),
+        publishedAt: toIsoDateOrNow(raw.pubDate),
         ilrLevel,
         topic,
         orientationLine:
