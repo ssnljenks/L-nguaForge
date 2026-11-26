@@ -1,12 +1,5 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import type {
-  ChatRegisterMode,
-  GeminiLiveVoice,
-  MilitaryDomain,
-  TalkCorrectionMode,
-  TalkPickedUpItem,
-  TargetLanguage,
-} from '../types';
+import type {GeminiLiveVoice, MilitaryDomain, TalkCorrectionMode, TalkPickedUpItem, TargetLanguage} from '../types';
 import {base64PcmToFloat32, computeRmsLevel, mergeTranscriptChunk, pcm16BytesToFloat32} from '../utils/liveAudio';
 import {type MicCapture, startMicCapture} from '../audio/micCapture';
 
@@ -18,7 +11,6 @@ export interface LiveSessionStartOptions {
   language: TargetLanguage;
   dialect: string;
   domain?: MilitaryDomain;
-  registerMode?: ChatRegisterMode;
   voiceName: GeminiLiveVoice;
   tutorId?: string;
   sceneId?: string;
@@ -311,7 +303,6 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
               language: options.language,
               dialect: options.dialect,
               ...(options.domain ? {domain: options.domain} : {}),
-              ...(options.registerMode ? {registerMode: options.registerMode} : {}),
               voiceName: options.voiceName,
               ...(options.tutorId ? {tutorId: options.tutorId} : {}),
               ...(options.sceneId ? {sceneId: options.sceneId} : {}),

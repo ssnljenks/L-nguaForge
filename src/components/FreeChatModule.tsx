@@ -491,7 +491,6 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
       language: config.language,
       dialect: selectedTutor.dialectId,
       ...(effectiveWorkTalk ? {domain: selectedDomain} : {}),
-      registerMode: effectiveWorkTalk ? 'professional' : 'everyday',
       voiceName,
       tutorId: selectedTutor.id,
       sceneId: effectiveWorkTalk ? WORK_TALK_SCENE_ID : sceneId,
@@ -544,7 +543,6 @@ export const FreeChatModule: React.FC<FreeChatModuleProps> = ({
         workTalk: effectiveWorkTalk,
         slangLevel,
         correctionMode,
-        registerMode: effectiveWorkTalk ? 'professional' : 'everyday',
         history: priorHistory,
         userMessage: clean,
       });

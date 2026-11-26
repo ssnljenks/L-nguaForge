@@ -3,7 +3,6 @@ import type {
   BriefDrill,
   BriefItem,
   BriefMediaType,
-  ChatRegisterMode,
   ChatStruggleSuggestion,
   DebriefReport,
   ErrorTaxonomyKey,
@@ -206,7 +205,6 @@ export async function sendFreeChatTurn(params: {
   workTalk?: boolean;
   slangLevel?: number;
   correctionMode?: TalkCorrectionMode;
-  registerMode?: ChatRegisterMode;
   history: Pick<FreeChatMessage, 'role' | 'text'>[];
   userMessage: string;
 }): Promise<{
