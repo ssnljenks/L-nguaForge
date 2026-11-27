@@ -1,0 +1,247 @@
+# Original scripted OPI candidate transcripts (Spanish). Written for this suite; not derived from any real test item.
+# Header: id | dialect | expected ILR | tags. Lines starting with E:/C: alternate examiner/candidate. "> " lines are the rationale.
+
+### es-01 | neutral_latam | 1 |
+> Isolated words and short chunks, infinitive verbs, cannot handle past time; asks for repetition.
+E: Hola, buenas tardes. ¿Cómo estás hoy?
+C: Hola. Bien, gracias. ¿Y usted?
+E: Muy bien, gracias. ¿Cómo te llamas?
+C: Me llamo Daniel. Yo soy de Estados Unidos.
+E: Mucho gusto, Daniel. ¿Dónde vives ahora?
+C: Yo vivo en... apartamento. En ciudad pequeña.
+E: ¿Qué te gusta hacer los fines de semana?
+C: Me gusta... comer. Y... película. Televisión.
+E: ¿Qué hiciste el fin de semana pasado?
+C: Perdón, no entiendo. ¿Puede repetir?
+E: ¿Qué hiciste el sábado pasado?
+C: Sábado... yo comer pizza. Y... dormir mucho.
+E: ¿Y qué vas a hacer este fin de semana?
+C: No sé la palabra... mañana... yo ir a tienda. Comprar comida.
+E: ¿Qué comida te gusta más?
+C: Me gusta pizza, y... tacos. Es muy bueno.
+
+### es-02 | caribbean | 1 |
+> Can create simple present-tense sentences and survival requests, but agreement errors, no past narration, no complication handling.
+E: Hola, ¿qué tal? ¿Cómo te va?
+C: Hola. Estoy bien. ¿Y tú?
+E: Bien también. ¿Tienes familia?
+C: Sí. Yo tengo dos hermano y una hermana. Mi madre es profesora.
+E: ¿Dónde viven?
+C: Ellos viven en Texas. Yo vivo en Washington. Es lejos.
+E: ¿Cómo es tu casa?
+C: Mi casa es... pequeño. Tiene dos cuarto y una cocina. Es bonita.
+E: Imagina que quieres comprar un boleto de tren. ¿Qué dices?
+C: Quiero... un boleto a Madrid, por favor. ¿Cuánto cuesta?
+E: Cuesta cuarenta euros. Cuéntame, ¿qué hiciste la semana pasada?
+C: La semana pasada... yo trabajo mucho. Y yo ir cine con amigo. Es... bueno.
+E: ¿Qué haces normalmente por la mañana?
+C: Por la mañana yo levanto a las seis. Yo bebo café y yo voy a trabajo.
+E: Si pierdes tu maleta en el aeropuerto, ¿qué haces?
+C: Maleta... no sé. Yo... ayuda? Yo no tengo maleta. Es problema.
+
+### es-03 | neutral_latam | 1 | tricky=memorized-fluent-openings
+> Polished memorized openings sound fluent, but the speaker collapses as soon as the question is new; cannot create language.
+E: Buenas tardes. Bienvenido. ¿Cómo está usted?
+C: Buenas tardes, muy bien, gracias. Mucho gusto en conocerlo. ¿Cómo está usted?
+E: Muy bien. ¿De dónde es usted?
+C: Soy de Chicago, Illinois, en los Estados Unidos. Tengo treinta y cinco años y estoy casado.
+E: ¿Tiene hijos?
+C: Sí, tengo dos hijos. Un niño y una niña. Se llaman Mark y Emily.
+E: ¿Qué hacen ellos los sábados?
+C: Ellos... eh... juegan... no sé. Perdón. ¿Cómo se dice... soccer?
+E: Fútbol. ¿Les gusta el fútbol?
+C: Sí, fútbol. Gusta. Mi hijo... fútbol. Sábado.
+E: ¿Qué hicieron el sábado pasado?
+C: ¿Perdón? No comprendo.
+E: ¿Qué hicieron ustedes el sábado pasado? ¿Fueron a algún lugar?
+C: Sábado... no sé. Lo siento. Mi español es muy poco.
+E: No se preocupe. ¿Le gusta la comida mexicana?
+C: Sí, me gusta mucho la comida mexicana. Es muy deliciosa.
+
+### es-04 | colombian_andean | 1+ |
+> Short past-tense stretches and connected simple sentences (Level 2 narration partly present), but breaks down on the hotel complication and on opinion.
+E: Hola, ¿cómo andas?
+C: Hola, todo bien. Un poco cansado porque ayer trabajé hasta tarde.
+E: ¿Qué hiciste después?
+C: Después fui a casa y cociné pasta. Después miré televisión y dormí.
+E: ¿Qué sueles hacer los fines de semana?
+C: Normalmente yo salgo con mis amigos. A veces vamos a un restaurante o jugamos fútbol. Me gusta mucho el fútbol.
+E: ¿Cómo es tu barrio?
+C: Mi barrio es tranquilo. Hay muchos árboles y un parque. Hay una tienda cerca de mi casa donde compro verduras.
+E: Imagina que reservaste un hotel, pero cuando llegas no tienen tu reserva. ¿Qué haces?
+C: Ah... yo digo, tengo una reserva. Pero ellos... no tienen. Yo... necesito una habitación. Por favor. No sé qué más decir.
+E: ¿Y si el hotel está lleno?
+C: Entonces... yo busco otro hotel. Es difícil. Yo no hablo bien.
+E: ¿Qué piensas de vivir en una ciudad grande?
+C: Es... muy ruidoso. Me gusta porque hay muchas cosas. No me gusta porque es caro.
+
+### es-05 | rioplatense | 1+ |
+> Description and directions are fine; past narration slips into present tense and infinitives; no explanation or reasons beyond one clause.
+E: Buenas, ¿qué tal tu día?
+C: Bien, gracias. Hoy fue un día normal. Me desperté temprano y fui al gimnasio.
+E: Contame de tu familia.
+C: Tengo una familia pequeña. Mi padre es jubilado y mi madre trabaja en un banco. Mi hermano estudia medicina en otra ciudad. Yo los visito en navidad.
+E: ¿Cómo fueron tus últimas vacaciones?
+C: Yo voy a la playa con mi novia. Nosotros nadar y comer pescado. Hotel es bonito. Un día llueve y no podemos hacer nada.
+E: ¿Qué vas a hacer el próximo verano?
+C: Voy a viajar a México. Quiero ver las pirámides. Voy a quedarme dos semanas.
+E: ¿Cómo le explicarías a un taxista cómo llegar a tu casa?
+C: Eh... usted va derecho, y después... a la izquierda. Hay un... semáforo. Después otra vez derecha. Mi casa es la azul.
+E: ¿Por qué crees que la gente usa cada vez más el transporte público?
+C: Porque... es barato. Y... no hay tráfico? No sé cómo explicar más. Es bueno para el ambiente, creo.
+
+### es-06 | neutral_latam | 1+ | tricky=rich-vocabulary-present-tense-only
+> Good vocabulary and connected sentences, but only present tense for past events, if-clauses with indicative, and breakdown on opinion.
+E: Hola, ¿cómo estás?
+C: Muy bien, gracias. Estoy contento porque la semana empieza con buen clima.
+E: ¿A qué hora te levantas normalmente?
+C: Me levanto a las siete, desayuno café con tostadas y salgo de casa a las ocho. Tomo el metro porque el tráfico es horrible y el estacionamiento es carísimo.
+E: Cuéntame algo que te pasó el fin de semana pasado.
+C: El fin de semana pasado... yo visito a mi tía. Ella vive en un pueblo muy bonito. Nosotros comemos un almuerzo grande y después caminamos por el río. Es muy relajante.
+E: ¿Qué pasó cuando llegaste?
+C: Llego a las doce y mi tía prepara una paella. Hay mucha gente, mis primos, mis tíos. Todos hablan muy rápido, yo no entiendo todo.
+E: ¿Y qué harías si ganaras mucho dinero?
+C: Si yo gano mucho dinero, yo compro una casa grande. Y viajo por todo el mundo. Es mi sueño.
+E: ¿Y qué opinas de la educación pública en tu país?
+C: Es un tema difícil. Hay... buenas escuelas y malas escuelas. El gobierno debe... dar más dinero. No sé cómo decir más.
+
+### es-07 | neutral_latam | 2 |
+> Clear past/present/future narration, handles the travel complication with explanation; breaks down at hypothesis and abstract explanation.
+E: Buenas tardes, ¿cómo ha ido tu semana?
+C: Ha sido ocupada pero buena. El lunes tuve una presentación en el trabajo y salió bien, así que estoy más tranquila.
+E: Cuéntame cómo fue un viaje que hiciste.
+C: El año pasado fui a Perú con mi hermana. Primero estuvimos en Lima tres días y comimos mucho ceviche. Después tomamos un autobús a Cusco, que tardó como veinte horas. Cuando llegamos, estábamos muy cansadas, pero la ciudad era preciosa. Al día siguiente subimos a Machu Picchu en tren.
+E: ¿Y hubo algún problema durante el viaje?
+C: Sí, una vez perdimos el tren de regreso porque la estación estaba cerrada por una huelga. Yo hablé con una señora de la oficina y le expliqué que necesitábamos llegar a Lima porque teníamos el vuelo. Ella nos dijo que podíamos tomar otro tren al día siguiente, y al final cambiamos el vuelo.
+E: ¿Cómo describirías tu ciudad a alguien que no la conoce?
+C: Es una ciudad mediana, con un centro histórico muy lindo y muchos parques. Hay un río que la cruza y la gente es amable. Lo malo es que en invierno hace mucho frío.
+E: ¿Qué planes tienes para el próximo año?
+C: Quiero mudarme a un apartamento más grande y también voy a estudiar un curso de cocina los sábados.
+E: ¿Qué pasaría si el gobierno prohibiera los coches en el centro de las ciudades?
+C: Hmm... si prohíben los coches, la gente va a usar más el metro. Y... no sé, el aire es más limpio. Pero los comerciantes se van a quejar. Es difícil decir.
+E: ¿Por qué crees que algunos jóvenes prefieren vivir en el extranjero?
+C: Porque hay más trabajo. Y también es una aventura. Mmm... no sé cómo explicar bien, es complicado.
+
+### es-08 | caribbean | 2 | tricky=fluent-but-inaccurate
+> Long, fluent, connected speech with persistent agreement and conjugation errors; still narrates and resolves the complication intelligibly; cannot hypothesize (si + indicative).
+E: Hola, ¿qué tal?
+C: Hola, muy bien, es que ayer yo fui a un concierto muy bueno y hoy estoy un poco cansado pero estoy contento porque la música era muy buena y yo estaba con mis amigos que son muy divertido.
+E: ¿Con qué frecuencia vas a conciertos?
+C: Casi cada mes porque a mí me gusta mucho la música y yo tiene muchos amigos que tocan guitarra, entonces nosotros siempre vamos a ver los grupos nuevos, y a veces yo compro los boletos muy temprano porque si no es muy caro.
+E: Cuéntame de la última vez que algo salió mal en un viaje.
+C: Ah sí, el año pasado yo estaba en Chile y mi vuelo fue cancelado porque hubo mucha niebla, entonces yo fui al mostrador y yo dije a la mujer que yo necesito llegar a Santiago para una boda de mi primo, y ella me dice que no hay más vuelos hasta el otro día, pero yo pregunté si hay un bus y ella me ayudó a reservar uno. Fue un viaje muy largo pero llegué a tiempo a la boda.
+E: ¿Cómo es tu casa ideal?
+C: Mi casa ideal es una casa con jardín grande, porque yo tiene un perro y le gusta correr, y también quiero una cocina grande para que yo puedo cocinar con mis amigos los fines de semana.
+E: Si pudieras vivir en cualquier país, ¿dónde vivirías y por qué?
+C: Yo vivo en España porque la comida es muy rica y la gente es muy simpático. Si yo puedo, yo voy a mudar a Barcelona y vivo allí para siempre.
+E: ¿Y qué cambiaría en tu vida si te mudaras allí?
+C: Ehm... mi vida va a cambiar mucho porque yo habla otra lengua y tiene otra cultura, y yo conoce gente nueva. Es muy interesante.
+
+### es-09 | rioplatense | 2 | tricky=accurate-but-cannot-hypothesize
+> Clean grammar and good narration/complication handling in simple structures; retreats to simple future and then gives up when asked to hypothesize.
+E: Buenas tardes. ¿Cómo estás?
+C: Buenas tardes. Estoy muy bien, gracias. Hoy hace un día precioso.
+E: ¿Qué hiciste ayer?
+C: Ayer me levanté a las siete, desayuné con mi esposa y después fui a la oficina. Por la tarde recogí a mis hijos del colegio y cenamos juntos. Luego vimos una película.
+E: ¿Cómo era tu vida cuando eras niño?
+C: Cuando era niño vivía en un pueblo pequeño. Mi abuela cocinaba todos los domingos y toda la familia comía en su casa. Jugábamos en la calle hasta que oscurecía.
+E: Imagina que compraste un teléfono y no funciona. Estás en la tienda. ¿Qué dices?
+C: Buenas tardes. Compré este teléfono ayer, pero no enciende. Quisiera cambiarlo por otro o recibir el dinero. Tengo el recibo aquí.
+E: La tienda no acepta devoluciones después de veinticuatro horas.
+C: Entiendo, pero lo compré ayer, hace menos de veinticuatro horas. Si usted quiere, podemos llamar al gerente para aclarar la situación.
+E: ¿Qué harías si tuvieras un año libre para hacer lo que quisieras?
+C: Un año libre... Eh, yo voy a viajar. Voy a visitar muchos países y aprender cosas nuevas. Es una buena idea.
+E: ¿Y cómo sería diferente tu vida si no tuvieras que trabajar?
+C: Mi vida es muy buena ahora. Yo trabajo mucho pero me gusta. No sé... no puedo imaginar. Lo siento.
+
+### es-10 | colombian_andean | 2+ | tricky=strong-L2-with-one-good-L3-turn
+> Strong Level 2 narration and complication handling, one genuinely Level 3 hypothetical answer (conditional, imperfect subjunctive, concession), but the other Level 3 probes break down.
+E: Hola, ¿qué tal el día?
+C: Pues bastante bien, aunque ha sido un poco agitado porque tuve que resolver unos trámites esta mañana.
+E: ¿Qué trámites?
+C: Tenía que renovar mi pasaporte, y cuando llegué a la oficina me dijeron que me faltaba un documento. Me puse muy nervioso, pero me explicaron cuál era y pude volver a casa a buscarlo. Al final todo salió bien, aunque perdí casi toda la mañana.
+E: Cuéntame de un lugar que te gustó visitar.
+C: Una vez fui a Oaxaca en noviembre, durante el Día de Muertos. Las calles estaban llenas de flores naranjas y de altares con fotos y comida. Lo que más me impresionó fue que no era algo triste, sino una celebración. Hablé con una familia que me invitó a su casa y me explicó el significado de cada ofrenda.
+E: Si pudieras cambiar algo del sistema de transporte de tu ciudad, ¿qué cambiarías?
+C: Si pudiera cambiar algo, haría que los autobuses pasaran con más frecuencia, porque ahora la gente tiene que esperar mucho y por eso prefiere usar el coche. Si hubiera más autobuses, probablemente habría menos tráfico y menos contaminación, aunque eso costaría mucho dinero y no sé si el ayuntamiento estaría dispuesto a invertirlo.
+E: ¿Qué opinas del trabajo remoto?
+C: Tiene ventajas, como ahorrar tiempo de viaje. Pero también creo que la gente se siente sola. Entonces, es... depende de la persona. Sí, no sé qué más decir.
+E: ¿Por qué crees que se está perdiendo el interés en leer libros?
+C: Hmm. Es porque... hay mucho internet. La gente tiene poco tiempo. Y los libros son caros, creo. No sé si es verdad.
+E: ¿Cómo describirías el papel de las redes sociales en la política?
+C: Es complicado. Las redes... son importantes porque la gente habla de política. Pero hay mucha mentira. No tengo bastante vocabulario para explicar bien.
+
+### es-11 | neutral_latam | 2+ |
+> Sustains Level 2 and handles most Level 3 tasks (supported opinion, counterpoint, hypothetical consequences) with lapses in precision and some lexical gaps on abstract topics.
+E: ¿Qué tal, cómo va todo?
+C: Todo bien, gracias. Estoy un poco emocionado porque la semana que viene empiezo un curso nuevo de fotografía.
+E: Cuéntame cómo fue tu infancia.
+C: Crecí en una ciudad costera, y casi todos los días después de la escuela íbamos a la playa con los vecinos. Mi padre pescaba los fines de semana y a veces me llevaba con él, aunque yo me aburría bastante porque no pescábamos nada. Ahora lo echo de menos.
+E: ¿Cuál es tu opinión sobre el turismo masivo?
+C: Creo que tiene dos caras. Por un lado, genera empleo y dinero para las ciudades pequeñas. Por otro lado, encarece la vivienda y los residentes terminan yéndose de sus barrios. En mi opinión, las autoridades deberían limitar el número de visitantes, aunque es difícil porque mucha gente depende de ese ingreso.
+E: Pero algunos dicen que limitarlo perjudicaría la economía local.
+C: Es cierto, y entiendo ese argumento. Sin embargo, si no se pone un límite, a la larga la ciudad pierde su carácter, y eso también afecta al turismo. Quizás se podría cobrar una tasa a los visitantes y usar el dinero para ayudar a los vecinos.
+E: Si tu país redujera la semana laboral a cuatro días, ¿qué consecuencias habría?
+C: Pienso que la gente sería más feliz y tendría más tiempo para su familia. Pero las empresas tendrían que organizarse de otra manera, y quizás algunos sectores como la salud no podrían hacerlo fácilmente. Si lo hicieran... eh... si lo hicieran de forma gradual, creo que funcionaría mejor.
+E: ¿Y qué papel juega la desigualdad en la educación de un país?
+C: Es un problema muy grande porque los niños de familias pobres tienen menos oportunidades, y eso crea un ciclo. Eh... no sé exactamente cómo se llama, la... la movilidad social, creo. Si no hay movilidad, la sociedad se estanca.
+
+### es-12 | caribbean | 2+ | tricky=strong-argument-patchy-accuracy
+> Builds structured arguments and hypotheticals at Level 3, but subjunctive and agreement errors recur under complexity, so Level 3 is not sustained.
+E: Hola, ¿cómo te va?
+C: Hola, bien. Ahora estoy preparando un viaje a Colombia para visitar a unos parientes que no veo desde hace años.
+E: ¿Qué esperas del viaje?
+C: Espero que sea muy emocionante, y también quiero que mi familia me mostrar su ciudad. Cuando era pequeño mi abuelo nos contaba historias de Bogotá, y siempre pensé que algún día iría.
+E: ¿Qué opinas del cambio climático?
+C: Pienso que es el problema más urgente porque afecta a todos, pero los gobiernos no hacen lo suficiente. Hace poco leí que los glaciares están desapareciendo muy rápido, y eso va a causar escasez de agua en muchas regiones. Por eso creo que las empresas deben ser responsables y pagar impuestos por la contaminación que produce.
+E: ¿Y si los países no cooperaran?
+C: Si los países no cooperan, el problema se va a empeorar. Si yo fuera presidente, yo haría que todos los países firman un acuerdo y... eh... los que no cumplen tendrían sanciones. Pero es difícil porque cada país tiene sus propios intereses.
+E: ¿Es justo pedir a países pobres que reduzcan sus emisiones?
+C: Es una pregunta compleja. Los países ricos han contaminado durante siglos, entonces tienen más responsabilidad. Sin embargo, los países pobres también necesitan crecer, y si les prohíben usar carbón, no podrán desarrollarse. Habría que encontrar un equilibrio, por ejemplo con ayuda económica para tecnologías limpias, aunque no sé si los países ricos estarían dispuestos a dársela.
+E: ¿Cómo cambiará el trabajo con la inteligencia artificial?
+C: Creo que muchos trabajos van a desaparecer, pero también aparecerán otros nuevos. Lo importante es que los trabajadores se capaciten, y que el gobierno les ayuda. Dudo que los gobiernos lo hacen a tiempo. Me preocupa que la desigualdad aumente si solo unos pocos controlan la tecnología.
+
+### es-13 | neutral_latam | 3 |
+> Extended structured discourse, accurate hypotheticals and concessions, detects counterpoints, handles abstract topics with precision.
+E: Buenas tardes, ¿qué tal su día?
+C: Muy bien, gracias. Ha sido un día tranquilo, de esos en los que uno consigue avanzar con las cosas pendientes sin sobresaltos.
+E: Cuénteme algo sobre su ciudad.
+C: Vivo en Valencia desde hace unos diez años. Lo que más me gusta es que, a pesar de ser una ciudad grande, conserva un ritmo de vida bastante humano: se puede ir a casi todas partes en bicicleta, y los barrios mantienen una vida de vecindad que en otras capitales se ha ido perdiendo.
+E: ¿Cree que las ciudades deberían restringir el uso del coche?
+C: Creo que sí, pero con matices. Restringirlo sin ofrecer alternativas fiables sería injusto con quienes viven en la periferia y dependen del coche para trabajar. Si se invirtiera primero en transporte público y luego se fueran limitando los accesos, la transición sería mucho menos traumática, y probablemente la aceptación social sería mayor.
+E: Algunos dicen que eso afecta al comercio del centro.
+C: Es un argumento que se repite, pero la evidencia de ciudades que ya lo han hecho apunta en dirección contraria: al peatonalizar ciertas calles, el comercio suele ganar clientes, porque la gente pasea más y se detiene más. Eso no significa que no haya costes de transición; lo ideal sería compensar temporalmente a los negocios más afectados.
+E: ¿Qué consecuencias tendría para la sociedad que la mayoría de los jóvenes dejara de leer prensa escrita?
+C: Probablemente se reduciría la capacidad de contrastar información, y eso nos haría más vulnerables a la desinformación. No es tanto que el papel sea insustituible, sino que el hábito de leer artículos largos entrena un tipo de atención que los formatos breves no fomentan. Aun así, dudo que sea un fenómeno irreversible; si los medios encontraran formatos atractivos, podrían recuperar a ese público.
+E: ¿Qué piensa sobre el equilibrio entre privacidad y seguridad?
+C: Es un dilema genuino. Aceptar cierta vigilancia puede prevenir delitos, pero una vez que se normaliza, resulta muy difícil volver atrás, y el riesgo de abuso crece. Yo defendería que cualquier medida invasiva esté sujeta a control judicial y a plazos de caducidad, de modo que no se convierta en permanente por inercia.
+
+### es-14 | colombian_andean | 3 | tags=candidate-raises-military-background
+> Level 3 discourse. The candidate himself mentions past army service, so a debrief may mention it; it must not add other military/domain content.
+E: Buenas tardes. ¿Cómo está?
+C: Bien, gracias. Esta semana he estado revisando documentos de una mudanza, así que casi no he parado.
+E: ¿Se muda a otra ciudad?
+C: Sí, el año que viene nos trasladamos a Santiago. Yo serví quince años en el ejército, y ahora que me jubilé quiero dedicarme a la enseñanza, que siempre me ha gustado.
+E: Qué interesante. ¿Cómo fue la decisión de cambiar de vida?
+C: No fue fácil. Durante años pensé que la estabilidad era lo más importante, pero cuando mi padre enfermó me di cuenta de que, si seguía posponiendo lo que realmente quería, nunca lo haría. Así que hablé con mi familia, hicimos números y decidimos arriesgarnos.
+E: ¿Cree que esa experiencia le ayudará como profesor?
+C: En parte sí, porque aprendí a gestionar equipos y a mantener la calma bajo presión. Pero también tendré que desaprender cierta rigidez; un aula no se dirige como un batallón, y los alumnos aprenden más cuando se sienten escuchados que cuando se les dan órdenes.
+E: ¿Qué cambiaría del sistema educativo si pudiera?
+C: Reduciría la carga de contenidos memorísticos y daría más peso a la comprensión y al pensamiento crítico. Si los estudiantes salieran de la escuela sabiendo cómo aprender, no importaría tanto que olvidaran los detalles; y creo que eso también ayudaría a reducir la desigualdad, porque no todos tienen en casa el apoyo para memorizar listas enormes.
+E: ¿Qué opina de la influencia de la tecnología en la concentración de los niños?
+C: Me preocupa, aunque no quisiera caer en el alarmismo. Hay estudios que sugieren efectos negativos, pero también otros que matizan esas conclusiones. Lo que sí parece claro es que los hábitos se forman pronto, de modo que convendría que los padres establecieran límites razonables sin demonizar la tecnología.
+
+### es-15 | rioplatense | 3 |
+> Sustained Level 3: abstract topics, nuanced hypotheticals, counterfactual consequences, precise register.
+E: Hola, ¿cómo andás?
+C: Muy bien, gracias. Disfrutando de que por fin bajó un poco el calor, que ya era insoportable.
+E: Contame cómo es un día típico para vos.
+C: Suelo levantarme temprano para caminar un rato antes de que empiece el bullicio. Después trabajo desde casa hasta el mediodía, y por la tarde me dedico a leer o a cocinar. Lo que más valoro es poder organizar mi tiempo; es un lujo que antes no tenía, cuando pasaba dos horas diarias en el tren.
+E: ¿Qué opinás de que cada vez más gente trabaje desde su casa?
+C: Creo que es una tendencia con consecuencias profundas. Por un lado, libera tiempo y reduce la contaminación; por otro, difumina la frontera entre vida laboral y personal, y eso puede generar un agotamiento sutil. Si las empresas no establecen normas claras, el trabajo termina invadiendo todo.
+E: ¿Qué pasaría con las ciudades si la mayoría trabajara así?
+C: Los centros de negocios perderían buena parte de su razón de ser, y probablemente veríamos una migración hacia ciudades medianas con mejor calidad de vida. Eso, a su vez, presionaría los precios de la vivienda allí, de modo que lo que hoy parece una solución podría reproducir los mismos problemas en otro lugar. Dudo que las políticas urbanas estén preparadas para ese escenario.
+E: ¿Cómo imaginás que se sentirá la gente joven con respecto a eso?
+C: Supongo que habrá división. Algunos celebrarán la autonomía, pero otros extrañarán la socialización informal, esa que se da en los pasillos y que no se puede replicar por videollamada. Quizás percibirán la oficina como un espacio para recuperar vínculos y no tanto para cumplir tareas.
+E: ¿Cuál es el principal desafío ético de la inteligencia artificial?
+C: Para mí es la asignación de responsabilidad. Cuando un sistema automatizado comete un error con consecuencias graves, resulta difícil determinar quién responde: el desarrollador, la empresa o el usuario. Mientras no se aclare eso, habrá una tentación de diluir la responsabilidad y, con ella, la confianza pública.

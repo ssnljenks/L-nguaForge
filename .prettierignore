@@ -5,3 +5,7 @@ bun.lock
 package-lock.json
 public
 *.png
+evals/REPORT.md
+evals/results
+evals/.cache
+evals/data/*.txt

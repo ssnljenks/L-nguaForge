@@ -14,6 +14,7 @@ import {
   sanitizeString,
 } from '../validation.ts';
 import type {RouteDeps} from './types.ts';
+import {createUntrustedFence} from '../untrustedContent.ts';
 
 export function registerChatRoutes(router: Router, {generate}: RouteDeps): void {
   // Typed Talk conversation turn sharing the exact persona/scene/slang/correction prompt as /ws/live
@@ -35,10 +36,14 @@ export function registerChatRoutes(router: Router, {generate}: RouteDeps): void 
 
       assertUnclassifiedText(userMessage, transcriptBlock);
 
+      // The learner's text (and history) is data: fenced so "ignore your instructions" inside it is not obeyed.
+      const fence = createUntrustedFence();
       const basePrompt = buildTalkSystemPrompt(talkCtx, {channel: 'text'});
       const wantRecast = talkCtx.correctionMode === 'recast';
 
       const systemInstruction = `${basePrompt}
+
+${fence.notice}
 
 OUTPUT FIELDS:
 1. replyText: Your natural conversational reply in ${talkCtx.langName} (${talkCtx.tutor.city}).
@@ -51,8 +56,8 @@ OUTPUT FIELDS:
 4. struggleSuggestions: Silently identify 0 to 2 helpful phrases if the user slipped into English or phrased something awkwardly, with targetPhrase, englishConcept, contextSentence, reasonTag, note, suggestedCategory ("High-Register Connectors" | "Operational/Military Terms" | "Regional Idioms" | "False Friends").`;
 
       const contents = transcriptBlock
-        ? `Conversation history:\n${transcriptBlock}\n\nUSER'S LATEST MESSAGE:\n${userMessage}`
-        : `USER'S OPENING MESSAGE:\n${userMessage}`;
+        ? `Conversation history:\n${fence.wrap('HISTORY', transcriptBlock)}\n\nUSER'S LATEST MESSAGE:\n${fence.wrap('USER_MESSAGE', userMessage)}`
+        : `USER'S OPENING MESSAGE:\n${fence.wrap('USER_MESSAGE', userMessage)}`;
 
       const data = await generate({
         model: MODELS.chat,
@@ -128,7 +133,9 @@ OUTPUT FIELDS:
             kind: isValidTalkVocabKind(item.kind) ? item.kind : term.includes(' ') ? 'phrase' : 'word',
           };
         })
-        .filter((x): x is TalkPickedUpItem => x !== null);
+        .filter((x): x is TalkPickedUpItem => x !== null)
+        // The prompt asks for terms actually used in replyText; enforce it so the tray never shows invented words.
+        .filter((x) => replyText.toLowerCase().includes(x.term.toLowerCase()));
 
       const struggleSuggestions = asRecordArray(data.struggleSuggestions)
         .slice(0, 3)

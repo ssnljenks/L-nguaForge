@@ -15,8 +15,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
     "test": "tsx --test \"src/**/*.test.ts\" \"server/**/*.test.ts\"",
-    "e2e": "vite build && playwright test",
-    "e2e:webkit": "vite build && E2E_BROWSERS=webkit playwright test",
+    "test:evals": "tsx --test \"evals/**/*.test.ts\"",
+    "eval": "tsx evals/run.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

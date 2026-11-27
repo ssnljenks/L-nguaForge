@@ -1,0 +1,82 @@
+[
+  {
+    "id": "int-es-1",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "level": "1",
+    "persona": "Maria, a US college student in her first year of Spanish. Lives in a dorm, likes music and pizza.",
+    "militaryBackground": false
+  },
+  {
+    "id": "int-es-1p",
+    "language": "es",
+    "dialect": "rioplatense",
+    "level": "1+",
+    "persona": "Tom, 40, accountant from Ohio, took Spanish for two years. Has a dog, travels to Mexico on holiday.",
+    "militaryBackground": false
+  },
+  {
+    "id": "int-es-2",
+    "language": "es",
+    "dialect": "colombian_andean",
+    "level": "2",
+    "persona": "Priya, 33, nurse who lived one year in Bogota. Comfortable with everyday topics, weak on abstract topics.",
+    "militaryBackground": false
+  },
+  {
+    "id": "int-es-2p",
+    "language": "es",
+    "dialect": "caribbean",
+    "level": "2+",
+    "persona": "Chris, 29, former Navy officer now working in logistics for a shipping company. If asked what he did before, he mentions the Navy.",
+    "militaryBackground": true
+  },
+  {
+    "id": "int-es-3",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "level": "3",
+    "persona": "Elena, 45, translator and long-time resident of Madrid; articulate, uses subjunctive and conditionals correctly.",
+    "militaryBackground": false
+  },
+  {
+    "id": "int-pt-1",
+    "language": "pt",
+    "dialect": "br_standard",
+    "level": "1",
+    "persona": "James, 22, started Portuguese three months ago for a study-abroad program in Sao Paulo.",
+    "militaryBackground": false
+  },
+  {
+    "id": "int-pt-1p",
+    "language": "pt",
+    "dialect": "br_bahian",
+    "level": "1+",
+    "persona": "Aisha, 35, teacher who studied Portuguese for a year. Likes cooking and capoeira.",
+    "militaryBackground": false
+  },
+  {
+    "id": "int-pt-2",
+    "language": "pt",
+    "dialect": "br_southern",
+    "level": "2",
+    "persona": "Marcus, 31, engineer who worked two years in Porto Alegre. Fluent on daily topics, makes noticeable errors.",
+    "militaryBackground": false
+  },
+  {
+    "id": "int-pt-2p",
+    "language": "pt",
+    "dialect": "eu_portuguese",
+    "level": "2+",
+    "persona": "Laura, 38, journalist who spent a year in Lisbon. Gives opinions with reasons but lacks precision in abstract topics.",
+    "militaryBackground": false
+  },
+  {
+    "id": "int-pt-3",
+    "language": "pt",
+    "dialect": "br_standard",
+    "level": "3",
+    "persona": "Daniel, 50, retired Army colonel and now a university lecturer in Rio. If asked about his past, mentions his military career. Sophisticated, fluent, abstract.",
+    "militaryBackground": true
+  }
+]

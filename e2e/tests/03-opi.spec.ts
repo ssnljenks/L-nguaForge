@@ -43,7 +43,8 @@ test('OPI Exam mode: phone-call screen, debrief auto-opens, redo, past sessions'
   await page.getByRole('button', {name: 'Back to Test prep'}).click();
   await expect(page.getByRole('button', {name: /Past sessions/})).toContainText('2 debriefs available');
   await page.getByRole('button', {name: /Past sessions/}).click();
-  const today = new Date().toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+  // The browser context runs in America/New_York (playwright.config.ts), so "today" must be computed there, not in the host's timezone.
+  const today = new Date().toLocaleDateString('en-US', {month: 'short', day: 'numeric', timeZone: 'America/New_York'});
   await expect(page.locator('#debrief-session-select option')).toHaveCount(2);
   await expect(page.locator('#debrief-session-select option').first()).toContainText(`OPI · ${today}`);
   await expect(page.getByTestId('debrief-redo-answer-btn')).toHaveText(/View \/ Redo this answer/);

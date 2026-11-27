@@ -5,6 +5,7 @@ import {handleAsync, UserFacingError} from '../errors.ts';
 import {BUDGETS, ThinkingLevel} from '../gemini.ts';
 import {assertUnclassifiedText, pickVocabCategory, resolveTrainingContext, sanitizeString} from '../validation.ts';
 import type {RouteDeps} from './types.ts';
+import {createUntrustedFence} from '../untrustedContent.ts';
 
 const CATEGORY_CHOICES =
   '"High-Register Connectors", "Operational/Military Terms", "Regional Idioms", or "False Friends"';
@@ -118,11 +119,13 @@ Return the strongest idiomatic high-register target phrase, an optional formal a
         throw new UserFacingError(400, 'Target term and candidate sentence are required.');
       }
       assertUnclassifiedText(targetTerm, userSentence);
+      const fence = createUntrustedFence();
 
       const data = await generate({
         model: MODELS.chat,
         contents: `Evaluate whether the learner used the ${langName} expression "${targetTerm}" accurately and at a natural ILR 2+/3 register in this sentence (${workFocus ? `work context: ${topicLabel}` : 'general context'}):
-"${userSentence}"
+${fence.notice}
+${fence.wrap('LEARNER_SENTENCE', userSentence)}
 Be concise and tactical.`,
         thinkingLevel: ThinkingLevel.LOW,
         responseSchema: {

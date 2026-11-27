@@ -1,0 +1,345 @@
+[
+  {
+    "id": "es-ba-mateo:c1",
+    "tutorId": "es-ba-mateo",
+    "slangLevel": 2,
+    "learnerTurns": [
+      "Hola Mateo. ¿Tú tienes planes para el sábado?",
+      "Yo quiero ir a un asado. ¿Quieres venir conmigo?"
+    ],
+    "recast": {
+      "correct": "\\b(vos|tenés|querés|podés|venís)\\b",
+      "note": "learner uses tuteo; tutor should answer with voseo"
+    },
+    "kind": "recast"
+  },
+  {
+    "id": "es-ba-mateo:c2",
+    "tutorId": "es-ba-mateo",
+    "slangLevel": 2,
+    "learnerTurns": [
+      "Mateo, ayer yo fui a un restaurante y comí mucho carne.",
+      "A mí gusta la comida argentina. ¿Qué plato recomiendas?"
+    ],
+    "recast": null,
+    "kind": "recast"
+  },
+  {
+    "id": "es-ba-mateo:c3",
+    "tutorId": "es-ba-mateo",
+    "slangLevel": 0,
+    "learnerTurns": ["Hola Mateo, ¿qué haces los domingos?", "¿Qué comida te gusta cocinar para tus amigos?"],
+    "recast": null,
+    "kind": "slang0"
+  },
+  {
+    "id": "es-ba-mateo:c4",
+    "tutorId": "es-ba-mateo",
+    "slangLevel": 4,
+    "learnerTurns": ["Hola Mateo, ¿qué haces los domingos?", "¿Qué comida te gusta cocinar para tus amigos?"],
+    "recast": null,
+    "kind": "slang4"
+  },
+  {
+    "id": "es-ba-mateo:c5",
+    "tutorId": "es-ba-mateo",
+    "slangLevel": 2,
+    "learnerTurns": [
+      "Perdón, mi español es muy malo. Yo no sé hablar bien.",
+      "Ayer yo ir al cine con mi amigo y nosotros vimos una película muy bueno."
+    ],
+    "recast": null,
+    "kind": "lecture_bait"
+  },
+  {
+    "id": "es-med-valeria:c1",
+    "tutorId": "es-med-valeria",
+    "slangLevel": 2,
+    "learnerTurns": [
+      "Hola Valeria, ¿cómo estás tú? ¿Qué hiciste el fin de semana?",
+      "Yo quiero ir a Guatapé. ¿Tú conoces ese pueblo?"
+    ],
+    "recast": null,
+    "kind": "recast"
+  },
+  {
+    "id": "es-med-valeria:c2",
+    "tutorId": "es-med-valeria",
+    "slangLevel": 2,
+    "learnerTurns": [
+      "Valeria, ¿qué haces en tu tiempo libre?",
+      "Me gusta el café. ¿Dónde puedo comprar buen café en Medellín?"
+    ],
+    "recast": null,
+    "kind": "recast"
+  },
+  {
+    "id": "es-med-valeria:c3",
+    "tutorId": "es-med-valeria",
+    "slangLevel": 0,
+    "learnerTurns": [
+      "Hola Valeria, ¿cómo va tu semana?",
+      "Voy a visitar Medellín el mes próximo. ¿Qué lugares me recomiendas?"
+    ],
+    "recast": null,
+    "kind": "slang0"
+  },
+  {
+    "id": "es-med-valeria:c4",
+    "tutorId": "es-med-valeria",
+    "slangLevel": 4,
+    "learnerTurns": [
+      "Hola Valeria, ¿cómo va tu semana?",
+      "Voy a visitar Medellín el mes próximo. ¿Qué lugares me recomiendas?"
+    ],
+    "recast": null,
+    "kind": "slang4"
+  },
+  {
+    "id": "es-med-valeria:c5",
+    "tutorId": "es-med-valeria",
+    "slangLevel": 2,
+    "learnerTurns": [
+      "Lo siento, yo hablo español muy mal.",
+      "Ayer yo comer arepas en el mercado, ellas eran muy sabroso."
+    ],
+    "recast": null,
+    "kind": "lecture_bait"
+  },
+  {
+    "id": "es-sj-carlos:c1",
+    "tutorId": "es-sj-carlos",
+    "slangLevel": 2,
+    "learnerTurns": [
+      "Hola Carlos, ¿cómo estás? ¿Qué hiciste anoche?",
+      "Yo fui a la playa con mi amigos. Hace mucho calor aquí."
+    ],
+    "recast": null,
+    "kind": "recast"
+  },
+  {
+    "id": "es-sj-carlos:c2",
+    "tutorId": "es-sj-carlos",
+    "slangLevel": 2,
+    "learnerTurns": ["Carlos, ¿qué música te gusta?", "Yo quiero aprender bailar salsa. ¿Puedes enseñarme?"],
+    "recast": null,
+    "kind": "recast"
+  },
+  {
+    "id": "es-sj-carlos:c3",
+    "tutorId": "es-sj-carlos",
+    "slangLevel": 0,
+    "learnerTurns": [
+      "Hola Carlos, ¿qué planes tienes para el fin de semana?",
+      "¿Y adónde me recomiendas ir en San Juan para comer algo rico?"
+    ],
+    "recast": null,
+    "kind": "slang0"
+  },
+  {
+    "id": "es-sj-carlos:c4",
+    "tutorId": "es-sj-carlos",
+    "slangLevel": 4,
+    "learnerTurns": [
+      "Hola Carlos, ¿qué planes tienes para el fin de semana?",
+      "¿Y adónde me recomiendas ir en San Juan para comer algo rico?"
+    ],
+    "recast": null,
+    "kind": "slang4"
+  },
+  {
+    "id": "es-sj-carlos:c5",
+    "tutorId": "es-sj-carlos",
+    "slangLevel": 2,
+    "learnerTurns": ["Perdón, mi español no es bueno.", "Ayer yo comí mofongo y es muy deliciosa."],
+    "recast": null,
+    "kind": "lecture_bait"
+  },
+  {
+    "id": "es-cdmx-sofia:c1",
+    "tutorId": "es-cdmx-sofia",
+    "slangLevel": 2,
+    "learnerTurns": [
+      "Hola Sofía, ¿cómo estás? ¿Qué tal tu semana?",
+      "Yo trabajo mucho, pero me gusta mi trabajo. ¿Tú tienes mucho trabajo?"
+    ],
+    "recast": null,
+    "kind": "recast"
+  },
+  {
+    "id": "es-cdmx-sofia:c2",
+    "tutorId": "es-cdmx-sofia",
+    "slangLevel": 2,
+    "learnerTurns": [
+      "Sofía, ¿dónde se come bien en la Ciudad de México?",
+      "Quiero probar tacos al pastor. ¿Cuánto cuestan?"
+    ],
+    "recast": null,
+    "kind": "recast"
+  },
+  {
+    "id": "es-cdmx-sofia:c3",
+    "tutorId": "es-cdmx-sofia",
+    "slangLevel": 0,
+    "learnerTurns": ["Hola Sofía, ¿cómo estuvo tu día?", "Voy a viajar a Oaxaca. ¿Qué me recomiendas hacer allá?"],
+    "recast": null,
+    "kind": "slang0"
+  },
+  {
+    "id": "es-cdmx-sofia:c4",
+    "tutorId": "es-cdmx-sofia",
+    "slangLevel": 4,
+    "learnerTurns": ["Hola Sofía, ¿cómo estuvo tu día?", "Voy a viajar a Oaxaca. ¿Qué me recomiendas hacer allá?"],
+    "recast": null,
+    "kind": "slang4"
+  },
+  {
+    "id": "es-cdmx-sofia:c5",
+    "tutorId": "es-cdmx-sofia",
+    "slangLevel": 2,
+    "learnerTurns": ["Disculpa, yo no hablo bien español.", "Ayer yo fui al mercado y compré mucho fruta."],
+    "recast": null,
+    "kind": "lecture_bait"
+  },
+  {
+    "id": "pt-rio-lucas:c1",
+    "tutorId": "pt-rio-lucas",
+    "slangLevel": 2,
+    "learnerTurns": [
+      "Oi Lucas, tudo bem? O que você fez no fim de semana?",
+      "Eu quero ir na praia amanhã. Você vai também?"
+    ],
+    "recast": null,
+    "kind": "recast"
+  },
+  {
+    "id": "pt-rio-lucas:c2",
+    "tutorId": "pt-rio-lucas",
+    "slangLevel": 2,
+    "learnerTurns": ["Lucas, que tipo de música você gosta?", "Eu gosto de samba, mas eu não sei dançar bem."],
+    "recast": null,
+    "kind": "recast"
+  },
+  {
+    "id": "pt-rio-lucas:c3",
+    "tutorId": "pt-rio-lucas",
+    "slangLevel": 0,
+    "learnerTurns": ["Oi Lucas, como foi o seu dia?", "Eu vou ao Rio no mês que vem. O que você recomenda fazer lá?"],
+    "recast": null,
+    "kind": "slang0"
+  },
+  {
+    "id": "pt-rio-lucas:c4",
+    "tutorId": "pt-rio-lucas",
+    "slangLevel": 4,
+    "learnerTurns": ["Oi Lucas, como foi o seu dia?", "Eu vou ao Rio no mês que vem. O que você recomenda fazer lá?"],
+    "recast": null,
+    "kind": "slang4"
+  },
+  {
+    "id": "pt-rio-lucas:c5",
+    "tutorId": "pt-rio-lucas",
+    "slangLevel": 2,
+    "learnerTurns": [
+      "Desculpa, meu português é muito ruim.",
+      "Ontem eu foi no restaurante e comi uma comida muito gostoso."
+    ],
+    "recast": null,
+    "kind": "lecture_bait"
+  },
+  {
+    "id": "pt-ssa-camila:c1",
+    "tutorId": "pt-ssa-camila",
+    "slangLevel": 2,
+    "learnerTurns": ["Oi Camila, tudo bem? O que você fez ontem?", "Eu quero provar acarajé. Onde posso comer um bom?"],
+    "recast": null,
+    "kind": "recast"
+  },
+  {
+    "id": "pt-ssa-camila:c2",
+    "tutorId": "pt-ssa-camila",
+    "slangLevel": 2,
+    "learnerTurns": [
+      "Camila, o que você faz no seu tempo livre?",
+      "Eu gosto de música baiana. Você conhece algum cantor bom?"
+    ],
+    "recast": null,
+    "kind": "recast"
+  },
+  {
+    "id": "pt-ssa-camila:c3",
+    "tutorId": "pt-ssa-camila",
+    "slangLevel": 0,
+    "learnerTurns": ["Oi Camila, como está o seu dia?", "Vou visitar Salvador em dezembro. O que devo fazer lá?"],
+    "recast": null,
+    "kind": "slang0"
+  },
+  {
+    "id": "pt-ssa-camila:c4",
+    "tutorId": "pt-ssa-camila",
+    "slangLevel": 4,
+    "learnerTurns": ["Oi Camila, como está o seu dia?", "Vou visitar Salvador em dezembro. O que devo fazer lá?"],
+    "recast": null,
+    "kind": "slang4"
+  },
+  {
+    "id": "pt-ssa-camila:c5",
+    "tutorId": "pt-ssa-camila",
+    "slangLevel": 2,
+    "learnerTurns": ["Desculpa, eu falo português muito mal.", "Ontem eu fui na praia e a água estava muito quente."],
+    "recast": null,
+    "kind": "lecture_bait"
+  },
+  {
+    "id": "pt-lis-tiago:c1",
+    "tutorId": "pt-lis-tiago",
+    "slangLevel": 2,
+    "learnerTurns": [
+      "Oi Tiago, tudo bem? Você está trabalhando hoje?",
+      "Eu estou estudando português. Você pode me ajudar?"
+    ],
+    "recast": {
+      "correct": "estou a |estás a |está a |\\b\\w+-(me|te|lhe|se)\\b|\\btu\\b|\\bpodes\\b|\\bqueres\\b",
+      "note": "learner uses Brazilian progressive and você; tutor should answer with European forms"
+    },
+    "kind": "recast"
+  },
+  {
+    "id": "pt-lis-tiago:c2",
+    "tutorId": "pt-lis-tiago",
+    "slangLevel": 2,
+    "learnerTurns": [
+      "Tiago, qual ônibus eu pego para ir ao centro?",
+      "Eu quero tomar um café da manhã bom. Você conhece um lugar?"
+    ],
+    "recast": {
+      "correct": "autocarro|pequeno-almoço",
+      "note": "Brazilian vocabulary; tutor should model the European words"
+    },
+    "kind": "recast"
+  },
+  {
+    "id": "pt-lis-tiago:c3",
+    "tutorId": "pt-lis-tiago",
+    "slangLevel": 0,
+    "learnerTurns": ["Olá Tiago, como foi o teu dia?", "Vou visitar Lisboa no mês que vem. O que me recomendas?"],
+    "recast": null,
+    "kind": "slang0"
+  },
+  {
+    "id": "pt-lis-tiago:c4",
+    "tutorId": "pt-lis-tiago",
+    "slangLevel": 4,
+    "learnerTurns": ["Olá Tiago, como foi o teu dia?", "Vou visitar Lisboa no mês que vem. O que me recomendas?"],
+    "recast": null,
+    "kind": "slang4"
+  },
+  {
+    "id": "pt-lis-tiago:c5",
+    "tutorId": "pt-lis-tiago",
+    "slangLevel": 2,
+    "learnerTurns": ["Desculpa, o meu português é muito mau.", "Ontem eu fui no cinema e o filme foi muito engraçado."],
+    "recast": null,
+    "kind": "lecture_bait"
+  }
+]

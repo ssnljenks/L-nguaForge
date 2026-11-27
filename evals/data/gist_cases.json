@@ -1,0 +1,274 @@
+{
+  "passages": [
+    {
+      "id": "gp-es-1",
+      "language": "es",
+      "transcript": "La empresa de aguas de Villa Hermosa anunció que el jueves cortará el suministro en doce barrios durante ocho horas, desde las nueve de la mañana, para reparar una tubería principal de más de cuarenta años. La gerente, Sofía Arias, dijo que la tubería tuvo tres roturas en el último año. La empresa repartirá agua en camiones cisterna y habilitará dos puntos de entrega en la plaza central y en el polideportivo. Los hospitales y las escuelas tendrán prioridad. Si la reparación termina antes, el servicio se restablecerá de forma gradual y la presión podría ser baja durante unas horas.",
+      "orientationLine": "This passage is from a regional radio news report about a planned water outage."
+    },
+    {
+      "id": "gp-es-2",
+      "language": "es",
+      "transcript": "La compañía de ferrocarriles del norte cambiará el horario del tren regional a partir del primer lunes de marzo. El primer tren saldrá a las cinco y media en lugar de las seis, y el último volverá a las once de la noche. El director de operaciones, Iván Salas, explicó que el cambio responde a una encuesta en la que más de dos mil pasajeros pidieron salidas más tempranas. El precio del boleto no cambiará. Sin embargo, la compañía advirtió que, durante dos semanas, habrá menos vagones en la hora pico porque están revisando dos de las seis locomotoras.",
+      "orientationLine": "This passage is from a radio report about a regional train schedule."
+    },
+    {
+      "id": "gp-es-3",
+      "language": "es",
+      "transcript": "La escuela rural de Piedra Blanca recibió el premio nacional a la innovación educativa por su proyecto de huertos escolares. La directora, Carmen Ibarra, contó que los treinta y cinco alumnos cultivan verduras que luego se usan en el comedor. El premio incluye diez mil dólares, que la escuela usará para comprar un invernadero. Según la directora, el proyecto también mejoró la asistencia, que subió de ochenta a noventa y cuatro por ciento. Los alumnos de los grados mayores enseñan a los más pequeños, y varios padres colaboran los sábados.",
+      "orientationLine": "This passage is from a radio report about a rural school receiving a national award."
+    },
+    {
+      "id": "gp-es-4",
+      "language": "es",
+      "transcript": "Una tormenta tropical se acerca a la costa del sur y llegará el sábado por la noche. El servicio meteorológico prevé vientos de ochenta kilómetros por hora y lluvias de hasta ciento cincuenta milímetros en veinticuatro horas. Las autoridades pidieron a los pescadores que no salgan al mar desde el viernes. En tres puertos se cerraron los muelles, y se habilitaron cinco refugios en escuelas de la zona. El gobernador, Esteban Rojas, dijo que se evacuará a las familias que viven cerca del río si el nivel sube más de dos metros.",
+      "orientationLine": "This passage is from a radio weather bulletin."
+    },
+    {
+      "id": "gp-es-5",
+      "language": "es",
+      "transcript": "El museo de historia natural de la ciudad cerrará durante cuatro meses para renovar su sala principal. La directora, Lucía Ferrer, explicó que el techo tiene filtraciones desde hace años y que la obra costará unos tres millones de pesos. Durante el cierre, las colecciones de fósiles viajarán a una exposición en el centro cultural. Los visitantes con entrada anual podrán usarla cuando el museo reabra en septiembre. Además, el museo abrirá una tienda en línea para financiar parte de las obras.",
+      "orientationLine": "This passage is from a radio report about a museum closing for renovation."
+    },
+    {
+      "id": "gp-pt-1",
+      "language": "pt",
+      "transcript": "A defesa civil de Vila Serena emitiu um alerta de calor para os próximos cinco dias, com temperaturas que podem chegar a quarenta graus. O coordenador, Ricardo Tavares, recomendou que os moradores evitem sair entre onze da manhã e três da tarde e bebam muita água. Quatro escolas vão encurtar o horário das aulas, e os centros comunitários abrirão salas com ar-condicionado para idosos. A prefeitura informou que não haverá racionamento de água, mas pediu que ninguém lave carros nem encha piscinas durante o período.",
+      "orientationLine": "This passage is from a Brazilian radio report about a heat alert."
+    },
+    {
+      "id": "gp-pt-2",
+      "language": "pt",
+      "transcript": "A prefeitura de Monte Claro lançou uma biblioteca digital gratuita com mais de três mil livros e audiolivros em português. Para usar o serviço, basta ter o cartão da biblioteca municipal e baixar um aplicativo. A secretária de cultura, Beatriz Lemos, explicou que cada usuário pode pegar emprestados cinco títulos por vez durante catorze dias. O projeto custou cerca de duzentos mil reais e foi pago com recursos do orçamento da cidade. Segundo a secretária, a meta é chegar a dez mil usuários até o fim do ano.",
+      "orientationLine": "This passage is from a Brazilian radio report about a digital library."
+    },
+    {
+      "id": "gp-pt-3",
+      "language": "pt",
+      "transcript": "Uma nova linha de ônibus ligará o bairro Jardim das Flores ao hospital regional a partir do dia quinze. O trajeto terá catorze paradas e levará cerca de quarenta minutos. Os ônibus passarão a cada vinte minutos entre as seis da manhã e as oito da noite. O diretor de transporte, André Campos, disse que a linha foi pedida por moradores que antes precisavam fazer duas conexões. A passagem custará quatro reais e meio, igual às outras linhas. Nos primeiros dois meses, os idosos poderão usar a linha de graça.",
+      "orientationLine": "This passage is from a Brazilian radio report about a new bus line."
+    }
+  ],
+  "summaries": [
+    {
+      "id": "g01",
+      "passageId": "gp-es-1",
+      "summary": "The water company in Villa Hermosa will cut the water supply in twelve neighborhoods on Thursday for eight hours to repair an old main pipe. It will deliver water by tanker trucks and prioritize hospitals and schools. The company said the cut was necessary because residents had been wasting water.",
+      "planted": [
+        {
+          "type": "addition",
+          "span": "The company said the cut was necessary because residents had been wasting water."
+        }
+      ]
+    },
+    {
+      "id": "g02",
+      "passageId": "gp-es-1",
+      "summary": "Villa Hermosa's water company announced a cut of water in twelve neighborhoods on Friday lasting eight hours, to fix a pipe that had broken three times in the past year. Tanker trucks will supply water.",
+      "planted": [
+        {
+          "type": "distortion",
+          "span": "on Friday"
+        }
+      ]
+    },
+    {
+      "id": "g03",
+      "passageId": "gp-es-1",
+      "summary": "Water will be cut for eight hours on Thursday in twelve neighborhoods so the company can repair a pipe more than forty years old.",
+      "planted": [
+        {
+          "type": "omission",
+          "sourceSentence": "La empresa repartirá agua en camiones cisterna y habilitará dos puntos de entrega en la plaza central y en el polideportivo.",
+          "keyTerms": ["cisterna", "tanker", "delivery points", "trucks", "polideportivo"]
+        }
+      ]
+    },
+    {
+      "id": "g04",
+      "passageId": "gp-es-2",
+      "summary": "A regional railway company will start its first train earlier, at five thirty, from the first Monday of March, after more than two thousand passengers asked for earlier departures. Ticket prices will stay the same. The company also said it will hire two hundred new drivers.",
+      "planted": [
+        {
+          "type": "addition",
+          "span": "The company also said it will hire two hundred new drivers."
+        }
+      ]
+    },
+    {
+      "id": "g05",
+      "passageId": "gp-es-2",
+      "summary": "The railway will move its first train from six to five thirty and the last train will return at ten at night. The change comes from a survey of more than two thousand passengers. The company said ticket prices might rise next year.",
+      "planted": [
+        {
+          "type": "distortion",
+          "span": "the last train will return at ten at night"
+        },
+        {
+          "type": "addition",
+          "span": "The company said ticket prices might rise next year."
+        }
+      ]
+    },
+    {
+      "id": "g06",
+      "passageId": "gp-es-2",
+      "summary": "The northern railway company will change the regional train schedule in March: the first train leaves at five thirty instead of six, and the last returns at eleven. Fares will not change, but there will be fewer cars at rush hour for two weeks while two locomotives are inspected.",
+      "planted": []
+    },
+    {
+      "id": "g07",
+      "passageId": "gp-es-3",
+      "summary": "A rural school called Piedra Blanca won a national award for innovation for its school gardens, which supply vegetables to the cafeteria. The prize money, ten thousand dollars, will pay for a greenhouse. Experts said the project should be copied in every school in the country.",
+      "planted": [
+        {
+          "type": "addition",
+          "span": "Experts said the project should be copied in every school in the country."
+        }
+      ]
+    },
+    {
+      "id": "g08",
+      "passageId": "gp-es-3",
+      "summary": "Piedra Blanca rural school won a national prize for its school garden project with its thirty-five students. Attendance rose from eighty to ninety-nine percent. The prize was presented by the president.",
+      "planted": [
+        {
+          "type": "distortion",
+          "span": "ninety-nine percent"
+        },
+        {
+          "type": "addition",
+          "span": "The prize was presented by the president."
+        }
+      ]
+    },
+    {
+      "id": "g09",
+      "passageId": "gp-es-3",
+      "summary": "A rural school, Piedra Blanca, won a national innovation prize for a project in which its thirty-five students grow vegetables used in the school dining hall. The ten thousand dollar prize will buy a greenhouse. The principal said attendance went up from eighty to ninety-four percent.",
+      "planted": []
+    },
+    {
+      "id": "g10",
+      "passageId": "gp-pt-1",
+      "summary": "Civil defense in Vila Serena issued a five-day heat alert with temperatures up to forty degrees and advised residents to avoid going out during the hottest hours. Community centers will open air-conditioned rooms for the elderly. The mayor said that several elderly people had already been hospitalized.",
+      "planted": [
+        {
+          "type": "addition",
+          "span": "The mayor said that several elderly people had already been hospitalized."
+        }
+      ]
+    },
+    {
+      "id": "g11",
+      "passageId": "gp-pt-1",
+      "summary": "The civil defense warned of heat for the next five days. Four schools will cancel classes entirely, and community centers will open air-conditioned rooms for the elderly.",
+      "planted": [
+        {
+          "type": "distortion",
+          "span": "Four schools will cancel classes entirely"
+        }
+      ]
+    },
+    {
+      "id": "g12",
+      "passageId": "gp-pt-1",
+      "summary": "Vila Serena's civil defense issued a five-day heat alert with temperatures that may reach forty degrees, and recommends drinking a lot of water.",
+      "planted": [
+        {
+          "type": "omission",
+          "sourceSentence": "A prefeitura informou que não haverá racionamento de água, mas pediu que ninguém lave carros nem encha piscinas durante o período.",
+          "keyTerms": ["racionamento", "rationing", "piscinas", "pools", "carros", "wash"]
+        }
+      ]
+    },
+    {
+      "id": "g13",
+      "passageId": "gp-pt-2",
+      "summary": "Monte Claro's city government launched a free digital library with more than three thousand books and audiobooks. Users need a library card and an app, and can borrow five titles at a time for fourteen days. The mayor hopes the library will replace the physical branches.",
+      "planted": [
+        {
+          "type": "addition",
+          "span": "The mayor hopes the library will replace the physical branches."
+        }
+      ]
+    },
+    {
+      "id": "g14",
+      "passageId": "gp-pt-2",
+      "summary": "The city launched a free digital library with over three thousand titles. Users can borrow five titles at a time for four days, and the goal is ten thousand users by the end of the year. The library has already reached five thousand users.",
+      "planted": [
+        {
+          "type": "distortion",
+          "span": "for four days"
+        },
+        {
+          "type": "addition",
+          "span": "The library has already reached five thousand users."
+        }
+      ]
+    },
+    {
+      "id": "g15",
+      "passageId": "gp-es-4",
+      "summary": "A tropical storm will reach the southern coast on Saturday night with winds of eighty kilometers per hour. Fishermen are told to stay out of the sea from Friday, and five shelters were opened in schools. The governor blamed the previous administration for the lack of flood defenses.",
+      "planted": [
+        {
+          "type": "addition",
+          "span": "The governor blamed the previous administration for the lack of flood defenses."
+        }
+      ]
+    },
+    {
+      "id": "g16",
+      "passageId": "gp-es-4",
+      "summary": "A tropical storm is approaching the southern coast and will arrive Saturday night. Rain could reach fifteen millimeters in twenty-four hours and fishermen should not go to sea from Friday.",
+      "planted": [
+        {
+          "type": "distortion",
+          "span": "fifteen millimeters"
+        }
+      ]
+    },
+    {
+      "id": "g17",
+      "passageId": "gp-es-4",
+      "summary": "A tropical storm will hit the southern coast on Saturday night with strong winds and heavy rain. Fishermen must stay on land from Friday, three ports closed their piers, and five shelters have been set up in schools. Families near the river will be evacuated if the river rises more than two meters.",
+      "planted": []
+    },
+    {
+      "id": "g18",
+      "passageId": "gp-pt-3",
+      "summary": "A new bus line will connect Jardim das Flores to the regional hospital starting on the fifteenth, with fourteen stops. Buses will come every twenty minutes, and the fare is the same as other lines. The line was designed to reduce traffic accidents near the hospital.",
+      "planted": [
+        {
+          "type": "addition",
+          "span": "The line was designed to reduce traffic accidents near the hospital."
+        }
+      ]
+    },
+    {
+      "id": "g19",
+      "passageId": "gp-pt-3",
+      "summary": "A new bus line will link the Jardim das Flores neighborhood to the regional hospital from the fifteenth, with fourteen stops and a forty-minute trip. The fare will be four and a half reais.",
+      "planted": [
+        {
+          "type": "omission",
+          "sourceSentence": "Nos primeiros dois meses, os idosos poderão usar a linha de graça.",
+          "keyTerms": ["idosos", "elderly", "graça", "free", "seniors"]
+        }
+      ]
+    },
+    {
+      "id": "g20",
+      "passageId": "gp-es-5",
+      "summary": "The natural history museum will close for four months to renovate its main hall because the roof has been leaking for years. The fossil collections will go to an exhibit at the cultural center, and the museum will reopen in September. The director resigned after criticism over the delays.",
+      "planted": [
+        {
+          "type": "addition",
+          "span": "The director resigned after criticism over the delays."
+        }
+      ]
+    }
+  ]
+}
