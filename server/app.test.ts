@@ -7,6 +7,9 @@ import {globalBriefService, type StoredBriefItem, validateDlptQuestions} from '.
 import {loadConfig, type ServerConfig} from './config.ts';
 import {UserFacingError} from './errors.ts';
 import type {GenerateStructured, StructuredPromptRequest} from './gemini.ts';
+import {createRoleplayTokenSealer} from './roleplayToken.ts';
+
+const roleplayTokens = createRoleplayTokenSealer(['app-test-secret']);
 
 console.error = () => {};
 
@@ -27,7 +30,7 @@ async function startApp(overrides: Partial<ServerConfig> = {}): Promise<Harness>
     return respond(request);
   };
   const config = {...loadConfig({TRUST_PROXY: '0'}), ...overrides};
-  const app = createApp({config, generate});
+  const app = createApp({config, generate, roleplayTokens});
   app.use(jsonErrorHandler);
   const server = http.createServer(app);
   servers.push(server);
@@ -409,9 +412,6 @@ test('OPI redo-turn and debrief analyze return 0+..3 rating, 6 levelFunctions wi
 });
 
 test('roleplay scenario keeps hiddenGoal and complication server-side and ignores domain', async () => {
-  const {getRoleplaySecret, saveRoleplaySecret, clearAllRoleplaySecrets} = await import('./roleplayStore.ts');
-  clearAllRoleplaySecrets();
-
   const h = await startApp();
   h.setResponse(async () => ({
     situationEnglish: 'Your rental car broke down outside Toledo on your way to a family dinner.',
@@ -440,10 +440,12 @@ test('roleplay scenario keeps hiddenGoal and complication server-side and ignore
   assert.ok(!prompt.includes('Maritime Surveillance'), 'Roleplay must ignore military domain');
   assert.match(prompt, /EVERYDAY CIVILIAN/i);
 
-  const stored = getRoleplaySecret(body.scenarioId);
-  assert.ok(stored);
-  assert.match(stored.hiddenGoal, /reservation code/i);
-  assert.match(stored.complication, /manual-transmission/i);
+  assert.equal(typeof body.scenarioToken, 'string');
+  assert.ok(!JSON.stringify(body).includes('reservation code'), 'the token must not carry readable secrets');
+  const opened = roleplayTokens.open(body.scenarioToken);
+  assert.ok(opened.ok);
+  assert.match(opened.record.hiddenGoal, /reservation code/i);
+  assert.match(opened.record.complication, /manual-transmission/i);
 
   // Opening turn -> not resolved and no complication yet
   h.setResponse(async () => ({
@@ -454,6 +456,7 @@ test('roleplay scenario keeps hiddenGoal and complication server-side and ignore
   }));
   const openRes = await post(`${h.url}/api/opi/roleplay/turn`, {
     scenarioId: body.scenarioId,
+    scenarioToken: body.scenarioToken,
     language: 'es',
     dialect: 'neutral_latam',
     level: 2,
@@ -480,6 +483,7 @@ test('roleplay scenario keeps hiddenGoal and complication server-side and ignore
   }));
   const twistRes = await post(`${h.url}/api/opi/roleplay/turn`, {
     scenarioId: body.scenarioId,
+    scenarioToken: body.scenarioToken,
     language: 'es',
     dialect: 'neutral_latam',
     level: 2,
@@ -517,6 +521,7 @@ test('roleplay scenario keeps hiddenGoal and complication server-side and ignore
   }));
   const debriefRes = await post(`${h.url}/api/opi/roleplay/debrief`, {
     scenarioId: body.scenarioId,
+    scenarioToken: body.scenarioToken,
     language: 'es',
     dialect: 'neutral_latam',
     level: 2,
@@ -535,6 +540,7 @@ test('roleplay scenario keeps hiddenGoal and complication server-side and ignore
   // Classification guard returns 422
   const classifiedTurn = await post(`${h.url}/api/opi/roleplay/turn`, {
     scenarioId: body.scenarioId,
+    scenarioToken: body.scenarioToken,
     language: 'es',
     level: 2,
     userMessage: 'SECRET//NOFORN details here',
@@ -542,25 +548,69 @@ test('roleplay scenario keeps hiddenGoal and complication server-side and ignore
   });
   assert.equal(classifiedTurn.status, 422);
 
-  // TTL store expiration
-  saveRoleplaySecret(
-    {
-      scenarioId: 'rp-ttl-test',
-      level: 1,
-      language: 'es',
-      dialect: 'neutral_latam',
-      situationEnglish: 'Order lunch.',
-      learnerGoal: 'Order politely.',
-      register: 'usted',
-      characterRole: 'Waiter',
-      hiddenGoal: 'Ask beverage.',
-      complication: 'None',
-    },
-    1000,
-    10_000
-  );
-  assert.ok(getRoleplaySecret('rp-ttl-test', 10_500));
-  assert.equal(getRoleplaySecret('rp-ttl-test', 11_001), null);
+  // A turn without a readable token is reported as expired; it never switches to a generic scenario.
+  const callsBefore = h.calls.length;
+  const lostTurn = await post(`${h.url}/api/opi/roleplay/turn`, {
+    scenarioId: body.scenarioId,
+    language: 'es',
+    level: 2,
+    userMessage: 'Hola, necesito un coche.',
+    situationEnglish: 'Client-supplied situation that must not be trusted.',
+    learnerGoal: 'Client-supplied goal.',
+    history: [],
+    candidateTurnCount: 1,
+  });
+  assert.equal(lostTurn.status, 410);
+  assert.equal((await lostTurn.json()).code, 'scenario_expired');
+  const tamperedTurn = await post(`${h.url}/api/opi/roleplay/turn`, {
+    scenarioId: body.scenarioId,
+    scenarioToken: `${body.scenarioToken.slice(0, -4)}AAAA`,
+    language: 'es',
+    level: 2,
+    userMessage: 'Hola.',
+    history: [],
+  });
+  assert.equal(tamperedTurn.status, 410);
+  assert.equal(h.calls.length, callsBefore, 'an expired scenario must not reach the model');
+
+  // Replaying with the twist the learner already saw in a debrief needs no token.
+  h.setResponse(async () => ({
+    characterText: 'Buenas tardes, ¿en qué puedo ayudarle?',
+    complicationIntroduced: false,
+    resolved: false,
+    assessment: {functionKey: 'l2_concrete_descriptions', outcome: 'sustained', evidence: 'Opening'},
+  }));
+  const replayTurn = await post(`${h.url}/api/opi/roleplay/turn`, {
+    scenarioId: body.scenarioId,
+    language: 'es',
+    level: 2,
+    isOpening: true,
+    situationEnglish: 'Your rental car broke down.',
+    learnerGoal: 'Arrange a replacement.',
+    knownHiddenGoal: 'Needs the reservation code.',
+    knownComplication: 'Only a manual van is left.',
+    history: [],
+  });
+  assert.equal(replayTurn.status, 200);
+
+  // The debrief still grades a conversation whose scenario can no longer be opened, and says so.
+  h.setResponse(async () => ({
+    resolvedOutcome: 'partial',
+    summary: 'Handled the request with some hesitation.',
+    checklist: [],
+  }));
+  const lateDebrief = await post(`${h.url}/api/opi/roleplay/debrief`, {
+    scenarioId: body.scenarioId,
+    language: 'es',
+    level: 2,
+    situationEnglish: 'Your rental car broke down.',
+    learnerGoal: 'Arrange a replacement.',
+    messages: [{role: 'candidate', text: 'El coche se apagó en la autopista.'}],
+  });
+  assert.equal(lateDebrief.status, 200);
+  const lateBody = await lateDebrief.json();
+  assert.match(lateBody.hiddenGoal, /Not available/);
+  assert.match(String(h.calls.at(-1)?.contents), /unknown \(do not guess/);
 });
 
 test('Phase 4 Talk enforces everyday isolation outside Work talk, honors slang/corrections, and supports how-do-locals-say + wrap-up', async () => {
@@ -1344,13 +1394,19 @@ test('learner text is fenced as untrusted data in the OPI, Talk and role-play pr
     history: [],
   });
   await post(`${h.url}/api/chat/turn`, {language: 'es', tutorId: 'es-cdmx-sofia', userMessage: attack});
-  await post(`${h.url}/api/opi/roleplay/turn`, {
-    language: 'es',
+  const scenarioToken = roleplayTokens.seal({
+    scenarioId: 'rp-fence',
     level: 2,
+    language: 'es',
+    dialect: 'neutral_latam',
     situationEnglish: 's',
     learnerGoal: 'g',
-    userMessage: attack,
+    register: 'usted',
+    characterRole: 'Clerk',
+    hiddenGoal: 'h',
+    complication: 'c',
   });
+  await post(`${h.url}/api/opi/roleplay/turn`, {language: 'es', level: 2, scenarioToken, userMessage: attack});
   assert.equal(h.calls.length, 3);
   for (const call of h.calls) {
     const all = `${call.systemInstruction ?? ''}\n${call.contents}`;
@@ -1380,4 +1436,86 @@ test('Talk pickedUp items must appear in the reply', async () => {
     body.pickedUp.map((p: {term: string}) => p.term),
     ['ahorita']
   );
+});
+
+test('client error reports: fixed shape, scrubbed, no body echoed, tiny limiter, outside the API limiter', async () => {
+  const {setLogSink} = await import('./logger.ts');
+  const lines: string[] = [];
+  const restore = setLogSink((l) => lines.push(l));
+  try {
+    const h = await startApp({clientErrorLimitPerMinute: 3, apiRateLimitPerMinute: 1});
+    const key = 'AIzaSyA1234567890abcdefghijklmnopqrstuv';
+    const res = await post(`${h.url}/api/client-error`, {
+      kind: 'audio',
+      message: `getUserMedia failed key=${key}`,
+      stack: 'Error: x\n    at a (app.js:1:1)',
+      tab: 'talk',
+      platform: 'ios',
+      standalone: true,
+      online: false,
+      appVersion: '1.2.3',
+      transcript: 'I said something private',
+      userText: 'also private',
+    });
+    assert.equal(res.status, 204);
+    const entry = JSON.parse(lines.find((l) => l.includes('client_error')) ?? '{}');
+    assert.equal(entry.event, 'client_error');
+    assert.equal(entry.kind, 'audio');
+    assert.match(String(entry.clientMessage), /getUserMedia failed/);
+    assert.equal(entry.platform, 'ios');
+    assert.equal(entry.standalone, true);
+    assert.equal(entry.online, false);
+    assert.ok(!JSON.stringify(entry).includes(key));
+    assert.ok(!JSON.stringify(entry).includes('private'), 'unknown fields are dropped');
+
+    // Garbage and unknown kinds do not crash or log anything useful.
+    assert.equal((await post(`${h.url}/api/client-error`, 'not json')).status, 400);
+    assert.equal((await post(`${h.url}/api/client-error`, {message: ''})).status, 204);
+
+    // Over its own limit a report is dropped quietly (204), and the API limiter (limit 1) never counted these.
+    for (let i = 0; i < 4; i++) assert.equal((await post(`${h.url}/api/client-error`, {message: 'x'})).status, 204);
+    assert.equal((await fetch(`${h.url}/api/health`)).status, 200);
+    const tooBig = await post(`${h.url}/api/client-error`, {message: 'x'.repeat(20_000)});
+    assert.equal(tooBig.status, 204, 'rate limited before the body is read');
+  } finally {
+    restore();
+  }
+});
+
+test('daily per-IP cap on POSTs: the 3rd POST is refused with a clear message, GETs are not counted', async () => {
+  const h = await startApp({apiDailyLimitPerIp: 2, apiRateLimitPerMinute: 1000});
+  h.setResponse(async () => ({}));
+  for (let i = 0; i < 4; i++) assert.equal((await fetch(`${h.url}/api/brief/feed?language=es`)).status === 429, false);
+  await post(`${h.url}/api/vocab/tot`, {});
+  await post(`${h.url}/api/vocab/tot`, {});
+  const third = await post(`${h.url}/api/vocab/tot`, {});
+  assert.equal(third.status, 429);
+  assert.match((await third.json()).error, /daily limit/i);
+});
+
+test('the Gemini daily budget stops calls with a 429 the app can show', async () => {
+  const {geminiBudget} = await import('./quota.ts');
+  const {createGeminiGenerator} = await import('./gemini.ts');
+  geminiBudget.configure(1);
+  try {
+    const fakeClient = {
+      models: {generateContent: async () => ({text: '{"ok":true}', usageMetadata: {promptTokenCount: 10}})},
+    } as never;
+    const generate = createGeminiGenerator(() => fakeClient);
+    const request = {
+      model: 'm',
+      contents: 'c',
+      thinkingLevel: 'LOW',
+      responseSchema: {},
+      emptyMessage: 'empty',
+      budget: {attemptTimeoutMs: 1000, totalBudgetMs: 2000, maxAttempts: 1},
+    } as never;
+    assert.deepEqual(await generate(request), {ok: true});
+    await assert.rejects(
+      () => generate(request),
+      (err) => err instanceof UserFacingError && err.status === 429 && /daily limit/i.test(err.message)
+    );
+  } finally {
+    geminiBudget.configure(0);
+  }
 });

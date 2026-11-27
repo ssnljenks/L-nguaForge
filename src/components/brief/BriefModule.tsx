@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Briefcase, Headphones, Newspaper, RefreshCw, Search, Sparkles} from 'lucide-react';
 import type {
   AppendErrorEventsFn,
@@ -50,7 +50,12 @@ export const BriefModule: React.FC<BriefModuleProps> = ({
 
   const [items, setItems] = useState<BriefItem[]>([]);
   const [loading, setLoading] = useState(true);
+  // Set when the feed request fails, so a server problem isn't shown as "no stories match your filters".
+  const [feedError, setFeedError] = useState<string | null>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const loadSeqRef = useRef(0);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
 
   // Modals
@@ -60,8 +65,16 @@ export const BriefModule: React.FC<BriefModuleProps> = ({
 
   const dialect = getDialectInfo(config.language, config.dialect);
 
+  // Typing in the search box must not send a request per keystroke: they share the per-minute API limit.
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedQuery(searchQuery.trim()), 350);
+    return () => window.clearTimeout(t);
+  }, [searchQuery]);
+
   const loadFeed = useCallback(async () => {
+    const seq = ++loadSeqRef.current;
     setLoading(true);
+    setFeedError(null);
     try {
       const data = await fetchBriefFeed({
         language: config.language,
@@ -70,17 +83,20 @@ export const BriefModule: React.FC<BriefModuleProps> = ({
         topic: selectedTopic !== 'all' ? selectedTopic : undefined,
         workFilter: workFilterActive,
         userDomain: workFilterActive ? config.domain : undefined,
-        searchQuery: searchQuery.trim() || undefined,
+        searchQuery: debouncedQuery || undefined,
       });
+      // A slower, older request must not overwrite the answer to the filters now on screen.
+      if (seq !== loadSeqRef.current) return;
       setItems(data.items);
       setLastRefreshedAt(data.lastRefreshedAt);
-    } catch {
-      // Fallback empty or handled by server seed
-      setItems([]);
+    } catch (err) {
+      if (seq !== loadSeqRef.current) return;
+      // Keep what was already on screen (it may be cached stories) and say what went wrong.
+      setFeedError(err instanceof Error ? err.message : 'The news feed is unavailable right now.');
     } finally {
-      setLoading(false);
+      if (seq === loadSeqRef.current) setLoading(false);
     }
-  }, [config.language, config.domain, mediaType, selectedLevel, selectedTopic, workFilterActive, searchQuery]);
+  }, [config.language, config.domain, mediaType, selectedLevel, selectedTopic, workFilterActive, debouncedQuery]);
 
   useEffect(() => {
     loadFeed();
@@ -88,9 +104,16 @@ export const BriefModule: React.FC<BriefModuleProps> = ({
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    setRefreshError(null);
     try {
       await triggerBriefRefresh();
       await loadFeed();
+    } catch (err) {
+      setRefreshError(
+        err instanceof Error
+          ? `${err.message}`
+          : "Couldn't check for new stories. The stories below are still available."
+      );
     } finally {
       setIsRefreshing(false);
     }
@@ -276,12 +299,32 @@ export const BriefModule: React.FC<BriefModuleProps> = ({
 
       {/* Feed List */}
       <section aria-label="Brief passages list" className="space-y-4">
+        {(feedError || refreshError) && (
+          <div
+            role="alert"
+            data-testid="brief-feed-error"
+            className="rounded-xl border border-[#F87171]/40 bg-red-950/30 px-4 py-3 text-xs sm:text-sm text-red-200 flex flex-wrap items-center justify-between gap-3"
+          >
+            <p className="min-w-0 flex-1">
+              {feedError ?? refreshError}
+              {items.length > 0 ? ' The stories below were loaded earlier and still work.' : ''}
+            </p>
+            <button
+              type="button"
+              onClick={() => void loadFeed()}
+              className="inline-flex items-center gap-1.5 min-h-[52px] px-4 rounded-lg bg-[#D99B26] text-[#0B1117] text-xs font-semibold hover:bg-[#E5AE42] shrink-0"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Try again</span>
+            </button>
+          </div>
+        )}
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3 text-[#94A3B8]">
             <span className="h-5 w-5 rounded-full border-2 border-[#D99B26] border-t-transparent animate-spin" />
             <p className="text-sm">Loading authentic passages…</p>
           </div>
-        ) : items.length === 0 ? (
+        ) : items.length === 0 && feedError ? null : items.length === 0 ? (
           <div className="p-8 sm:p-12 rounded-xl border border-[#23303E] bg-[#111922] text-center space-y-3">
             <Sparkles className="w-8 h-8 text-[#94A3B8] mx-auto" />
             <p className="text-sm sm:text-base font-semibold text-[#F8FAFC]">No passages found for this combination</p>

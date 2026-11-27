@@ -1,4 +1,3 @@
-import {getRoleplaySecret} from '../../server/roleplayStore.ts';
 import {spread} from '../lib/data.ts';
 import {okJson, openHelper, pMap, runCase, withApi} from '../lib/harness.ts';
 import {ask, bool, str, Type} from '../lib/judge.ts';
@@ -95,11 +94,18 @@ export const roleplay: Feature = {
             await api.post('/api/opi/roleplay/scenario', {language: s.language, dialect: s.dialect, level: s.level}),
             'roleplay/scenario'
           );
-          const secret = getRoleplaySecret(scenario.scenarioId);
-          if (!secret) throw new Error('scenario secret was not stored');
+          const opened = api.roleplayTokens.open(scenario.scenarioToken);
+          if (!opened.ok) throw new Error(`scenario token could not be opened: ${opened.reason}`);
+          const secret = opened.record;
           registers.set(scenario.register, (registers.get(scenario.register) ?? 0) + 1);
 
-          const base = {language: s.language, dialect: s.dialect, level: s.level, scenarioId: scenario.scenarioId};
+          const base = {
+            language: s.language,
+            dialect: s.dialect,
+            level: s.level,
+            scenarioId: scenario.scenarioId,
+            scenarioToken: scenario.scenarioToken,
+          };
           const history: {role: 'examiner' | 'candidate'; text: string}[] = [];
           const characterLines: string[] = [];
           let complicationIntroduced = false;

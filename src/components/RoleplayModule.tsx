@@ -5,6 +5,7 @@ import {getDialectInfo} from '../utils/ilrLogic';
 import {ROLEPLAY_DURATION_SECONDS} from '../utils/opiRoleplay';
 import {saveLastOpiAudio} from '../utils/opiAudioStore';
 import {fetchRoleplayScenario, requestRoleplayTurn} from '../services/api';
+import {ApiRequestError} from '../services/http';
 import {useSpeechRecognition, useSpeechSynthesis} from '../hooks/useSpeech';
 import {useCallAudio} from '../hooks/useCallAudio';
 import {type SaveVocabFn, useWordLookup} from '../hooks/useWordLookup';
@@ -238,6 +239,7 @@ export const RoleplayModule: React.FC<RoleplayModuleProps> = ({
     try {
       const openTurn = await requestRoleplayTurn({
         scenarioId: scenario.scenarioId,
+        scenarioToken: scenario.scenarioToken,
         language: config.language,
         dialect: dialectInfo.id,
         level: scenario.level,
@@ -309,6 +311,7 @@ export const RoleplayModule: React.FC<RoleplayModuleProps> = ({
     try {
       const turn = await requestRoleplayTurn({
         scenarioId: scenario.scenarioId,
+        scenarioToken: scenario.scenarioToken,
         language: config.language,
         dialect: dialectInfo.id,
         level: scenario.level,
@@ -350,7 +353,18 @@ export const RoleplayModule: React.FC<RoleplayModuleProps> = ({
       setMessages((prev) => [...prev, charMsg]);
       speakCharacterTurn(turn.characterText);
     } catch (err) {
-      setCallError(err instanceof Error ? err.message : 'Role-play turn failed.');
+      if (err instanceof ApiRequestError && err.code === 'scenario_expired') {
+        // The scenario can't continue, but nothing the learner said is lost: End call grades what was said.
+        setCallError(`${err.message} Tap End call to see feedback on what you said so far.`);
+      } else {
+        // Put the answer back in the box and out of the transcript so it can be sent again, not counted twice.
+        messagesRef.current = messagesRef.current.filter((m) => m.id !== candidateMsg.id);
+        setMessages((prev) => prev.filter((m) => m.id !== candidateMsg.id));
+        setDraftResponse(cleanText);
+        setCallError(
+          `${err instanceof Error ? err.message : 'Role-play turn failed.'} Your answer is kept below: tap Send to try again.`
+        );
+      }
     } finally {
       setIsThinking(false);
     }
@@ -379,6 +393,7 @@ export const RoleplayModule: React.FC<RoleplayModuleProps> = ({
     try {
       const turn = await requestRoleplayTurn({
         scenarioId: scenario.scenarioId,
+        scenarioToken: scenario.scenarioToken,
         language: config.language,
         dialect: dialectInfo.id,
         level: scenario.level,
@@ -486,7 +501,14 @@ export const RoleplayModule: React.FC<RoleplayModuleProps> = ({
         isMuted={callAudio.isMuted}
         micLevel={callAudio.micLevel}
         sttSupported={stt.supported}
-        sttError={stt.error}
+        sttUnavailable={stt.failed}
+        sttError={stt.error ?? callAudio.micError}
+        ttsUnsupported={!tts.supported}
+        ttsBlocked={tts.blocked}
+        onPlayBlocked={tts.playBlocked}
+        onRetryStart={() => {
+          void callAudio.stopCapture().then(() => handleStartCall());
+        }}
         apiError={callError}
         draftResponse={draftResponse}
         wordLookup={wordLookup}

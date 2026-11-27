@@ -1,5 +1,6 @@
 import React from 'react';
 import {AlertTriangle, RotateCcw} from 'lucide-react';
+import {reportClientError} from '../services/errorReporter';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -30,6 +31,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
     console.error(`[ErrorBoundary:${this.props.scopeLabel ?? 'app'}]`, error, info.componentStack);
+    reportClientError('react_error', error);
   }
 
   private handleRecover = () => {

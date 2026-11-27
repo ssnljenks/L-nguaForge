@@ -3,6 +3,7 @@ import type {AddressInfo} from 'node:net';
 import {createApp, jsonErrorHandler} from '../../server/app.ts';
 import {loadConfig} from '../../server/config.ts';
 import type {GenerateStructured} from '../../server/gemini.ts';
+import {createRoleplayTokenSealer, type RoleplayTokenSealer} from '../../server/roleplayToken.ts';
 import {BudgetExceededError, createEvalGenerator, type CallContext, type CallRecord, type Runtime} from './llm.ts';
 import type {CaseResult, Check} from './types.ts';
 import {casePassed} from './types.ts';
@@ -23,6 +24,8 @@ export interface ApiResponse {
 export interface EvalApi {
   post(path: string, body: unknown): Promise<ApiResponse>;
   generate: GenerateStructured;
+  /** Opens and seals role-play scenario tokens for this app instance. */
+  roleplayTokens: RoleplayTokenSealer;
   records: CallRecord[];
   close(): Promise<void>;
 }
@@ -34,14 +37,16 @@ export interface EvalApi {
 export async function openApi(rt: Runtime, ctx: CallContext): Promise<EvalApi> {
   const records: CallRecord[] = [];
   const generate = createEvalGenerator(rt, ctx, records);
-  const config = {...loadConfig({TRUST_PROXY: '0'}), apiRateLimitPerMinute: 1_000_000};
-  const app = createApp({config, generate});
+  const config = {...loadConfig({TRUST_PROXY: '0'}), apiRateLimitPerMinute: 1_000_000, apiDailyLimitPerIp: 0};
+  const roleplayTokens = createRoleplayTokenSealer(['eval-harness']);
+  const app = createApp({config, generate, roleplayTokens});
   app.use(jsonErrorHandler);
   const server = http.createServer(app);
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const {port} = server.address() as AddressInfo;
   return {
     generate,
+    roleplayTokens,
     records,
     async post(path, body) {
       const res = await fetch(`http://127.0.0.1:${port}${path}`, {

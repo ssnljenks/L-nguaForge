@@ -1,7 +1,9 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {GeminiLiveVoice, MilitaryDomain, TalkCorrectionMode, TalkPickedUpItem, TargetLanguage} from '../types';
 import {base64PcmToFloat32, computeRmsLevel, mergeTranscriptChunk, pcm16BytesToFloat32} from '../utils/liveAudio';
+import {describeMicError, getBrowserEnv} from '../audio/capabilities';
 import {type MicCapture, startMicCapture} from '../audio/micCapture';
+import {reportClientError, reportClientEvent} from '../services/errorReporter';
 
 export type {GeminiLiveVoice};
 
@@ -29,6 +31,25 @@ export interface UseGeminiLiveCallbacks {
   onTalkNote?: (note: TalkNotePayload) => void;
 }
 
+/** How long to wait for the server's `ready` before giving up on a connection that never completes. */
+export const LIVE_CONNECT_TIMEOUT_MS = 15_000;
+
+/** After the app returns to the foreground, how long to wait for the microphone to come back before ending. */
+const RESUME_GRACE_MS = 2_000;
+
+/**
+ * iOS silences Web Audio when the ring/silent switch is on unless the page declares a playback session.
+ * `play-and-record` keeps the call audible (and routes it like a call). No-op where the API doesn't exist.
+ */
+function declareCallAudioSession(): void {
+  try {
+    const session = (navigator as unknown as {audioSession?: {type: string}}).audioSession;
+    if (session) session.type = 'play-and-record';
+  } catch {
+    // Not supported: nothing to do
+  }
+}
+
 function createResilientAudioContext(AudioCtxCtor: typeof AudioContext, preferredSampleRate: number): AudioContext {
   try {
     return new AudioCtxCtor({sampleRate: preferredSampleRate});
@@ -50,6 +71,8 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
   const streamRef = useRef<MediaStream | null>(null);
   const inputAudioCtxRef = useRef<AudioContext | null>(null);
   const captureRef = useRef<MicCapture | null>(null);
+  const connectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const outputAudioCtxRef = useRef<AudioContext | null>(null);
   const nextStartTimeRef = useRef<number>(0);
@@ -115,6 +138,14 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
   const cleanupResources = useCallback(() => {
     isReadyRef.current = false;
     stopQueuedPlayback();
+    if (connectTimerRef.current) {
+      clearTimeout(connectTimerRef.current);
+      connectTimerRef.current = null;
+    }
+    if (resumeTimerRef.current) {
+      clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = null;
+    }
 
     captureRef.current?.stop();
     captureRef.current = null;
@@ -245,7 +276,20 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
       }
 
       try {
-        // 1. Capture microphone with echo cancellation so speaker output doesn't barge-in falsely
+        // 1. Create and unlock both AudioContexts first, while we are still inside the tap that started the
+        //    call: iOS leaves a context created after the permission prompt suspended, and Chrome Android
+        //    applies the same autoplay rule. Separate 16 kHz input and 24 kHz output contexts, with a safe
+        //    fallback to the hardware rate.
+        declareCallAudioSession();
+        const AudioCtxCtor =
+          window.AudioContext || (window as unknown as {webkitAudioContext: typeof AudioContext}).webkitAudioContext;
+        const inputCtx = createResilientAudioContext(AudioCtxCtor, 16000);
+        const outputCtx = createResilientAudioContext(AudioCtxCtor, 24000);
+        inputAudioCtxRef.current = inputCtx;
+        outputAudioCtxRef.current = outputCtx;
+        const unlocking = Promise.all([inputCtx.resume(), outputCtx.resume()]).catch(() => {});
+
+        // 2. Capture microphone with echo cancellation so speaker output doesn't barge-in falsely
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             channelCount: 1,
@@ -263,23 +307,20 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
               flushUserDraft();
               flushPartnerDraft();
               cleanupResources();
-              setError('Microphone input stopped unexpectedly. Tap Start Live Voice to resume.');
+              setError(
+                'Microphone input stopped unexpectedly. Your conversation so far is saved. Tap Start Live Voice to resume.'
+              );
               updateStatus('error');
+              reportClientEvent('live', 'microphone track ended unexpectedly');
             }
           };
         }
 
-        // 2. Initialize separate 16kHz input and 24kHz output AudioContexts (with safe hardware fallback)
-        const AudioCtxCtor =
-          window.AudioContext || (window as unknown as {webkitAudioContext: typeof AudioContext}).webkitAudioContext;
-        const inputCtx = createResilientAudioContext(AudioCtxCtor, 16000);
-        const outputCtx = createResilientAudioContext(AudioCtxCtor, 24000);
-        inputAudioCtxRef.current = inputCtx;
-        outputAudioCtxRef.current = outputCtx;
-
         const keepAwake = (ctx: AudioContext) => {
           ctx.onstatechange = () => {
-            if (!userEndedRef.current && ctx.state === 'suspended') {
+            // iOS reports 'interrupted' (a call, Siri, an alarm) as well as 'suspended'.
+            const state = ctx.state as AudioContextState | 'interrupted';
+            if (!userEndedRef.current && (state === 'suspended' || state === 'interrupted')) {
               ctx.resume().catch(() => {});
             }
           };
@@ -287,6 +328,7 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
         keepAwake(inputCtx);
         keepAwake(outputCtx);
 
+        await unlocking;
         if (inputCtx.state === 'suspended') await inputCtx.resume();
         if (outputCtx.state === 'suspended') await outputCtx.resume();
 
@@ -295,6 +337,20 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
         const ws = new WebSocket(`${protocol}//${window.location.host}/ws/live`);
         ws.binaryType = 'arraybuffer';
         wsRef.current = ws;
+        // A connection that never completes (captive Wi-Fi, a dead tunnel) would sit on "Connecting…" forever.
+        connectTimerRef.current = setTimeout(() => {
+          connectTimerRef.current = null;
+          if (isReadyRef.current || userEndedRef.current) return;
+          userEndedRef.current = true;
+          flushUserDraft();
+          flushPartnerDraft();
+          cleanupResources();
+          setError(
+            "Couldn't connect to live voice. Check your connection and tap Start Live Voice to try again, or use the text box."
+          );
+          updateStatus('error');
+          reportClientEvent('live', 'connect timeout');
+        }, LIVE_CONNECT_TIMEOUT_MS);
 
         ws.onopen = () => {
           ws.send(
@@ -331,6 +387,10 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
           }
 
           if (payload.type === 'ready') {
+            if (connectTimerRef.current) {
+              clearTimeout(connectTimerRef.current);
+              connectTimerRef.current = null;
+            }
             isReadyRef.current = true;
             updateStatus('listening');
             return;
@@ -423,9 +483,12 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
           userEndedRef.current = true;
           flushUserDraft();
           flushPartnerDraft();
-          setError('Live voice connection interrupted. Tap Start Live Voice to reconnect.');
+          setError(
+            'Live voice connection interrupted. Your conversation so far is saved. Tap Start Live Voice to reconnect.'
+          );
           cleanupResources();
           updateStatus('error');
+          reportClientEvent('live', 'websocket error');
         };
 
         ws.onclose = (closeEvent) => {
@@ -435,8 +498,11 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
           cleanupResources();
           if (!wasUserEnded && statusRef.current !== 'error') {
             const suffix = closeEvent.code && closeEvent.code !== 1000 ? ` (code ${closeEvent.code})` : '';
-            setError(`Live voice connection dropped${suffix}. Tap Start Live Voice to reconnect.`);
+            setError(
+              `Live voice connection dropped${suffix}. Your conversation so far is saved. Tap Start Live Voice to reconnect.`
+            );
             updateStatus('error');
+            reportClientEvent('live', `websocket closed unexpectedly (${closeEvent.code || 'no code'})`);
           } else {
             updateStatus((prev) => (prev === 'error' ? 'error' : 'idle'));
           }
@@ -467,14 +533,9 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
       } catch (err) {
         userEndedRef.current = true;
         cleanupResources();
-        const message =
-          err instanceof DOMException && err.name === 'NotAllowedError'
-            ? 'Microphone permission was blocked. Allow mic access in your browser to use Live Voice.'
-            : err instanceof Error
-              ? err.message
-              : 'Unable to start live voice session.';
-        setError(message);
+        setError(describeMicError(err, {...getBrowserEnv(), secureContext: window.isSecureContext}));
         updateStatus('error');
+        if (!(err instanceof DOMException && err.name === 'NotAllowedError')) reportClientError('live', err);
       }
     },
     [cleanupResources, flushPartnerDraft, flushUserDraft, scheduleAudioChunk, stopQueuedPlayback, updateStatus]
@@ -513,6 +574,52 @@ export function useGeminiLive(callbacks?: UseGeminiLiveCallbacks) {
   }, [cleanupResources]);
 
   const isLive = status === 'connecting' || status === 'listening' || status === 'speaking';
+
+  // Network loss and the phone being locked or backgrounded don't always close the socket promptly, so the
+  // call can look alive while nothing is flowing. Detect both and say so, instead of leaving a dead call.
+  useEffect(() => {
+    if (!isLive) return;
+    const endWith = (message: string, reason: string) => {
+      if (userEndedRef.current) return;
+      userEndedRef.current = true;
+      flushUserDraft();
+      flushPartnerDraft();
+      cleanupResources();
+      setError(message);
+      updateStatus('error');
+      reportClientEvent('live', reason);
+    };
+    const onOffline = () =>
+      endWith(
+        "You went offline, so live voice stopped. Your conversation so far is saved. Tap Start Live Voice when you're back online, or use the text box.",
+        'went offline during live call'
+      );
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      for (const ctx of [inputAudioCtxRef.current, outputAudioCtxRef.current]) {
+        if (ctx && ctx.state !== 'running' && ctx.state !== 'closed') ctx.resume().catch(() => {});
+      }
+      // A locked or backgrounded phone usually pauses or ends the microphone; give it a moment to come back.
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = setTimeout(() => {
+        resumeTimerRef.current = null;
+        const track = streamRef.current?.getAudioTracks()[0];
+        const socketOpen = wsRef.current?.readyState === WebSocket.OPEN;
+        if (!socketOpen || !track || track.readyState === 'ended' || track.muted) {
+          endWith(
+            'Live voice paused while the app was in the background. Your conversation so far is saved. Tap Start Live Voice to continue.',
+            'live call paused by background or screen lock'
+          );
+        }
+      }, RESUME_GRACE_MS);
+    };
+    window.addEventListener('offline', onOffline);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener('offline', onOffline);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [isLive, cleanupResources, flushPartnerDraft, flushUserDraft, updateStatus]);
 
   return useMemo(
     () => ({

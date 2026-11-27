@@ -447,6 +447,9 @@ function opiSession(raw: unknown): OpiSession | undefined {
     const scReg = oneOf(sc.register, ['usted', 'tú', 'vos', 'você', 'tu'] as const, scLang === 'pt' ? 'você' : 'usted');
     session.roleplayScenario = {
       scenarioId: str(sc.scenarioId),
+      ...(reqStr(sc.scenarioToken) && String(sc.scenarioToken).length <= 4096
+        ? {scenarioToken: String(sc.scenarioToken)}
+        : {}),
       level: scLevel,
       language: scLang,
       dialect: dialectFor(scLang, sc.dialect ?? raw.dialect),

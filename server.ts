@@ -6,6 +6,8 @@ import express from 'express';
 import {createApp, jsonErrorHandler} from './server/app.ts';
 import {globalBriefService} from './server/briefService.ts';
 import {loadConfig} from './server/config.ts';
+import {describeError, log} from './server/logger.ts';
+import {geminiBudget} from './server/quota.ts';
 import fs from 'fs';
 import {createFakeGenerator, createFakeLiveClient, FIXTURES_DIR} from './server/fakeGemini.ts';
 import {createGeminiGenerator} from './server/gemini.ts';
@@ -17,13 +19,14 @@ const BRIEF_REFRESH_INTERVAL_MS = 3 * 60 * 60 * 1000;
 
 async function startServer() {
   const config = loadConfig();
+  geminiBudget.configure(config.geminiDailyCallCap);
   const fakeGenerator = config.geminiFake ? createFakeGenerator() : null;
   const generate = fakeGenerator ?? createGeminiGenerator();
   const app = createApp({config, generate});
   const httpServer = http.createServer(app);
   if (config.geminiFake) {
     // Test-only: canned Gemini answers, fixed Brief items and their audio (see server/fakeGemini.ts).
-    console.warn('[gemini] GEMINI_FAKE=1: answering every Gemini call from server/fixtures/.');
+    log.warn('gemini_fake_mode', {hint: 'GEMINI_FAKE=1: answering every Gemini call from server/fixtures/.'});
     globalBriefService.useFixtureItems(
       JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, 'brief-items.json'), 'utf8'))
     );
@@ -69,13 +72,14 @@ async function startServer() {
   let briefRefreshTimer: ReturnType<typeof setInterval> | null = null;
 
   httpServer.listen(config.port, '0.0.0.0', () => {
-    console.log(`LinguaForge ILR server listening on http://0.0.0.0:${config.port}`);
+    log.info('server_listening', {port: config.port, geminiDailyCallCap: config.geminiDailyCallCap});
 
     // Non-blocking startup ingest + periodic refresh every 3 hours (only processes new URL hashes once).
     const runBriefIngest = () => {
       if (config.geminiFake) return;
-      void globalBriefService.refreshFeeds(process.env.GEMINI_API_KEY?.trim() ? generate : undefined).catch(() => {
+      void globalBriefService.refreshFeeds(process.env.GEMINI_API_KEY?.trim() ? generate : undefined).catch((err) => {
         // Seed items remain available if remote RSS feeds are unreachable.
+        log.warn('brief_refresh_failed', describeError(err));
       });
     };
     runBriefIngest();
@@ -85,7 +89,7 @@ async function startServer() {
 
   // Cloud Run sends SIGTERM before stopping an instance: stop accepting connections and drain.
   const shutdown = (signal: string) => {
-    console.log(`${signal} received, shutting down.`);
+    log.info('server_shutting_down', {signal});
     if (briefRefreshTimer) clearInterval(briefRefreshTimer);
     httpServer.close(() => process.exit(0));
     httpServer.closeIdleConnections();
@@ -96,6 +100,6 @@ async function startServer() {
 }
 
 startServer().catch((err) => {
-  console.error('Failed to start LinguaForge ILR server:', err);
+  log.error('server_start_failed', describeError(err));
   process.exit(1);
 });

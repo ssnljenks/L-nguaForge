@@ -1,0 +1,81 @@
+# Cloud Run service for the closed beta (REVIEW M-2 and M-3, see READINESS.md §4).
+#
+# Replace IMAGE and the secret names, then:
+#   gcloud run services replace deploy/cloud-run.service.yaml --region REGION
+# or, to build from source and keep these settings, deploy once with the flags in READINESS.md §4.
+#
+# Why these numbers:
+#   minScale/maxScale = 1   One instance holds the Brief cache and the Live voice session counters. A second
+#                           instance would re-run every Brief analysis (Gemini cost) and double the per-IP caps.
+#                           min=1 also avoids a cold start (and a full Brief re-ingest) for the first tester of the day.
+#   timeoutSeconds = 1200   Cloud Run ends a WebSocket when the request timeout is reached. Live voice sessions are
+#                           capped at MAX_LIVE_SESSION_MINUTES (15), so the timeout must be longer than that.
+#   concurrency = 80        One instance, all testers. Live voice is separately capped by MAX_LIVE_SESSIONS (20).
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: linguaforge
+  annotations:
+    run.googleapis.com/ingress: all
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: '1'
+        autoscaling.knative.dev/maxScale: '1'
+        run.googleapis.com/startup-cpu-boost: 'true'
+        # Default (CPU only while a request is open) is enough: the 3-hourly Brief refresh simply runs
+        # when the next tester opens the app. Set to 'false' for always-on CPU if you want it on schedule.
+        run.googleapis.com/cpu-throttling: 'true'
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 1200
+      containers:
+        - image: IMAGE
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: '1'
+              memory: 512Mi
+          env:
+            - name: NODE_ENV
+              value: production
+            # One proxy hop (Cloud Run's front end) sits between the browser and the app: the rate limiters
+            # key on the real client IP.
+            - name: TRUST_PROXY
+              value: '1'
+            # Sealed role-play scenarios (REVIEW M-3). Without it every restart expires running scenarios.
+            - name: ROLEPLAY_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: linguaforge-roleplay-token-secret
+                  key: latest
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: linguaforge-gemini-api-key
+                  key: latest
+            # Quota protection (READINESS.md §3). Defaults shown; tune after the first test week.
+            - name: GEMINI_DAILY_CALL_CAP
+              value: '3000'
+            - name: API_RATE_LIMIT_PER_MINUTE
+              value: '40'
+            - name: API_DAILY_LIMIT_PER_IP
+              value: '800'
+            - name: LIVE_DAILY_SESSIONS_PER_IP
+              value: '10'
+            - name: MAX_LIVE_SESSION_MINUTES
+              value: '15'
+            # Where testers open the app (the WebSocket origin check allows this host).
+            # - name: APP_URL
+            #   value: https://linguaforge-XXXX.a.run.app
+          startupProbe:
+            httpGet:
+              path: /api/health
+            periodSeconds: 3
+            failureThreshold: 20
+          livenessProbe:
+            httpGet:
+              path: /api/health
+            periodSeconds: 30
