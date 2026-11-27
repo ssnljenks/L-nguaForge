@@ -1,0 +1,11 @@
+{
+  "responses": [
+    {
+      "speakerRole": "City council spokesperson",
+      "scenarioTitle": "New bike lanes",
+      "briefingText": "El ayuntamiento anunció hoy la construcción de veinte kilómetros de ciclovías en el centro.",
+      "estimatedSeconds": 20,
+      "keyFacts": ["20 km of bike lanes", "City center"]
+    }
+  ]
+}

@@ -57,3 +57,51 @@ jobs:
           done
           curl -fsS http://localhost:3000/api/health
           curl -fsSI http://localhost:3000/ | grep -i '^content-security-policy:'
+
+  e2e:
+    name: End-to-end (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Build
+        run: bun run build
+
+      - name: Run e2e suite (GEMINI_FAKE=1, mobile 390x844 + desktop)
+        env:
+          E2E_BROWSERS: ${{ matrix.browser }}
+        run: npx playwright test
+
+      - name: Upload screenshots of main screens
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screens-${{ matrix.browser }}
+          path: e2e/screens/
+          if-no-files-found: warn
+
+      - name: Upload report and failure traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report-${{ matrix.browser }}
+          path: |
+            e2e/report/
+            e2e/test-results/

@@ -1,0 +1,20 @@
+{
+  "responses": [
+    {
+      "fidelityScore": 80,
+      "registerScore": 75,
+      "capturedPoints": ["20 km of bike lanes"],
+      "missedOrDistorted": ["Did not mention the city center"],
+      "terminologyFeedback": "\"Ciclovías\" is bike lanes.",
+      "modelRendition": "The city council announced 20 km of new bike lanes downtown.",
+      "errors": [
+        {
+          "key": "omission",
+          "wrong": "Omitted the location",
+          "fix": "Mention the city center",
+          "quote": "en el centro"
+        }
+      ]
+    }
+  ]
+}

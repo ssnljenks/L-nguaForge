@@ -20,6 +20,17 @@ export const LIVE_WS_MAX_PAYLOAD_BYTES = 128 * 1024;
 
 export interface ServerConfig {
   isProduction: boolean;
+  /**
+   * Serve the built app from dist/ (with the production CSP) instead of the Vite dev server. Always on in
+   * production; SERVE_DIST=1 turns it on for end-to-end tests, which need the real build and service worker.
+   */
+  serveDist: boolean;
+  /**
+   * GEMINI_FAKE=1: deterministic test mode. Every Gemini call is answered from server/fixtures/ (see
+   * server/fakeGemini.ts); request validation, the classification guard and client parsing still run.
+   * Never allowed in production: loadConfig throws.
+   */
+  geminiFake: boolean;
   port: number;
   /** Number of reverse-proxy hops in front of this server (Cloud Run = 1). 0 = trust no X-Forwarded-* headers. */
   trustProxyHops: number;
@@ -57,9 +68,17 @@ export function parseHostList(raw: string | undefined): string[] {
     });
 }
 
+export const GEMINI_FAKE_IN_PRODUCTION_MESSAGE =
+  'GEMINI_FAKE=1 is a test-only mode and cannot be used with NODE_ENV=production. Refusing to start.';
+
 export function loadConfig(env: Env = process.env): ServerConfig {
+  const isProduction = env.NODE_ENV === 'production';
+  const geminiFake = env.GEMINI_FAKE === '1';
+  if (isProduction && geminiFake) throw new Error(GEMINI_FAKE_IN_PRODUCTION_MESSAGE);
   return {
-    isProduction: env.NODE_ENV === 'production',
+    isProduction,
+    serveDist: isProduction || env.SERVE_DIST === '1',
+    geminiFake,
     port: readNonNegativeInt(env, 'PORT', 3000),
     trustProxyHops: readNonNegativeInt(env, 'TRUST_PROXY', 1),
     apiRateLimitPerMinute: readNonNegativeInt(env, 'API_RATE_LIMIT_PER_MINUTE', 40),

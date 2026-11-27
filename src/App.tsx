@@ -512,14 +512,15 @@ export default function App() {
               type="button"
               data-testid="mission-chip"
               onClick={() => setMissionSheetOpen(true)}
-              aria-label={`Change mission context: ${config.language.toUpperCase()} ${dialectInfo.short}${
-                config.workFocusEnabled ? ` ${domainInfo.shortLabel}` : ''
-              }`}
+              // Visible text first, so the accessible name contains what sighted users see (WCAG 2.5.3).
+              aria-label={`${config.language.toUpperCase()} ${dialectInfo.short}${
+                config.workFocusEnabled ? ` · ${domainInfo.shortLabel}` : ''
+              } — change mission context`}
               className="inline-flex items-center gap-2 min-h-[44px] max-w-full px-3 rounded-lg border border-[#23303E] bg-[#111922] hover:border-[#D99B26]/60 text-left transition-colors"
             >
               <span className="px-1.5 py-0.5 rounded bg-[#D99B26] text-[#0B1117] font-mono text-[11px] font-bold shrink-0">
                 {config.language.toUpperCase()}
-              </span>
+              </span>{' '}
               <span className="text-xs sm:text-sm font-medium text-[#E6EDF3] truncate">
                 {dialectInfo.short}
                 {/* Domain is work content: shown only with Work focus ON (REVIEW H-3). */}

@@ -1,0 +1,72 @@
+{
+  "responses": [
+    {
+      "resolvedOutcome": "resolved",
+      "summary": "You explained the problem politely and proposed a fair solution. You kept the usted register throughout.",
+      "checklist": [
+        {
+          "itemKey": "rp_l1_request",
+          "label": "rp_l1_request",
+          "status": "met",
+          "evidence": "\"Compré este teléfono ayer y la pantalla parpadea.\""
+        },
+        {
+          "itemKey": "rp_l1_courtesy",
+          "label": "rp_l1_courtesy",
+          "status": "met",
+          "evidence": "\"Compré este teléfono ayer y la pantalla parpadea.\""
+        },
+        {
+          "itemKey": "rp_l1_basic_qa",
+          "label": "rp_l1_basic_qa",
+          "status": "met",
+          "evidence": "\"Compré este teléfono ayer y la pantalla parpadea.\""
+        },
+        {
+          "itemKey": "rp_l2_explain",
+          "label": "rp_l2_explain",
+          "status": "met",
+          "evidence": "\"Compré este teléfono ayer y la pantalla parpadea.\""
+        },
+        {
+          "itemKey": "rp_l2_resolve",
+          "label": "rp_l2_resolve",
+          "status": "met",
+          "evidence": "\"Compré este teléfono ayer y la pantalla parpadea.\""
+        },
+        {
+          "itemKey": "rp_l2_narrate",
+          "label": "rp_l2_narrate",
+          "status": "met",
+          "evidence": "\"Compré este teléfono ayer y la pantalla parpadea.\""
+        },
+        {
+          "itemKey": "rp_l3_support",
+          "label": "rp_l3_support",
+          "status": "met",
+          "evidence": "\"Compré este teléfono ayer y la pantalla parpadea.\""
+        },
+        {
+          "itemKey": "rp_l3_adapt",
+          "label": "rp_l3_adapt",
+          "status": "met",
+          "evidence": "\"Compré este teléfono ayer y la pantalla parpadea.\""
+        },
+        {
+          "itemKey": "rp_l3_tone_register",
+          "label": "rp_l3_tone_register",
+          "status": "met",
+          "evidence": "\"Compré este teléfono ayer y la pantalla parpadea.\""
+        }
+      ],
+      "errors": [
+        {
+          "key": "tu_for_usted",
+          "wrong": "¿Me puedes ayudar?",
+          "fix": "¿Me puede ayudar?",
+          "quote": "¿Me puedes ayudar con el teléfono?"
+        }
+      ]
+    }
+  ]
+}

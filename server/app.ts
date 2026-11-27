@@ -23,7 +23,7 @@ export function createApp({config, generate}: AppOptions): Express {
   const app = express();
   app.set('trust proxy', config.trustProxyHops);
   app.disable('x-powered-by');
-  app.use(createSecurityHeaders(config));
+  app.use(createSecurityHeaders({isProduction: config.serveDist, frameAncestors: config.frameAncestors}));
 
   app.get('/api/health', (_req, res) => {
     res.json({ok: true});

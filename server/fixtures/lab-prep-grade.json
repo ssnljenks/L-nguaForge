@@ -1,0 +1,16 @@
+{
+  "responses": [
+    {
+      "estimatedIlr": "2+",
+      "structureScore": 72,
+      "phaseFeedback": {
+        "point": "Clear thesis.",
+        "reason": "One solid reason.",
+        "example": "Concrete example.",
+        "pivot": "Weak conclusion."
+      },
+      "subjunctiveNote": "Use the subjunctive after \"es importante que\".",
+      "upgradedConclusion": "Por consiguiente, es fundamental que la ciudad actúe con prudencia."
+    }
+  ]
+}

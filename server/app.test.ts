@@ -58,7 +58,7 @@ test('health check and security headers', async () => {
   assert.equal(res.headers.get('x-powered-by'), null);
   assert.equal(res.headers.get('content-security-policy'), null, 'no CSP in dev (Vite needs inline scripts)');
 
-  const prod = await startApp({isProduction: true});
+  const prod = await startApp({isProduction: true, serveDist: true});
   const csp = (await fetch(`${prod.url}/api/health`)).headers.get('content-security-policy') ?? '';
   assert.match(csp, /script-src 'self'/);
   assert.match(csp, /frame-ancestors 'self' https:\/\/aistudio\.google\.com/);
