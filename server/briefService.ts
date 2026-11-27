@@ -602,11 +602,11 @@ STRICT DLPT5 ITEM REQUIREMENTS:
      * "text": the English option text.
      * "justification": 1-2 crisp sentences in English referencing/quoting the source passage explaining why it is correct OR why it is a trap.
      * "trapType": for the ONE correct choice set "none"; for EACH of the 3 wrong choices pick the most accurate distractor tag from:
-       - "mentioned_not_answer"
-       - "not_in_passage"
-       - "true_not_answer"
-       - "wrong_detail"
-       - "over_inference"
+       - "mentioned_not_answer": repeats words from the passage but answers a different question
+       - "not_in_passage": introduces information that never appears in the passage
+       - "true_not_answer": is stated in the passage and true, but does not answer the question asked
+       - "wrong_detail": distorts a number, actor, cause, place or polarity that the passage states
+       - "over_inference": stretches beyond what the passage supports (extreme or unsupported conclusion)
    - "targetVocabulary": 1 to 3 key target-language terms from the passage central to this question, with English glosses.
 5. Never write a question whose correct answer relies on outside world knowledge not stated or clearly implied in the source passage.`;
 
@@ -824,7 +824,12 @@ GRADING RULES (STRICT FIDELITY):
         const description = clampText(rec.description, BRIEF_FIELD_LIMITS.gistFinding);
         if (!description) continue;
         const sourceQuote = clampText(rec.sourceQuote, BRIEF_FIELD_LIMITS.gistFinding) || fallbackQuote;
-        const rawSpan = includeLearnerSpan ? clampText(rec.learnerSpan, BRIEF_FIELD_LIMITS.gistFinding) : '';
+        const claimedSpan = includeLearnerSpan ? clampText(rec.learnerSpan, BRIEF_FIELD_LIMITS.gistFinding) : '';
+        // A span that is not actually in the learner's text cannot be highlighted and may be invented: drop it, keep the finding.
+        const rawSpan =
+          claimedSpan && normalizeForSourceMatch(cleanedSummary).includes(normalizeForSourceMatch(claimedSpan))
+            ? claimedSpan
+            : '';
         out.push({
           description,
           sourceQuote,

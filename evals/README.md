@@ -12,6 +12,13 @@ bun run eval --label after --compare evals/results/baseline.json   # adds a befo
 bun run test:evals                     # offline harness tests (no API, no key)
 ```
 
+Before/after on this branch: the production fixes are in the commit after the eval suite, so
+
+```bash
+git checkout 7f0cff7 && bun run eval --label baseline      # eval suite only, no fixes
+git checkout eval/ai-quality && bun run eval --label after --compare evals/results/baseline.json
+```
+
 Needs `GEMINI_API_KEY` (env or `.env`). Model IDs are read from `server/config.ts` and never changed here.
 
 ## Budget, cache, safety

@@ -7,6 +7,7 @@ import {handleAsync, UserFacingError} from '../errors.ts';
 import {BUDGETS, ThinkingLevel} from '../gemini.ts';
 import {asRecordArray, assertUnclassifiedText, resolveTrainingContext, sanitizeString} from '../validation.ts';
 import type {RouteDeps} from './types.ts';
+import {createUntrustedFence} from '../untrustedContent.ts';
 
 const FIX_DRILL_PROMPT_COUNT = 8;
 
@@ -120,6 +121,7 @@ STRICT RULES:
       assertUnclassifiedText(promptTarget, userAnswer);
 
       const entry = getTaxonomyEntry(errorKey);
+      const fence = createUntrustedFence();
 
       const data = await generate({
         model: MODELS.chat,
@@ -130,11 +132,13 @@ TARGET STRUCTURE ONLY:
 - Label: ${entry.label}
 - Rule: ${entry.fixFocusHint}
 
+${fence.notice}
+
 PROMPT:
-"${promptTarget}"
+${fence.wrap('PROMPT', promptTarget)}
 
 LEARNER ANSWER:
-"${userAnswer}"
+${fence.wrap('LEARNER_ANSWER', userAnswer)}
 
 STRICT GRADING RULES:
 1. Check ONLY whether the learner successfully used/followed "${entry.label}" (${entry.fixFocusHint}).

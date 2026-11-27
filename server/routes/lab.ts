@@ -15,6 +15,7 @@ import {
   sanitizeStringArray,
 } from '../validation.ts';
 import type {RouteDeps} from './types.ts';
+import {createUntrustedFence} from '../untrustedContent.ts';
 
 export function registerLabRoutes(router: Router, {generate}: RouteDeps): void {
   // PREP monologue prompt generator
@@ -73,12 +74,15 @@ Provide the prompt in ${langName}, an English summary, and 4 recommended high-re
         throw new UserFacingError(400, 'Record or enter your monologue transcript before grading.');
       }
       assertUnclassifiedText(promptTarget, transcript);
+      const fence = createUntrustedFence();
 
       const data = await generate({
         model: MODELS.standard,
         contents: `Grade this 90-second PREP monologue (actual duration: ${durationSeconds}s) in ${langName} (${dialectLabel}).
+${fence.notice}
 PROMPT: ${promptTarget}
-CANDIDATE MONOLOGUE: ${transcript}
+CANDIDATE MONOLOGUE:
+${fence.wrap('MONOLOGUE', transcript)}
 
 Evaluate Point (0:00–0:15), Reason (0:15–0:40), Example (0:40–1:10), and Pivot/Conclusion (1:10–1:30), plus subjunctive/conditional control and provide one polished ILR 2+/3 closing pivot sentence in ${langName}.`,
         thinkingLevel: ThinkingLevel.MEDIUM,

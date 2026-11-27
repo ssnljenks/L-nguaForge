@@ -9,6 +9,7 @@ import {
 } from './briefService.ts';
 import {isSafeFeedUrl} from './feedFetch.ts';
 import type {GenerateStructured} from './gemini.ts';
+import {SEED_BRIEF_ITEMS} from '../src/utils/briefLogic.ts';
 
 const PUBLISHER_TEXT =
   'El gobierno anunció este martes un plan para ampliar la red de bibliotecas públicas en los barrios. ' +
@@ -353,4 +354,42 @@ test('server/sources.json lists only real, fetchable feeds (REVIEW L-7)', () => 
     assert.ok(isSafeFeedUrl(source.url), `${source.id} passes the URL check`);
     assert.ok(source.url.startsWith('https://'), `${source.id} uses https`);
   }
+});
+
+test('gist findings drop a learnerSpan that is not in the learner summary but keep the finding', async () => {
+  const svc = new BriefService();
+  const seed = SEED_BRIEF_ITEMS[0];
+  const audio = {
+    ...seed,
+    id: 'span-test',
+    mediaType: 'audio' as const,
+    transcript: 'La guardia costera detuvo una embarcación pequeña sin bandera visible.',
+    studyExcerpt: 'La guardia costera detuvo una embarcación pequeña sin bandera visible.',
+    drillable: true,
+  };
+  (svc as unknown as {cache: Map<string, unknown>}).cache.set(audio.id, audio);
+  const summary = 'The coast guard stopped a small boat. Officials said it carried five people.';
+  const model: GenerateStructured = async () => ({
+    mainPoint: 'partial',
+    keyDetails: {found: 1, total: 3, missing: []},
+    additions: [
+      {
+        description: 'real span',
+        learnerSpan: 'Officials said it carried five people.',
+        sourceQuote: 'sin bandera visible',
+      },
+      {
+        description: 'invented span',
+        learnerSpan: 'The captain was arrested at dawn.',
+        sourceQuote: 'sin bandera visible',
+      },
+    ],
+    omissions: [],
+    distortions: [],
+    modelGist: 'A faithful three sentence gist of the clip goes here.',
+  });
+  const result = await svc.gradeGist(audio.id, summary, model);
+  assert.equal(result.additions.length, 2);
+  assert.equal(result.additions[0].learnerSpan, 'Officials said it carried five people.');
+  assert.equal(result.additions[1].learnerSpan, undefined);
 });

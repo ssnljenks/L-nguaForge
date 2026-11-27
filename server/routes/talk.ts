@@ -15,6 +15,7 @@ import {
   sanitizeStringArray,
 } from '../validation.ts';
 import type {RouteDeps} from './types.ts';
+import {createUntrustedFence} from '../untrustedContent.ts';
 
 export function registerTalkRoutes(router: Router, {generate}: RouteDeps): void {
   // 1. "How do locals say..." lookup tailored to tutor's city, dialect, and slang level
@@ -30,7 +31,10 @@ export function registerTalkRoutes(router: Router, {generate}: RouteDeps): void 
       assertUnclassifiedText(englishQuery);
 
       const {tutor, langName, slangLevel, workTalk, domainLabel} = ctx;
-      const systemInstruction = `You are ${tutor.name} from ${tutor.city}, helping a learner speak natural ${tutor.regionTag} ${langName}.
+      const fence = createUntrustedFence();
+      const systemInstruction = `${fence.notice}
+
+You are ${tutor.name} from ${tutor.city}, helping a learner speak natural ${tutor.regionTag} ${langName}.
 Given an English thought or phrase, provide 1 or 2 authentic ways locals in ${tutor.city} actually say this at slang level ${slangLevel}/4 (0 = textbook, 4 = full street slang).
 ${
   workTalk && domainLabel
@@ -44,7 +48,7 @@ Rules:
 
       const data = await generate({
         model: MODELS.chat,
-        contents: `How would locals in ${tutor.city} say: "${englishQuery}" (Slang level ${slangLevel}/4)`,
+        contents: `How would locals in ${tutor.city} say the following (Slang level ${slangLevel}/4)?\n${fence.wrap('ENGLISH_QUERY', englishQuery)}`,
         systemInstruction,
         thinkingLevel: ThinkingLevel.LOW,
         responseSchema: {
