@@ -7,6 +7,8 @@ import {mergeTranscriptChunk} from '../src/utils/liveAudio.ts';
 import {LIVE_WS_MAX_PAYLOAD_BYTES, MODELS, type ServerConfig, VALID_LIVE_VOICES} from './config.ts';
 import {toPublicError} from './errors.ts';
 import {createGeminiGenerator, getAiClient, getLiveAiClient} from './gemini.ts';
+import {describeError, log, scrubText} from './logger.ts';
+import {createDailyKeyedCounter} from './quota.ts';
 import {getClientIp, isAllowedWebSocketOrigin, rejectUpgrade} from './security.ts';
 import {
   analyzeLiveTalkTurn,
@@ -153,6 +155,7 @@ export function attachLiveBridge(
 ): WebSocketServer {
   const liveWss = new WebSocketServer({noServer: true, maxPayload: LIVE_WS_MAX_PAYLOAD_BYTES});
   const connectionsByIp = new Map<string, number>();
+  const dailyStarts = createDailyKeyedCounter();
   let connectionCount = 0;
 
   httpServer.on('upgrade', (request, socket, head) => {
@@ -162,7 +165,7 @@ export function attachLiveBridge(
       return;
     }
     if (!isAllowedWebSocketOrigin(request, config)) {
-      console.warn('[live] rejected WebSocket upgrade from origin:', request.headers.origin ?? '(none)');
+      log.warn('live_upgrade_rejected', {origin: scrubText(String(request.headers.origin ?? '(none)'), 120)});
       rejectUpgrade(socket, 403, 'Forbidden');
       return;
     }
@@ -205,6 +208,16 @@ export function attachLiveBridge(
             : 'Live voice is at capacity right now. Please try again in a few minutes.',
       });
       clientWs.close(1013, 'Try again later');
+      return;
+    }
+    if (!dailyStarts.tryTake(clientIp, config.liveDailySessionsPerIp)) {
+      log.warn('live_daily_cap_reached');
+      sendJson({
+        type: 'error',
+        error:
+          'You have reached the daily limit for live voice sessions during testing. It resets at 00:00 UTC. Text chat still works.',
+      });
+      clientWs.close(1013, 'Daily limit reached');
       return;
     }
     connectionCount += 1;
@@ -322,6 +335,7 @@ export function attachLiveBridge(
               }
             },
             onerror: (err) => {
+              log.error('live_upstream_error', describeError(err));
               sendJson({type: 'error', error: toPublicError(err).message});
             },
             onclose: (event) => {
@@ -329,7 +343,10 @@ export function attachLiveBridge(
               liveSession = null;
               if (rawEvent?.reason) {
                 // Upstream close reasons can contain provider details; log them, don't forward them.
-                console.warn('[live] Gemini session closed:', rawEvent.code, rawEvent.reason);
+                log.warn('live_upstream_closed', {
+                  code: rawEvent.code,
+                  reason: scrubText(String(rawEvent.reason), 120),
+                });
               }
               sendJson({type: 'closed', code: typeof rawEvent?.code === 'number' ? rawEvent.code : undefined});
             },
@@ -353,6 +370,7 @@ export function attachLiveBridge(
         }
         sendJson({type: 'ready', voiceName});
       } catch (err) {
+        log.error('live_start_failed', describeError(err));
         sendJson({type: 'error', error: toPublicError(err).message});
         closeLiveSession();
       }

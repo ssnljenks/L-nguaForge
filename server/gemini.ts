@@ -1,5 +1,13 @@
 import {GoogleGenAI, type Schema, ThinkingLevel} from '@google/genai';
-import {ClientAbortedError, isTransientGeminiError, UserFacingError} from './errors.ts';
+import {
+  classifyGeminiError,
+  ClientAbortedError,
+  isTransientGeminiError,
+  mapPublicError,
+  UserFacingError,
+} from './errors.ts';
+import {describeError, log} from './logger.ts';
+import {geminiBudget} from './quota.ts';
 
 export {ThinkingLevel};
 
@@ -161,25 +169,76 @@ export interface StructuredPromptRequest {
 /** Sends a prompt that must return JSON matching `responseSchema`; returns the parsed object. */
 export type GenerateStructured = (request: StructuredPromptRequest) => Promise<Record<string, unknown>>;
 
+/** Token counts the SDK reports for a call; numbers only, so they are safe to log. */
+function usageFields(response: unknown): Record<string, number | undefined> {
+  const usage = (response as {usageMetadata?: Record<string, unknown>} | undefined)?.usageMetadata;
+  const num = (v: unknown) => (typeof v === 'number' ? v : undefined);
+  return {
+    promptTokens: num(usage?.promptTokenCount),
+    outputTokens: num(usage?.candidatesTokenCount),
+    thoughtTokens: num(usage?.thoughtsTokenCount),
+    totalTokens: num(usage?.totalTokenCount),
+  };
+}
+
 export function createGeminiGenerator(getClient: () => GoogleGenAI = getAiClient): GenerateStructured {
   return async (request) => {
     const ai = getClient();
-    const response = await withRetry(
-      (abortSignal) =>
-        ai.models.generateContent({
+    geminiBudget.assertAvailable();
+    const startedAt = Date.now();
+    let attempts = 0;
+    let response;
+    try {
+      response = await withRetry(
+        async (abortSignal) => {
+          attempts += 1;
+          geminiBudget.record();
+          try {
+            return await ai.models.generateContent({
+              model: request.model,
+              contents: request.contents,
+              config: {
+                systemInstruction: request.systemInstruction,
+                thinkingConfig: {thinkingLevel: request.thinkingLevel},
+                responseMimeType: 'application/json',
+                responseSchema: request.responseSchema,
+                abortSignal,
+              },
+            });
+          } catch (err) {
+            if (!request.signal?.aborted) {
+              log.warn('gemini_attempt_failed', {
+                model: request.model,
+                attempt: attempts,
+                kind: abortSignal.aborted ? 'timeout' : classifyGeminiError(err),
+                ...describeError(err),
+              });
+            }
+            throw err;
+          }
+        },
+        request.budget,
+        request.signal
+      );
+    } catch (err) {
+      if (!(err instanceof ClientAbortedError)) {
+        log.error('gemini_failure', {
           model: request.model,
-          contents: request.contents,
-          config: {
-            systemInstruction: request.systemInstruction,
-            thinkingConfig: {thinkingLevel: request.thinkingLevel},
-            responseMimeType: 'application/json',
-            responseSchema: request.responseSchema,
-            abortSignal,
-          },
-        }),
-      request.budget,
-      request.signal
-    );
+          attempts,
+          ms: Date.now() - startedAt,
+          kind: err instanceof UserFacingError && err.status === 504 ? 'timeout' : classifyGeminiError(err),
+          publicStatus: mapPublicError(err).status,
+          ...describeError(err),
+        });
+      }
+      throw err;
+    }
+    log.info('gemini_call', {
+      model: request.model,
+      attempts,
+      ms: Date.now() - startedAt,
+      ...usageFields(response),
+    });
     return parseModelJson(response.text, request.emptyMessage);
   };
 }

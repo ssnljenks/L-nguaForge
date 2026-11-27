@@ -1,12 +1,17 @@
+import {randomUUID} from 'node:crypto';
 import type {NextFunction, Request, RequestHandler, Response} from 'express';
+import {describeError, log, requestLogContext} from './logger.ts';
 
 /** An error whose message is safe to show to end users. */
 export class UserFacingError extends Error {
   readonly status: number;
-  constructor(status: number, message: string, options?: {cause?: unknown}) {
+  /** Optional machine-readable code the browser can act on (e.g. 'scenario_expired'). */
+  readonly code?: string;
+  constructor(status: number, message: string, options?: {cause?: unknown; code?: string}) {
     super(message, options);
     this.name = 'UserFacingError';
     this.status = status;
+    this.code = options?.code;
   }
 }
 
@@ -59,27 +64,46 @@ export function isTransientGeminiError(err: unknown): boolean {
   return kind === 'rate_limited' || kind === 'unavailable';
 }
 
-/** Maps any error to a status code and a message that is safe to return to the browser. */
-export function toPublicError(err: unknown): {status: number; message: string} {
+/** Maps any error to a status code and a message that is safe to return to the browser. Pure: no logging. */
+export function mapPublicError(err: unknown): {
+  status: number;
+  message: string;
+  kind: GeminiErrorKind | 'user';
+  code?: string;
+} {
   if (err instanceof UserFacingError) {
-    return {status: err.status, message: err.message};
+    return {status: err.status, message: err.message, kind: 'user', code: err.code};
   }
-  switch (classifyGeminiError(err)) {
+  const kind = classifyGeminiError(err);
+  switch (kind) {
     case 'auth':
-      console.error('[gemini] authentication failed:', extractMessage(err));
-      return {status: 403, message: 'Gemini API authentication failed. Verify your API key in Settings > Secrets.'};
+      return {
+        status: 403,
+        message: 'Gemini API authentication failed. Verify your API key in Settings > Secrets.',
+        kind,
+      };
     case 'rate_limited':
-      return {status: 429, message: 'Gemini API rate limit reached. Please wait a moment and try again.'};
+      return {status: 429, message: 'Gemini API rate limit reached. Please wait a moment and try again.', kind};
     case 'unavailable':
-      return {status: 503, message: 'Gemini is experiencing a brief demand spike. Please tap Send again in a moment.'};
+      return {
+        status: 503,
+        message: 'Gemini is experiencing a brief demand spike. Please tap Send again in a moment.',
+        kind,
+      };
     case 'model_not_found':
-      console.error('[gemini] model not found:', extractMessage(err));
-      return {status: 502, message: 'The configured AI model is unavailable right now. Please try again later.'};
+      return {status: 502, message: 'The configured AI model is unavailable right now. Please try again later.', kind};
     default:
-      // Unknown failure: keep details in server logs, never in the response.
-      console.error('[server] unexpected error:', err);
-      return {status: 500, message: 'Something went wrong on the server. Please try again.'};
+      return {status: 500, message: 'Something went wrong on the server. Please try again.', kind};
   }
+}
+
+/** Like mapPublicError, and logs failures that need an operator (details stay in logs, never in the response). */
+export function toPublicError(err: unknown): {status: number; message: string; code?: string} {
+  const mapped = mapPublicError(err);
+  if (mapped.kind === 'auth') log.error('gemini_auth_failed', describeError(err));
+  else if (mapped.kind === 'model_not_found') log.error('gemini_model_not_found', describeError(err));
+  else if (mapped.kind === 'unknown') log.error('unhandled_error', describeError(err));
+  return {status: mapped.status, message: mapped.message, ...(mapped.code ? {code: mapped.code} : {})};
 }
 
 /** Aborts when the client disconnects before the response has been sent. */
@@ -100,10 +124,17 @@ export type AsyncRouteHandler = (req: Request, res: Response, signal: AbortSigna
 export function handleAsync(handler: AsyncRouteHandler): RequestHandler {
   return (req: Request, res: Response, _next: NextFunction) => {
     const signal = createClientAbortSignal(res);
-    handler(req, res, signal).catch((err: unknown) => {
-      if (err instanceof ClientAbortedError || signal.aborted || res.headersSent) return;
-      const {status, message} = toPublicError(err);
-      res.status(status).json({error: message});
+    // Log lines written while handling this request (e.g. Gemini failures) carry its route, never its body.
+    const context = {
+      requestId: randomUUID().slice(0, 8),
+      route: `${req.method} ${req.baseUrl}${req.route?.path ?? req.path}`,
+    };
+    requestLogContext.run(context, () => {
+      handler(req, res, signal).catch((err: unknown) => {
+        if (err instanceof ClientAbortedError || signal.aborted || res.headersSent) return;
+        const {status, message, code} = toPublicError(err);
+        res.status(status).json({error: message, ...(code ? {code} : {})});
+      });
     });
   };
 }

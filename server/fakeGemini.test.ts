@@ -113,10 +113,18 @@ test('every fixture passes its real route: schema check, validation and post-pro
 
   const scenario = await ok('opi/roleplay/scenario', {...es, level: 2});
   assert.equal(JSON.stringify(scenario).includes('original receipt'), false, 'hidden goal stays server-side');
-  await ok('opi/roleplay/turn', {...es, scenarioId: scenario.scenarioId, level: 2, isOpening: true, history: []});
+  await ok('opi/roleplay/turn', {
+    ...es,
+    scenarioId: scenario.scenarioId,
+    scenarioToken: scenario.scenarioToken,
+    level: 2,
+    isOpening: true,
+    history: [],
+  });
   const rpDebrief = await ok('opi/roleplay/debrief', {
     ...es,
     scenarioId: scenario.scenarioId,
+    scenarioToken: scenario.scenarioToken,
     level: 2,
     messages: [{role: 'candidate', text: 'Compré este teléfono ayer.'}],
   });

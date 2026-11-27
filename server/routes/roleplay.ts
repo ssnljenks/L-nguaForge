@@ -13,7 +13,7 @@ import {MODELS} from '../config.ts';
 import {buildErrorReportingInstruction, extractReportedErrors, REPORTED_ERRORS_SCHEMA} from '../errorReporting.ts';
 import {handleAsync, UserFacingError} from '../errors.ts';
 import {BUDGETS, ThinkingLevel} from '../gemini.ts';
-import {getRoleplaySecret, saveRoleplaySecret} from '../roleplayStore.ts';
+import type {RoleplaySecretRecord} from '../roleplayToken.ts';
 import {
   asRecord,
   asRecordArray,
@@ -61,7 +61,53 @@ function levelScenarioGuidance(level: IlrBaseLevel): string {
 - hiddenGoal MUST state the specific underlying concern or assurance that will actually win the character over (e.g., written commitment on timeline, neighbor consensus safeguard, or concrete trial compromise).`;
 }
 
-export function registerRoleplayRoutes(router: Router, {generate}: RouteDeps): void {
+export const SCENARIO_DETAILS_UNAVAILABLE =
+  'Not available: this scenario expired before the debrief, so its hidden details could not be revealed.';
+
+export const SCENARIO_EXPIRED_MESSAGE =
+  'This role-play scenario is no longer available (the server was restarted or the scenario is too old). Your conversation is kept; start a new scenario to continue.';
+
+/**
+ * Finds the scenario a turn belongs to. A turn needs the sealed token; a missing or unreadable one is reported
+ * (410), never replaced with a generic scenario, because that would silently change the conversation mid-call
+ * (REVIEW M-3). The one exception is "replay with the twist", where the learner already holds the hidden goal
+ * and complication from the debrief and sends them with the scenario: there is no secret left to protect.
+ */
+function resolveScenarioSecret(
+  body: unknown,
+  tokens: RouteDeps['roleplayTokens'],
+  language: 'es' | 'pt',
+  dialectId: string
+): {secret: RoleplaySecretRecord; replayWithKnownTwist: boolean} {
+  const req = asRecord(body);
+  const opened = tokens.open(req.scenarioToken);
+  if (opened.ok) return {secret: opened.record, replayWithKnownTwist: false};
+
+  const knownHiddenGoal = sanitizeString(req.knownHiddenGoal, 600);
+  const knownComplication = sanitizeString(req.knownComplication, 600);
+  const situationEnglish = sanitizeString(req.situationEnglish, 800);
+  const learnerGoal = sanitizeString(req.learnerGoal, 400);
+  if (knownHiddenGoal && knownComplication && situationEnglish && learnerGoal) {
+    return {
+      replayWithKnownTwist: true,
+      secret: {
+        scenarioId: sanitizeString(req.scenarioId, 120),
+        level: parseRoleplayLevel(req.level),
+        language,
+        dialect: dialectId,
+        situationEnglish,
+        learnerGoal,
+        register: normalizeRoleplayRegister(req.register, language, dialectId),
+        characterRole: sanitizeString(req.characterRole, 120) || 'Staff member',
+        hiddenGoal: knownHiddenGoal,
+        complication: knownComplication,
+      },
+    };
+  }
+  throw new UserFacingError(410, SCENARIO_EXPIRED_MESSAGE, {code: 'scenario_expired'});
+}
+
+export function registerRoleplayRoutes(router: Router, {generate, roleplayTokens}: RouteDeps): void {
   // 1. Generate a civilian role-play scenario matched to ILR 1/2/3; keep hiddenGoal & complication server-side only.
   router.post(
     '/opi/roleplay/scenario',
@@ -130,7 +176,8 @@ Return ONLY JSON matching the schema:
             'A scheduling or record discrepancy prevents the standard solution unless the caller proposes an alternative.';
 
       const scenarioId = `rp-${crypto.randomUUID()}`;
-      saveRoleplaySecret({
+      // The secrets travel inside an encrypted token the browser can't read; any instance with the key can open it.
+      const scenarioToken = roleplayTokens.seal({
         scenarioId,
         level,
         language,
@@ -146,6 +193,7 @@ Return ONLY JSON matching the schema:
       // Strictly return ONLY public fields — NEVER send hiddenGoal or complication here.
       res.json({
         scenarioId,
+        scenarioToken,
         level,
         language,
         dialect: dialectId,
@@ -163,17 +211,11 @@ Return ONLY JSON matching the schema:
     handleAsync(async (req, res, signal) => {
       const {language, langName, dialectId, dialectLabel} = resolveTrainingContext(req.body);
       const level = parseRoleplayLevel(req.body?.level);
-      const scenarioId = sanitizeString(req.body?.scenarioId, 120);
-      const storedSecret = getRoleplaySecret(scenarioId);
-
-      const situationEnglish = storedSecret?.situationEnglish || sanitizeString(req.body?.situationEnglish, 800);
-      const learnerGoal = storedSecret?.learnerGoal || sanitizeString(req.body?.learnerGoal, 400);
-      const characterRole =
-        storedSecret?.characterRole || sanitizeString(req.body?.characterRole, 120) || 'Staff member';
-      const register = normalizeRoleplayRegister(storedSecret?.register ?? req.body?.register, language, dialectId);
-
-      const knownHiddenGoal = sanitizeString(req.body?.knownHiddenGoal, 600);
-      const knownComplication = sanitizeString(req.body?.knownComplication, 600);
+      const {secret, replayWithKnownTwist} = resolveScenarioSecret(req.body, roleplayTokens, language, dialectId);
+      const {situationEnglish, learnerGoal, characterRole} = secret;
+      const register = normalizeRoleplayRegister(secret.register, language, dialectId);
+      const knownHiddenGoal = replayWithKnownTwist ? secret.hiddenGoal : '';
+      const knownComplication = replayWithKnownTwist ? secret.complication : '';
       const userMessage = sanitizeString(req.body?.userMessage, 2500);
       const isOpening = Boolean(req.body?.isOpening);
       const isRepeat = Boolean(req.body?.isRepeat);
@@ -206,18 +248,8 @@ Return ONLY JSON matching the schema:
         throw new UserFacingError(400, 'Learner message is required.');
       }
 
-      const hiddenGoal =
-        storedSecret?.hiddenGoal ||
-        knownHiddenGoal ||
-        (level === 1
-          ? 'Confirm basic request politely and complete the everyday transaction.'
-          : 'Insist on a clear explanation and a workable compromise addressing the underlying concern.');
-      const complication =
-        storedSecret?.complication ||
-        knownComplication ||
-        (level === 1
-          ? 'None (straightforward survival transaction).'
-          : 'There is a practical snag with availability or policy that requires negotiation.');
+      const hiddenGoal = secret.hiddenGoal;
+      const complication = secret.complication;
 
       const pacing = determineRoleplayPacing({
         level,
@@ -337,13 +369,16 @@ ${levelFnList}`;
       const {language, langName, dialectId, dialectLabel} = resolveTrainingContext(req.body);
       const level = parseRoleplayLevel(req.body?.level);
       const scenarioId = sanitizeString(req.body?.scenarioId, 120);
-      const storedSecret = getRoleplaySecret(scenarioId);
+      // The debrief grades a conversation that already happened, so a scenario that can no longer be opened must
+      // not lose the learner's work: grade from the public details the client holds and say plainly that the
+      // scenario's secrets are unavailable, instead of inventing a generic hidden goal.
+      const opened = roleplayTokens.open(req.body?.scenarioToken);
+      const sealed = opened.ok ? opened.record : null;
 
-      const situationEnglish = storedSecret?.situationEnglish || sanitizeString(req.body?.situationEnglish, 800);
-      const learnerGoal = storedSecret?.learnerGoal || sanitizeString(req.body?.learnerGoal, 400);
-      const characterRole =
-        storedSecret?.characterRole || sanitizeString(req.body?.characterRole, 120) || 'Local resident';
-      const register = normalizeRoleplayRegister(storedSecret?.register ?? req.body?.register, language, dialectId);
+      const situationEnglish = sealed?.situationEnglish || sanitizeString(req.body?.situationEnglish, 800);
+      const learnerGoal = sealed?.learnerGoal || sanitizeString(req.body?.learnerGoal, 400);
+      const characterRole = sealed?.characterRole || sanitizeString(req.body?.characterRole, 120) || 'Local resident';
+      const register = normalizeRoleplayRegister(sealed?.register ?? req.body?.register, language, dialectId);
 
       const knownHiddenGoal = sanitizeString(req.body?.knownHiddenGoal, 600);
       const knownComplication = sanitizeString(req.body?.knownComplication, 600);
@@ -376,18 +411,11 @@ ${levelFnList}`;
         fullTranscript
       );
 
-      const hiddenGoal =
-        storedSecret?.hiddenGoal ||
-        knownHiddenGoal ||
-        (level === 1
-          ? 'Confirm basic transaction details politely.'
-          : 'Needed a clear explanation plus a workable practical compromise.');
-      const complication =
-        storedSecret?.complication ||
-        knownComplication ||
-        (level === 1
-          ? 'None (straightforward survival transaction — no complication).'
-          : 'A practical scheduling or policy obstacle raised during the conversation.');
+      const secretsAvailable = Boolean(
+        (sealed?.hiddenGoal && sealed.complication) || (knownHiddenGoal && knownComplication)
+      );
+      const hiddenGoal = sealed?.hiddenGoal || knownHiddenGoal || SCENARIO_DETAILS_UNAVAILABLE;
+      const complication = sealed?.complication || knownComplication || SCENARIO_DETAILS_UNAVAILABLE;
 
       const specs = getRoleplayChecklistSpecs(level);
       const checklistPrompt = specs.map((s) => `- ${s.itemKey}: "${s.label}"`).join('\n');
@@ -401,8 +429,8 @@ SCENARIO:
 - Role played by AI: ${characterRole} (target register: ${register})
 - Public situation: ${situationEnglish}
 - Learner goal: ${learnerGoal}
-- Revealed complication: ${complication}
-- Revealed hidden goal/motive: ${hiddenGoal}
+- Revealed complication: ${secretsAvailable ? complication : 'unknown (do not guess or invent one; judge only what the transcript shows)'}
+- Revealed hidden goal/motive: ${secretsAvailable ? hiddenGoal : 'unknown (do not guess or invent one; judge only what the transcript shows)'}
 
 ${dfence.notice}
 

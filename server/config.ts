@@ -38,6 +38,14 @@ export interface ServerConfig {
   maxLiveSessions: number;
   maxLiveSessionsPerIp: number;
   maxLiveSessionMinutes: number;
+  /** Live voice sessions one IP may start per UTC day (0 = unlimited). */
+  liveDailySessionsPerIp: number;
+  /** Gemini-backed POST requests one IP may make per UTC day (0 = unlimited). */
+  apiDailyLimitPerIp: number;
+  /** Upstream Gemini attempts, all users together, per UTC day (0 = unlimited). Retries count. */
+  geminiDailyCallCap: number;
+  /** POST /api/client-error reports one IP may send per minute. */
+  clientErrorLimitPerMinute: number;
   /** Extra hosts (besides the server's own) whose pages may open /ws/live. */
   extraAllowedHosts: string[];
   /** CSP frame-ancestors (production only). AI Studio embeds the app in an iframe. */
@@ -85,6 +93,10 @@ export function loadConfig(env: Env = process.env): ServerConfig {
     maxLiveSessions: readNonNegativeInt(env, 'MAX_LIVE_SESSIONS', 20),
     maxLiveSessionsPerIp: readNonNegativeInt(env, 'MAX_LIVE_SESSIONS_PER_IP', 2),
     maxLiveSessionMinutes: readNonNegativeInt(env, 'MAX_LIVE_SESSION_MINUTES', 15),
+    liveDailySessionsPerIp: readNonNegativeInt(env, 'LIVE_DAILY_SESSIONS_PER_IP', 10),
+    apiDailyLimitPerIp: readNonNegativeInt(env, 'API_DAILY_LIMIT_PER_IP', 800),
+    geminiDailyCallCap: readNonNegativeInt(env, 'GEMINI_DAILY_CALL_CAP', 3000),
+    clientErrorLimitPerMinute: readNonNegativeInt(env, 'CLIENT_ERROR_LIMIT_PER_MINUTE', 10),
     extraAllowedHosts: parseHostList(`${env.APP_URL ?? ''},${env.ALLOWED_ORIGINS ?? ''}`),
     frameAncestors: (env.FRAME_ANCESTORS ?? "'self' https://aistudio.google.com").split(/[,\s]+/).filter(Boolean),
     hmrEnabled: env.DISABLE_HMR !== 'true' && env.ENABLE_HMR === 'true',
