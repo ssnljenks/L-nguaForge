@@ -26,14 +26,14 @@ Needs `GEMINI_API_KEY` (env or `.env`). Model IDs are read from `server/config.t
 
 ## Layout
 
-| Path | What |
-|---|---|
-| `run.ts` | CLI |
-| `lib/` | budget, cache, in-process app harness, judge helpers, report writer, remediation hints |
-| `features/` | one file per eval (8) |
-| `scorers/` | deterministic checks (language, military terms, dialect markers) |
-| `data/` | golden datasets: all original text written for this suite (no real test items) |
-| `results/` | saved run JSON for `--compare` |
+| Path        | What                                                                                     |
+| ----------- | ---------------------------------------------------------------------------------------- |
+| `run.ts`    | CLI                                                                                      |
+| `lib/`      | budget, cache, in-process app harness, judge helpers, report writer, remediation hints   |
+| `features/` | one file per eval (8)                                                                    |
+| `scorers/`  | deterministic checks (language, military terms, dialect markers)                         |
+| `data/`     | golden datasets: all original text written for this suite (no real test items)           |
+| `results/`  | saved run JSON for `--compare`                                                           |
 | `REPORT.md` | generated report: pass rate per feature, worst failures, suggested prompt/schema changes |
 
 ## What each eval does
