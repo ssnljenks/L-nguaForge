@@ -1,0 +1,272 @@
+[
+  {
+    "id": "t01",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "Cuéntame algo sobre tu semana.",
+    "sentence": "Estudié español para tres años en la universidad.",
+    "expected": ["por_para"],
+    "note": ""
+  },
+  {
+    "id": "t02",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "Cuéntame algo sobre tu semana.",
+    "sentence": "Mañana salgo por Madrid en el tren de las ocho.",
+    "expected": ["por_para"],
+    "note": ""
+  },
+  {
+    "id": "t03",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "Cuéntame algo sobre tu semana.",
+    "sentence": "Mi hermano es muy cansado después del trabajo.",
+    "expected": ["ser_estar"],
+    "note": ""
+  },
+  {
+    "id": "t04",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "Cuéntame algo sobre tu semana.",
+    "sentence": "La fiesta está en mi casa el sábado por la noche.",
+    "expected": ["ser_estar"],
+    "note": ""
+  },
+  {
+    "id": "t05",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "Cuéntame cómo era tu vida de niño.",
+    "sentence": "Cuando fui niño, siempre jugaba en la calle con mis primos.",
+    "expected": ["preterite_imperfect"],
+    "note": ""
+  },
+  {
+    "id": "t06",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "Cuéntame algo sobre tu semana.",
+    "sentence": "Tengo una problema muy grande con mi coche nuevo.",
+    "expected": ["gender_agreement"],
+    "note": ""
+  },
+  {
+    "id": "t07",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "Describe tu barrio.",
+    "sentence": "Las casas de mi barrio son muy grandes y bonitos.",
+    "expected": ["gender_agreement"],
+    "note": ""
+  },
+  {
+    "id": "t08",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "¿Qué planes tienes para el sábado?",
+    "sentence": "Quiero que mi hermano viene a la fiesta conmigo.",
+    "expected": ["subjunctive_triggers"],
+    "note": ""
+  },
+  {
+    "id": "t09",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "¿Qué opinas del proyecto del equipo?",
+    "sentence": "Es importante que todos llegan a tiempo mañana.",
+    "expected": ["subjunctive_triggers"],
+    "note": ""
+  },
+  {
+    "id": "t10",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "¿Qué hiciste por el cumpleaños de tu abuela?",
+    "sentence": "Le lo di a mi madre ayer para que se lo diera a mi abuela.",
+    "expected": ["direct_indirect_pronouns"],
+    "note": ""
+  },
+  {
+    "id": "t11",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "¿Qué le regalaste a tu abuela?",
+    "sentence": "Compré unas flores y le las regalé a mi abuela.",
+    "expected": ["direct_indirect_pronouns"],
+    "note": ""
+  },
+  {
+    "id": "t12",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "¿Qué harías si tuvieras mucho dinero?",
+    "sentence": "Si tengo mucho dinero, compraría una casa en la playa.",
+    "expected": ["si_clause_present_for_subjunctive"],
+    "note": ""
+  },
+  {
+    "id": "t13",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "¿Qué harías si fueras presidente?",
+    "sentence": "Si yo soy presidente, eliminaría todos los impuestos.",
+    "expected": ["si_clause_present_for_subjunctive"],
+    "note": ""
+  },
+  {
+    "id": "t14",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "Situación: usted habla con la gerente del hotel, una persona mayor y desconocida. Use un registro formal y cortés. Gerente: Buenas tardes, ¿en qué puedo ayudarle?",
+    "sentence": "Buenas tardes, ¿puedes decirme dónde está el comedor? Necesito que me traigas la llave de mi habitación.",
+    "expected": ["tu_for_usted"],
+    "note": "Formal context stated in the examiner prompt."
+  },
+  {
+    "id": "t15",
+    "language": "es",
+    "dialect": "rioplatense",
+    "examinerPrompt": "Situación: hablás con un amigo de Buenos Aires, en un café, con total confianza. Amigo: ¡Che, qué bueno verte!",
+    "sentence": "Hola, ¿cómo estás? ¿Tienes tiempo para tomar un café? ¿Quieres venir conmigo al cine después?",
+    "expected": ["tu_for_vos"],
+    "note": "Rioplatense friend context."
+  },
+  {
+    "id": "t16",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "Cuéntame algo sobre tu semana.",
+    "sentence": "Ayer fui al mercado con mi hermana y compramos frutas para la cena.",
+    "expected": [],
+    "note": "clean"
+  },
+  {
+    "id": "t17",
+    "language": "es",
+    "dialect": "neutral_latam",
+    "examinerPrompt": "¿Qué harías con más tiempo libre?",
+    "sentence": "Si tuviera más tiempo, aprendería a tocar el piano.",
+    "expected": [],
+    "note": "clean"
+  },
+  {
+    "id": "t18",
+    "language": "pt",
+    "dialect": "br_standard",
+    "examinerPrompt": "O que você vai fazer hoje à noite?",
+    "sentence": "Quando eu chego em casa, vou ligar para você.",
+    "expected": ["futuro_do_subjuntivo"],
+    "note": ""
+  },
+  {
+    "id": "t19",
+    "language": "pt",
+    "dialect": "br_standard",
+    "examinerPrompt": "Quais são os seus planos para o fim de semana?",
+    "sentence": "Quando ele vem amanhã, vamos jantar juntos.",
+    "expected": ["futuro_do_subjuntivo"],
+    "note": ""
+  },
+  {
+    "id": "t20",
+    "language": "pt",
+    "dialect": "br_standard",
+    "examinerPrompt": "Como era a sua infância?",
+    "sentence": "Quando eu fui criança, eu sempre brincava na rua.",
+    "expected": ["preterito_perfeito_imperfeito"],
+    "note": ""
+  },
+  {
+    "id": "t21",
+    "language": "pt",
+    "dialect": "br_standard",
+    "examinerPrompt": "Conte-me algo sobre a sua semana.",
+    "sentence": "Enquanto eu estudei, meu irmão tocou violão no quarto.",
+    "expected": ["preterito_perfeito_imperfeito"],
+    "note": ""
+  },
+  {
+    "id": "t22",
+    "language": "pt",
+    "dialect": "br_standard",
+    "examinerPrompt": "O que vocês fizeram antes da festa?",
+    "sentence": "Antes de eles chegar, a gente arrumou a sala.",
+    "expected": ["personal_infinitive"],
+    "note": ""
+  },
+  {
+    "id": "t23",
+    "language": "pt",
+    "dialect": "br_standard",
+    "examinerPrompt": "O que aconteceu na reunião?",
+    "sentence": "Eu pedi para nós sair mais cedo.",
+    "expected": ["personal_infinitive"],
+    "note": ""
+  },
+  {
+    "id": "t24",
+    "language": "pt",
+    "dialect": "br_standard",
+    "examinerPrompt": "Quais são seus hobbies?",
+    "sentence": "Eu gosto muito cozinhar para meus amigos.",
+    "expected": ["regencia_preposicoes"],
+    "note": ""
+  },
+  {
+    "id": "t25",
+    "language": "pt",
+    "dialect": "br_standard",
+    "examinerPrompt": "O que você precisa para viajar?",
+    "sentence": "Eu preciso um documento para viajar.",
+    "expected": ["regencia_preposicoes"],
+    "note": ""
+  },
+  {
+    "id": "t26",
+    "language": "pt",
+    "dialect": "eu_portuguese",
+    "examinerPrompt": "Situação: está a falar com um professor universitário numa reunião formal, em português europeu. Professor: Bom dia, em que posso ajudá-lo?",
+    "sentence": "Me disseram que a reunião foi cancelada.",
+    "expected": ["colocacao_pronominal"],
+    "note": "European Portuguese formal context: sentence-initial unstressed clitic."
+  },
+  {
+    "id": "t27",
+    "language": "pt",
+    "dialect": "eu_portuguese",
+    "examinerPrompt": "Situação: está a falar com um amigo de infância, em português europeu, com total confiança. Amigo: Olá, tudo bem?",
+    "sentence": "Tu sabes onde você deixou as chaves? Tu podes me ajudar a procurar?",
+    "expected": ["voce_for_tu_eu"],
+    "note": "Mixes tu and você in one exchange."
+  },
+  {
+    "id": "t28",
+    "language": "pt",
+    "dialect": "br_standard",
+    "examinerPrompt": "O que você comprou?",
+    "sentence": "Eu comprei uma carro novo e duas camisa bonitas.",
+    "expected": ["gender_agreement"],
+    "note": ""
+  },
+  {
+    "id": "t29",
+    "language": "pt",
+    "dialect": "br_standard",
+    "examinerPrompt": "Conte-me algo sobre a sua semana.",
+    "sentence": "Ontem eu fui ao mercado e comprei frutas para o jantar.",
+    "expected": [],
+    "note": "clean"
+  },
+  {
+    "id": "t30",
+    "language": "pt",
+    "dialect": "br_standard",
+    "examinerPrompt": "O que você faria com mais tempo?",
+    "sentence": "Se eu tivesse mais tempo, eu aprenderia a tocar piano.",
+    "expected": [],
+    "note": "clean"
+  }
+]

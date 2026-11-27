@@ -1,0 +1,154 @@
+# Original scripted OPI candidate transcripts (Portuguese). Written for this suite; not derived from any real test item.
+# Header: id | dialect | expected ILR | tags.
+
+### pt-01 | br_standard | 1 |
+> Isolated words and infinitives, no past, asks for repetition.
+E: Olá, boa tarde. Como você está?
+C: Olá. Eu estou bem, obrigado. E você?
+E: Estou bem também. Qual é o seu nome?
+C: Meu nome é Michael. Eu sou... americano.
+E: Prazer, Michael. Onde você mora?
+C: Eu moro em... Washington. Eu moro casa pequena.
+E: O que você gosta de comer?
+C: Eu gosto... arroz, feijão, e... carne. Brasil comida é bom.
+E: O que você fez ontem?
+C: Desculpe, não entendo. Pode repetir?
+E: O que você fez ontem? Para onde você foi?
+C: Ontem... eu ir... mercado. Comprar... pão. Só isso.
+E: E amanhã, o que você vai fazer?
+C: Amanhã eu... trabalho. Não sei dizer mais.
+
+### pt-02 | br_bahian | 1 |
+> Simple present-tense sentences and survival requests; cannot narrate past or deal with a problem.
+E: Oi, tudo bem?
+C: Oi. Tudo bem. Eu chamo Sarah.
+E: Você tem família?
+C: Sim. Eu tenho um irmão e uma irmã. Meu pai é médico. Minha mãe é professora.
+E: Onde eles moram?
+C: Eles moram... Califórnia. Eu moro Nova York. É longe.
+E: Como é o seu apartamento?
+C: Meu apartamento é pequeno. Tem um quarto e uma cozinha. É bonito.
+E: Imagine que você está num restaurante. O que você pede?
+C: Eu quero um suco de laranja e... frango, por favor. Quanto custa?
+E: Custa vinte reais. Você pode me contar o que fez no fim de semana?
+C: No fim de semana eu... eu estudar. E ir parque com amigo. Foi... bom? Não sei.
+E: Se você perder o passaporte, o que faz?
+C: Passaporte... não sei. Polícia? Eu não sei falar. É problema.
+
+### pt-03 | eu_portuguese | 1+ |
+> Connected simple sentences, plans and routines, only partial past narration; breaks down on the cancelled-flight complication and on opinion.
+E: Olá, como vai você?
+C: Vou bem, obrigado. Hoje eu acordei cedo porque tenho uma reunião.
+E: O que costuma fazer nos fins de semana?
+C: Normalmente eu encontro meus amigos. Nós vamos ao cinema ou jantamos fora. Às vezes eu fico em casa e leio.
+E: Conte-me sobre as suas últimas férias.
+C: Minhas férias... eu vou para Portugal com minha namorada. Nós visitamos Lisboa e Porto. Comemos muito bacalhau. É muito bonito. Eu gosto muito.
+E: Vai voltar lá?
+C: Sim, eu quero voltar no ano que vem. Eu vou ficar mais tempo.
+E: Imagine que o seu voo foi cancelado. O que diz no balcão?
+C: Meu voo... cancelado. Eu preciso... outro voo. Hoje. Por favor. Eu não sei... como dizer mais.
+E: Por que muita gente prefere morar no litoral?
+C: Porque... tem praia. É bonito. Eu não sei explicar.
+
+### pt-04 | br_standard | 1+ | tricky=rich-vocabulary-present-tense-only
+> Fluent-sounding present-tense stories, vocabulary good, but past narrated in present, if-clause with indicative, no opinion support.
+E: Boa tarde! Como está o seu dia?
+C: Boa tarde. Está ótimo, o tempo está lindo e eu estou com muita energia depois do café.
+E: O que você fez no último domingo?
+C: No domingo passado eu acordo tarde, tomo café com minha família e depois nós vamos à casa da minha avó. Ela faz uma feijoada deliciosa, com muita carne e laranja. Todos comem muito e conversam.
+E: E depois?
+C: Depois nós assistimos o jogo de futebol na televisão. O time da minha cidade ganha, então todos ficam muito felizes. À noite eu volto para casa e durmo cedo.
+E: O que você faria se ganhasse na loteria?
+C: Se eu ganho na loteria, eu compro uma casa na praia. E eu viajo muito. Eu ajudo minha família também.
+E: O que você acha do transporte público na sua cidade?
+C: É... não é muito bom. Os ônibus são lentos e muito cheios. O governo precisa... não sei... melhorar. É difícil explicar.
+
+### pt-05 | br_southern | 2 |
+> Clear past narration with the car-breakdown problem, directions, description; hypothesis and abstract reasons break down.
+E: Oi, tudo bem com você?
+C: Tudo bem, obrigada. Hoje foi uma manhã corrida porque meu carro quebrou e eu tive que ir de ônibus para o trabalho.
+E: O que aconteceu com o carro?
+C: Eu estava saindo de casa quando percebi que o pneu estava vazio. Tentei trocar, mas não tinha o macaco, então liguei para o seguro. Eles disseram que o guincho chegaria em uma hora, mas demorou duas. No final, o carro foi para a oficina e eu peguei o ônibus.
+E: Descreva a sua casa.
+C: É um apartamento de dois quartos no quarto andar. A sala é grande e tem uma janela que dá para um parque. A cozinha é pequena, mas eu gosto porque é muito clara.
+E: Como eu faço para chegar da sua casa ao centro?
+C: Você sai do prédio e vira à direita. Anda dois quarteirões até a avenida principal, e lá pega o ônibus número vinte. Desce na terceira parada, em frente à praça.
+E: O que você faria se pudesse morar em qualquer cidade?
+C: Eu moraria... em Lisboa, eu acho. Eu gosto da cultura. Mas é difícil porque minha família está aqui.
+E: Por que o preço dos aluguéis está subindo tanto?
+C: Não sei bem. Talvez porque tem muita gente nas cidades. Eu não tenho certeza. É um assunto difícil.
+
+### pt-06 | br_standard | 2 | tricky=fluent-but-inaccurate
+> Fast, connected speech with persistent agreement and verb-form errors; narrates and resolves the lost-wallet problem; cannot hypothesize (si/se + indicative, wrong person endings).
+E: Olá, como você está?
+C: Estou muito bem, é que ontem eu fui no cinema com meus amigos e nós assistimos um filme muito engraçado, então hoje eu estou de bom humor mesmo que eu dormi pouco.
+E: Que tipo de filmes você gosta?
+C: Eu gosto de comédia e também de filme de ação, porque eu acho que são mais divertido e a gente pode relaxar depois de um dia de trabalho muito cansativo, mas às vezes eu vejo drama também com minha namorada que gosta muito.
+E: Conte uma vez em que algo deu errado em uma viagem.
+C: Ah, uma vez eu estava em Salvador e eu perdi minha carteira na praia, então eu fui na delegacia e eu expliquei pro policial que eu preciso de um documento pra viajar no outro dia, e ele me falou que eu tenho que esperar até segunda, mas eu pedi pra ele me ajudar e ele fez um papel provisório. Foi muito estressante mas no final deu tudo certo.
+E: Como é o lugar onde você mora?
+C: Eu moro num bairro muito legal que tem muitas árvores e os vizinhos são muito simpático. Tem uma padaria perto que faz o melhor pão de queijo, eu vou lá toda manhã.
+E: O que você faria se pudesse trabalhar de qualquer lugar do mundo?
+C: Eu vou morar na Espanha porque eu gosto muito de lá e eu posso trabalhar com computador, então não é problema. Se eu pode, eu vou fazer isso no ano que vem.
+E: E como você acha que sua vida mudaria?
+C: Vai mudar muito porque eu vai falar espanhol todo dia e eu tem que conhecer pessoas novas. É interessante.
+
+### pt-07 | br_standard | 2+ |
+> Sustains Level 2; handles opinions, counterpoints and hypotheticals with lapses in precision and lexical gaps on abstract topics.
+E: Boa tarde, como vai?
+C: Vou bem, obrigado. Estou animado porque semana que vem começo um curso de fotografia.
+E: Conte uma experiência marcante da sua infância.
+C: Quando eu tinha uns dez anos, meu avô me levou para pescar pela primeira vez. Ficamos horas no barco sem pegar nada, e eu estava ficando impaciente, até que de repente puxei um peixe enorme. Meu avô riu tanto que quase caiu na água. Desde então eu associo a pescaria com paciência e com ele.
+E: Qual é a sua opinião sobre o turismo em massa?
+C: Acho que tem prós e contras. Por um lado, gera empregos nas cidades pequenas. Por outro, encarece a moradia e os moradores acabam saindo dos bairros. Na minha opinião, as autoridades deveriam limitar o número de visitantes, embora isso seja complicado porque muita gente depende dessa renda.
+E: Se o seu país reduzisse a semana de trabalho para quatro dias, o que aconteceria?
+C: Acho que as pessoas ficariam mais felizes e teriam mais tempo para a família. Mas as empresas teriam que se organizar de outro jeito, e alguns setores, como a saúde, talvez não conseguissem... não conseguiriam fazer isso facilmente. Se fosse gradual, acho que funcionaria melhor.
+E: Qual o papel da desigualdade na educação?
+C: É um problema grande porque crianças de famílias pobres têm menos oportunidades, e isso cria um ciclo. Eu não sei bem como se chama... a mobilidade social, acho. Se não há mobilidade, a sociedade fica estagnada.
+E: Como a inteligência artificial vai mudar o trabalho?
+C: Eu acho que muitos empregos vão desaparecer, mas outros vão surgir. O importante é que... eh... os trabalhadores se capacitem. Eu não sei muito mais sobre isso.
+
+### pt-08 | br_bahian | 2+ | tricky=strong-L2-with-one-good-L3-turn
+> Strong Level 2 narration and complication handling plus one fully Level 3 hypothetical turn; the other Level 3 probes break down.
+E: Oi, tudo bem?
+C: Tudo bem! Hoje foi um dia cheio porque tive que resolver uns problemas no banco.
+E: O que aconteceu no banco?
+C: Cheguei de manhã para abrir uma conta nova, mas a atendente disse que faltava um comprovante de residência. Eu fiquei chateado, porque já tinha ido lá na semana passada. Expliquei que tinha entregado os documentos, e ela foi verificar no sistema. No fim, encontraram o papel e consegui abrir a conta.
+E: Descreva uma cidade que você gostou de visitar.
+C: Gostei muito de Recife. A cidade tem muitos rios e pontes, e o centro histórico é cheio de cores. Comi tapioca na rua todo dia de manhã, e à noite fui a um show de frevo. O povo era muito acolhedor.
+E: Se você pudesse mudar algo no sistema de saúde do seu país, o que mudaria?
+C: Se eu pudesse mudar algo, eu investiria em atendimento primário, porque a maioria dos problemas poderia ser resolvida antes de chegar ao hospital. Se houvesse mais postos de saúde nos bairros, os hospitais ficariam menos lotados e as pessoas esperariam menos, embora isso exigisse um investimento inicial grande que o governo talvez não quisesse fazer.
+E: O que você acha do voto obrigatório?
+C: Não sei. Algumas pessoas gostam, outras não. Eu acho que é bom e ruim ao mesmo tempo. Não sei dizer mais.
+E: Por que a confiança nos jornais está diminuindo?
+C: Porque... as pessoas leem notícia nas redes sociais. É mais fácil. Não sei explicar melhor.
+
+### pt-09 | br_southern | 3 |
+> Extended structured discourse with accurate hypotheticals, concessions and abstract reasoning.
+E: Boa tarde, como tem passado?
+C: Muito bem, obrigada. Tem sido uma semana produtiva, daquelas em que as coisas finalmente se encaixam.
+E: Fale-me sobre a sua cidade.
+C: Moro em Porto Alegre há muitos anos. O que mais aprecio é o equilíbrio entre a vida urbana e a proximidade do rio; há um ritmo que permite caminhar à beira do Guaíba no fim da tarde e, ao mesmo tempo, ter acesso a uma vida cultural intensa. Em contrapartida, a cidade enfrenta desafios de mobilidade que se agravaram com o crescimento desordenado.
+E: Você acha que as cidades deveriam restringir o uso do carro?
+C: Acho que sim, mas com ressalvas. Restringir sem oferecer alternativas confiáveis seria injusto com quem mora na periferia e depende do carro. Se o transporte público fosse reforçado primeiro, e só depois as restrições entrassem em vigor, a transição seria bem menos traumática e a aceitação social, provavelmente, maior.
+E: Há quem diga que isso prejudicaria o comércio.
+C: É um argumento recorrente, mas a experiência de outras cidades indica o contrário: quando as ruas são fechadas aos carros, as pessoas circulam mais a pé e param mais nas lojas. Isso não significa que não haja custos de transição; seria razoável compensar temporariamente os negócios mais afetados.
+E: Que consequências haveria se os jovens deixassem de ler jornais?
+C: Provavelmente diminuiria a capacidade de confrontar informações, o que nos tornaria mais vulneráveis à desinformação. Não é que o papel seja insubstituível, mas o hábito de ler textos longos treina uma atenção que formatos curtos não estimulam. Ainda assim, duvido que o fenômeno seja irreversível; se os veículos encontrassem formatos atraentes, poderiam recuperar esse público.
+E: Como equilibrar privacidade e segurança?
+C: É um dilema genuíno. Aceitar certa vigilância pode prevenir crimes, mas, uma vez normalizada, é muito difícil voltar atrás. Eu defenderia que qualquer medida invasiva ficasse sujeita a controle judicial e a prazo de validade, para que não se perpetue por inércia.
+
+### pt-10 | eu_portuguese | 3 |
+> Sustained Level 3 in European Portuguese: abstract topics, counterfactuals, concession and nuance.
+E: Boa tarde. Como está?
+C: Bem, obrigado. Um pouco cansado, mas satisfeito, porque finalmente concluí um projeto que me ocupava há meses.
+E: Conte-me um pouco sobre o seu percurso.
+C: Cresci em Coimbra, estudei Arquitetura em Lisboa e passei alguns anos no Porto antes de me fixar no Algarve. Cada mudança trouxe uma perspetiva diferente: no Norte aprendi a valorizar a disciplina, no Sul a importância de saber desacelerar.
+E: O que pensa da subida dos preços da habitação?
+C: Considero-a um dos problemas sociais mais graves do país. Quando uma parte significativa do rendimento é consumida pela renda, a poupança desaparece e os jovens adiam projetos de vida. Se o Estado tivesse investido mais cedo em habitação pública, a pressão sobre o mercado seria hoje menor, embora seja difícil provar esse contrafactual.
+E: Mas alguns defendem que o mercado deve resolver sozinho.
+C: Percebo o argumento, mas o mercado, por si só, tende a responder a quem pode pagar mais. Sem alguma regulação, os preços sobem até excluir quem trabalha na própria cidade. Não defendo um controlo rígido, que provocaria outras distorções, mas um conjunto de incentivos para aumentar a oferta acessível.
+E: Que impacto terá a inteligência artificial na criatividade?
+C: Penso que alterará o processo mais do que o resultado: ferramentas que geram imagens ou textos reduzem o custo de experimentar, o que pode ser libertador, mas também banalizar. O risco é confundirmos produção abundante com expressão genuína. Caso se perca o valor do esforço, perder-se-á também algo da satisfação de criar.
+E: Como imagina o mundo daqui a trinta anos?
+C: Suponho que será mais urbano e mais desigual se nada mudar, mas não creio que o futuro esteja escrito. Se conseguirmos articular a transição energética com políticas de proteção social, talvez cheguemos a um cenário menos conflituoso. Admito, porém, que o otimismo é, em parte, uma escolha.

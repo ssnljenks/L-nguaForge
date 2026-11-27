@@ -7,3 +7,6 @@ coverage/
 .env*
 !.env.example
 dev-dist/
+
+# eval response cache (regenerable, may be large)
+evals/.cache/
