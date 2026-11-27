@@ -1,4 +1,4 @@
-import {checkScreen, expect, gotoTab, test} from '../support';
+import {checkScreen, expect, gotoTab, isWebKit, test} from '../support';
 
 const OFFLINE = /You're offline\. Reconnect to the internet and try again/;
 
@@ -9,6 +9,9 @@ test.describe('offline', () => {
     page,
     context,
   }, testInfo) => {
+    // Playwright's WebKit can't navigate through a service worker while offline: the offline reload
+    // fails with "WebKit encountered an internal error" (first CI run). Offline is covered on Chromium.
+    test.skip(isWebKit(testInfo), 'Playwright WebKit cannot reload offline through a service worker');
     await page.goto('/');
     // Let the service worker install and precache, then take control of the page.
     await page.evaluate(async () => {
