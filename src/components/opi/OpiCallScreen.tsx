@@ -1,5 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {HelpCircle, Keyboard, Loader2, Mic, MicOff, PhoneOff, RotateCcw, Send, Volume2} from 'lucide-react';
+import {useScreenWakeLock} from '../../hooks/useScreenWakeLock';
+import {getBrowserEnv, IOS_VOICE_TIP, voiceInputIsFragile} from '../../audio/capabilities';
 import {getFunctionSpec, type IlrFunctionKey} from '../../data/ilrSpeakingLevels';
 import type {MissionConfig, OpiCallMode, OpiMessage, OpiPhase, OpiProbeLevel, OpiWorkingLevel} from '../../types';
 import {formatSecondsClock, getDialectInfo, LANGUAGE_LABELS} from '../../utils/ilrLogic';
@@ -31,7 +33,16 @@ interface OpiCallScreenProps {
   isMuted: boolean;
   micLevel: number;
   sttSupported: boolean;
+  /** Voice input failed in a way retrying won't fix (permission, service off): typing moves to the front. */
+  sttUnavailable?: boolean;
   sttError: string | null;
+  /** The browser has no speech synthesis, so the examiner's line is shown as text instead of spoken. */
+  ttsUnsupported?: boolean;
+  /** The browser refused to speak the last line (autoplay rules); offer a tap to hear it. */
+  ttsBlocked?: boolean;
+  onPlayBlocked?: () => void;
+  /** Shown instead of the status line's "Connecting call…" when the opening request failed. */
+  onRetryStart?: () => void;
   apiError: string | null;
   draftResponse: string;
   wordLookup: ReturnType<typeof useWordLookup>;
@@ -62,7 +73,12 @@ export const OpiCallScreen: React.FC<OpiCallScreenProps> = ({
   isMuted,
   micLevel,
   sttSupported,
+  sttUnavailable = false,
   sttError,
+  ttsUnsupported = false,
+  ttsBlocked = false,
+  onPlayBlocked,
+  onRetryStart,
   apiError,
   draftResponse,
   wordLookup,
@@ -78,8 +94,15 @@ export const OpiCallScreen: React.FC<OpiCallScreenProps> = ({
   onSaveVocab,
 }) => {
   const dialectInfo = getDialectInfo(config.language, config.dialect);
+  // The call screen exists only while a call is active; keep the phone awake for it.
+  useScreenWakeLock(true);
   const [hintOpen, setHintOpen] = useState(false);
-  const [showKeyboard, setShowKeyboard] = useState(!sttSupported);
+  const voiceFragile = sttSupported && voiceInputIsFragile(getBrowserEnv());
+  const [showKeyboard, setShowKeyboard] = useState(!sttSupported || voiceFragile);
+  const [showExaminerText, setShowExaminerText] = useState(false);
+  // When voice input breaks mid-call, typing is the way forward: show it without being asked.
+  const keyboardOpen = showKeyboard || sttUnavailable;
+  const lastExaminerLine = [...messages].reverse().find((m) => m.role === 'examiner')?.text ?? '';
   const [waveTick, setWaveTick] = useState(0);
   const transcriptContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -206,9 +229,62 @@ export const OpiCallScreen: React.FC<OpiCallScreenProps> = ({
           {apiError && (
             <div
               role="alert"
-              className="rounded-lg border border-[#F87171]/40 bg-red-950/30 px-4 py-2.5 text-xs sm:text-sm text-red-200"
+              className="rounded-lg border border-[#F87171]/40 bg-red-950/30 px-4 py-2.5 text-xs sm:text-sm text-red-200 space-y-2"
             >
-              {apiError}
+              <p>{apiError}</p>
+              {onRetryStart && messages.length === 0 && !isThinking && (
+                <button
+                  type="button"
+                  data-testid="call-retry-start"
+                  onClick={onRetryStart}
+                  className="inline-flex items-center gap-1.5 min-h-[52px] px-4 rounded-lg bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42]"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Try again</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {(ttsBlocked || ttsUnsupported) && lastExaminerLine && (
+            <div
+              data-testid="call-audio-fallback"
+              className="rounded-lg border border-[#D99B26]/40 bg-[#111922] px-4 py-3 text-sm text-[#E6EDF3] space-y-2"
+            >
+              {ttsBlocked && (
+                <>
+                  <p className="text-xs text-[#CBD5E1]">
+                    Your browser blocked the examiner's voice. Tap to hear it
+                    {mode === 'exam' ? '.' : ', or read it below.'}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      data-testid="call-tap-to-hear"
+                      onClick={onPlayBlocked}
+                      className="inline-flex items-center gap-2 min-h-[52px] px-5 rounded-xl bg-[#D99B26] text-[#0B1117] text-sm font-semibold hover:bg-[#E5AE42]"
+                    >
+                      <Volume2 className="w-4 h-4" />
+                      <span>Tap to hear the examiner</span>
+                    </button>
+                    {!showExaminerText && (
+                      <button
+                        type="button"
+                        onClick={() => setShowExaminerText(true)}
+                        className="min-h-[44px] px-3 rounded-lg text-xs text-[#94A3B8] hover:text-[#E6EDF3]"
+                      >
+                        Show the question as text
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+              {ttsUnsupported && (
+                <p className="text-xs text-[#CBD5E1]">
+                  This browser can't speak the examiner's lines, so they appear as text.
+                </p>
+              )}
+              {(showExaminerText || ttsUnsupported) && <p className="leading-relaxed">{lastExaminerLine}</p>}
             </div>
           )}
 
@@ -267,7 +343,7 @@ export const OpiCallScreen: React.FC<OpiCallScreenProps> = ({
             </div>
 
             {/* Subtle turn submission bar when user has spoken/typed draft or toggled keyboard */}
-            {(draftResponse.trim() || showKeyboard) && (
+            {(draftResponse.trim() || keyboardOpen) && (
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -430,8 +506,17 @@ export const OpiCallScreen: React.FC<OpiCallScreenProps> = ({
           </div>
         </div>
 
+        {voiceFragile && (
+          <p
+            data-testid="call-voice-tip"
+            className="mt-2 text-center text-[11px] leading-snug text-[#94A3B8] max-w-md mx-auto"
+          >
+            {IOS_VOICE_TIP}
+          </p>
+        )}
+
         {/* Unobtrusive keyboard toggle if user wants to type without mic */}
-        {sttSupported && (
+        {sttSupported && !sttUnavailable && (
           <div className="mt-3 flex justify-center">
             <button
               type="button"

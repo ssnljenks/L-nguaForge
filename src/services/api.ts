@@ -103,6 +103,8 @@ export interface RequestRoleplayTurnResponse {
 
 export async function requestRoleplayTurn(params: {
   scenarioId: string;
+  /** Sealed scenario from /scenario; the server answers 410 (code scenario_expired) when it can't open it. */
+  scenarioToken?: string;
   language: TargetLanguage;
   dialect: string;
   level: IlrBaseLevel;
@@ -126,6 +128,7 @@ export async function requestRoleplayTurn(params: {
 
 export async function gradeRoleplayDebrief(params: {
   scenarioId: string;
+  scenarioToken?: string;
   language: TargetLanguage;
   dialect: string;
   level: IlrBaseLevel;

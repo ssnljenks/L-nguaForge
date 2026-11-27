@@ -19,6 +19,7 @@ import {
 } from '../../utils/talkLogic';
 import {sendFreeChatTurn} from '../../services/api';
 import {type TalkNotePayload, useGeminiLive} from '../../hooks/useGeminiLive';
+import {useScreenWakeLock} from '../../hooks/useScreenWakeLock';
 import {useSpeechSynthesis} from '../../hooks/useSpeech';
 import {type SaveVocabFn, useWordLookup} from '../../hooks/useWordLookup';
 import {CLASSIFICATION_REJECT_MESSAGE, detectClassificationMarking} from '../../utils/classificationGuard';
@@ -141,6 +142,8 @@ export const TalkChatScreen: React.FC<TalkChatScreenProps> = ({
     },
   });
 
+  useScreenWakeLock(live.isLive);
+
   useImperativeHandle(
     ref,
     () => ({
@@ -224,11 +227,16 @@ export const TalkChatScreen: React.FC<TalkChatScreenProps> = ({
       return;
     }
 
-    const priorHistory = (activeThread?.messages ?? []).map((m) => ({
+    const threadMessages = activeThread?.messages ?? [];
+    // A line that failed to send stays in the conversation (nothing is lost) and is back in the box; sending it
+    // again must not add it a second time.
+    const lastMessage = threadMessages[threadMessages.length - 1];
+    const isResend = lastMessage?.role === 'user' && lastMessage.text === clean;
+    const priorHistory = (isResend ? threadMessages.slice(0, -1) : threadMessages).map((m) => ({
       role: m.role,
       text: typeof m.text === 'string' ? m.text : '',
     }));
-    appendMessageToThread('user', clean);
+    if (!isResend) appendMessageToThread('user', clean);
     setShowTranscript(true);
     setIsSendingText(true);
 
@@ -258,7 +266,10 @@ export const TalkChatScreen: React.FC<TalkChatScreenProps> = ({
 
       appendMessageToThread('assistant', reply, {recastNote, pickedUp});
     } catch (err) {
-      setTextError(err instanceof Error ? err.message : `Unable to reach ${selectedTutor.name}.`);
+      setTextError(
+        `${err instanceof Error ? err.message : `Unable to reach ${selectedTutor.name}.`} Your message is kept: tap Send to try again.`
+      );
+      setTextInput((current) => current || clean);
     } finally {
       setIsSendingText(false);
     }

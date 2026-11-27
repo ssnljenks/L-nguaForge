@@ -5,6 +5,23 @@ export const DEFAULT_REQUEST_TIMEOUT_MS = 45_000;
 export const OFFLINE_MESSAGE = "You're offline. Reconnect to the internet and try again — saved Vocab still works.";
 export const NETWORK_ERROR_MESSAGE = "Can't reach LinguaForge right now. Check your connection and try again.";
 
+/** A request the server answered with an error. Carries the HTTP status and, when the server sets one, a code. */
+export class ApiRequestError extends Error {
+  readonly status: number;
+  readonly code?: string;
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = 'ApiRequestError';
+    this.status = status;
+    this.code = code;
+  }
+}
+
+/** True for the server's 429: a rate limit or daily cap, where waiting (not retrying at once) is the way forward. */
+export function isRateLimited(err: unknown): boolean {
+  return err instanceof ApiRequestError && err.status === 429;
+}
+
 /**
  * Sends a request with a timeout and returns the parsed JSON body, or throws with the server's
  * `error` message (falling back to the status) so screens can show it.
@@ -41,7 +58,7 @@ async function requestJson<T>(url: string, init: RequestInit, timeoutMs: number)
   if (!response.ok) {
     const errMsg =
       typeof data?.error === 'string' && data.error.trim() ? data.error : `Request failed (${response.status})`;
-    throw new Error(errMsg);
+    throw new ApiRequestError(errMsg, response.status, typeof data?.code === 'string' ? data.code : undefined);
   }
   if (!data || typeof data !== 'object') {
     throw new Error('Server returned an unexpected empty response. Please try again.');

@@ -58,6 +58,7 @@ import type {RoleplayLevelRequest, TestPrepView} from './components/TestPrepModu
 import type {TalkWorkRequest} from './components/FreeChatModule';
 import {OfflineIndicator, PWAInstallButton} from './components/PWAControls';
 import {ErrorBoundary} from './components/ErrorBoundary';
+import {setReportTab} from './services/errorReporter';
 import {createId} from './utils/ids';
 import {getStartupOverlays} from './utils/startupOverlays';
 import {setApiWorkFocus} from './services/requestContext';
@@ -118,6 +119,11 @@ export default function App() {
   const [tabIntroOpen, setTabIntroOpen] = useState<ModuleTab | null>(null);
 
   const {showDataSafetyNotice: showDataSafetyModal, allowTabIntros} = getStartupOverlays({dataSafetyAck, isAutostart});
+
+  // Client error reports say which tab the user was on.
+  useEffect(() => {
+    setReportTab(settingsOpen ? 'settings' : activeTab);
+  }, [activeTab, settingsOpen]);
 
   const [apiSavedCount, setApiSavedCount] = useState<number>(() => getApiSavedCount());
 

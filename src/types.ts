@@ -128,6 +128,11 @@ export type RoleplayRegister = 'usted' | 'tú' | 'vos' | 'você' | 'tu';
 
 export interface RoleplayScenarioPublic {
   scenarioId: string;
+  /**
+   * Encrypted copy of the scenario's secrets (hidden goal, complication). Opaque to the browser: it is only sent
+   * back with each turn and the debrief so any server instance can continue the scenario.
+   */
+  scenarioToken?: string;
   level: IlrBaseLevel;
   language: TargetLanguage;
   dialect: string;

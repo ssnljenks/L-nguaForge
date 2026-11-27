@@ -23,6 +23,7 @@ import {
 } from '../utils/opiLogic';
 import {saveLastOpiAudio} from '../utils/opiAudioStore';
 import {fetchRoleplayScenario, requestOpiTurn, requestRoleplayTurn} from '../services/api';
+import {ApiRequestError} from '../services/http';
 import {useSpeechRecognition, useSpeechSynthesis} from '../hooks/useSpeech';
 import {useCallAudio} from '../hooks/useCallAudio';
 import {type SaveVocabFn, useWordLookup} from '../hooks/useWordLookup';
@@ -309,6 +310,15 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
     setApiError(null);
 
     const currentElapsed = elapsedRef.current;
+    // If the request fails, put everything back so the learner's answer isn't lost or counted twice.
+    const rollback = {
+      messages: messagesRef.current,
+      roleplayDone: roleplayDoneRef.current,
+      roleplayScenario: activeRoleplayRef.current,
+      roleplayTurns: roleplayTurnsCountRef.current,
+      roleplayComplication: roleplayComplicationRef.current,
+      roleplayResolved: roleplayResolvedRef.current,
+    };
     const candidatePhase = phase;
     const candidateWorking = workingLevel;
     const candidateProbe = probeLevel;
@@ -369,6 +379,7 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
 
         const openRp = await requestRoleplayTurn({
           scenarioId: scenario.scenarioId,
+          scenarioToken: scenario.scenarioToken,
           language: config.language,
           dialect: dialectInfo.id,
           level: scenario.level,
@@ -421,6 +432,7 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
         roleplayTurnsCountRef.current = nextRpTurns;
         const rpTurn = await requestRoleplayTurn({
           scenarioId: sc.scenarioId,
+          scenarioToken: sc.scenarioToken,
           language: config.language,
           dialect: dialectInfo.id,
           level: sc.level,
@@ -527,7 +539,26 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
       setCurrentFunctionKey(turn.targetFunctionKey);
       speakExaminerTurn(turn.examinerText);
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : 'Examiner turn failed.');
+      messagesRef.current = rollback.messages;
+      setMessages(rollback.messages);
+      roleplayDoneRef.current = rollback.roleplayDone;
+      setRoleplayDone(rollback.roleplayDone);
+      activeRoleplayRef.current = rollback.roleplayScenario;
+      roleplayTurnsCountRef.current = rollback.roleplayTurns;
+      roleplayComplicationRef.current = rollback.roleplayComplication;
+      roleplayResolvedRef.current = rollback.roleplayResolved;
+      // The role-play scenario can't be continued: skip it and carry on with the interview.
+      if (err instanceof ApiRequestError && err.code === 'scenario_expired') {
+        activeRoleplayRef.current = null;
+        roleplayDoneRef.current = true;
+        setRoleplayDone(true);
+        setApiError('The role-play scenario expired, so it was skipped. Tap Send to continue the interview.');
+      } else {
+        setApiError(
+          `${err instanceof Error ? err.message : 'Examiner turn failed.'} Your answer is kept below: tap Send to try again.`
+        );
+      }
+      setDraftResponse(cleanText);
     } finally {
       setIsThinking(false);
     }
@@ -672,7 +703,14 @@ export const OpiSimulatorModule: React.FC<OpiSimulatorModuleProps> = ({
         isMuted={callAudio.isMuted}
         micLevel={callAudio.micLevel}
         sttSupported={stt.supported}
-        sttError={stt.error}
+        sttUnavailable={stt.failed}
+        sttError={stt.error ?? callAudio.micError}
+        ttsUnsupported={!tts.supported}
+        ttsBlocked={tts.blocked}
+        onPlayBlocked={tts.playBlocked}
+        onRetryStart={() => {
+          void callAudio.stopCapture().then(() => launchCall({targetFunctionKey: activeTargetFunction}));
+        }}
         apiError={apiError}
         draftResponse={draftResponse}
         wordLookup={wordLookup}

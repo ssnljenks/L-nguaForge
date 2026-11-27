@@ -1,3 +1,4 @@
+import {getBrowserEnv} from '../../audio/capabilities';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {AlertTriangle, Play, RotateCcw, Square} from 'lucide-react';
 import type {AppendErrorEventsFn, DebriefReport, OpiRedoRecord, OpiSession} from '../../types';
@@ -63,7 +64,11 @@ export const CeilingMomentCard: React.FC<CeilingMomentCardProps> = ({
       return;
     }
     if (!storedAudio) {
-      setClipNotice('Mic audio is stored locally for your most recent recorded call only.');
+      setClipNotice(
+        getBrowserEnv().platform === 'ios'
+          ? "Replay clips aren't recorded on iPhone yet: the microphone is kept free for voice input."
+          : 'Mic audio is stored locally for your most recent recorded call only.'
+      );
       return;
     }
     setClipNotice(null);

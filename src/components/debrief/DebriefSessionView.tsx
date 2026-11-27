@@ -95,6 +95,7 @@ export const DebriefSessionView: React.FC<DebriefSessionViewProps> = ({
         if (hasRpCandidateSpeech) {
           const rpDebrief = await gradeRoleplayDebrief({
             scenarioId: sc.scenarioId,
+            scenarioToken: sc.scenarioToken,
             language: activeSession.language,
             dialect: dialectInfo.id,
             level: sc.level,
