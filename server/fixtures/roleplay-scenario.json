@@ -1,0 +1,12 @@
+{
+  "responses": [
+    {
+      "situationEnglish": "You bought a phone at a small shop yesterday and the screen already flickers. Ask the shop clerk to fix the problem.",
+      "learnerGoal": "Get a replacement or a refund for the faulty phone.",
+      "register": "usted",
+      "characterRole": "Shop clerk",
+      "complication": "The shop's policy says no refunds after 24 hours.",
+      "hiddenGoal": "The clerk needs the original receipt and will offer a same-day replacement if you ask politely."
+    }
+  ]
+}

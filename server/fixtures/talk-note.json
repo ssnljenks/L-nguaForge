@@ -1,0 +1,15 @@
+{
+  "responses": [
+    {
+      "recastNote": "Locals say \"¿qué onda?\" for a casual hello.",
+      "pickedUp": [
+        {
+          "term": "qué onda",
+          "meaning": "what's up",
+          "regionTag": "Mexico City",
+          "kind": "phrase"
+        }
+      ]
+    }
+  ]
+}

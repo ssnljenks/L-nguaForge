@@ -1,0 +1,48 @@
+{
+  "responses": [
+    {
+      "prompts": [
+        {
+          "promptTarget": "Si tuvieras más tiempo libre, ¿qué harías? (1)",
+          "promptEnglishHint": "If you had more free time, what would you do?",
+          "targetStructureHint": "si + imperfect subjunctive, conditional"
+        },
+        {
+          "promptTarget": "Si tuvieras más tiempo libre, ¿qué harías? (2)",
+          "promptEnglishHint": "If you had more free time, what would you do?",
+          "targetStructureHint": "si + imperfect subjunctive, conditional"
+        },
+        {
+          "promptTarget": "Si tuvieras más tiempo libre, ¿qué harías? (3)",
+          "promptEnglishHint": "If you had more free time, what would you do?",
+          "targetStructureHint": "si + imperfect subjunctive, conditional"
+        },
+        {
+          "promptTarget": "Si tuvieras más tiempo libre, ¿qué harías? (4)",
+          "promptEnglishHint": "If you had more free time, what would you do?",
+          "targetStructureHint": "si + imperfect subjunctive, conditional"
+        },
+        {
+          "promptTarget": "Si tuvieras más tiempo libre, ¿qué harías? (5)",
+          "promptEnglishHint": "If you had more free time, what would you do?",
+          "targetStructureHint": "si + imperfect subjunctive, conditional"
+        },
+        {
+          "promptTarget": "Si tuvieras más tiempo libre, ¿qué harías? (6)",
+          "promptEnglishHint": "If you had more free time, what would you do?",
+          "targetStructureHint": "si + imperfect subjunctive, conditional"
+        },
+        {
+          "promptTarget": "Si tuvieras más tiempo libre, ¿qué harías? (7)",
+          "promptEnglishHint": "If you had more free time, what would you do?",
+          "targetStructureHint": "si + imperfect subjunctive, conditional"
+        },
+        {
+          "promptTarget": "Si tuvieras más tiempo libre, ¿qué harías? (8)",
+          "promptEnglishHint": "If you had more free time, what would you do?",
+          "targetStructureHint": "si + imperfect subjunctive, conditional"
+        }
+      ]
+    }
+  ]
+}

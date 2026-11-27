@@ -1,0 +1,34 @@
+{
+  "responses": [
+    {
+      "characterText": "Buenas tardes. ¿En qué le puedo ayudar?",
+      "complicationIntroduced": false,
+      "resolved": false,
+      "assessment": {
+        "functionKey": "l2_resolve_complication",
+        "outcome": "sustained",
+        "evidence": "Opening."
+      }
+    },
+    {
+      "characterText": "Lo siento, pero nuestra política no permite devoluciones después de veinticuatro horas.",
+      "complicationIntroduced": true,
+      "resolved": false,
+      "assessment": {
+        "functionKey": "l2_resolve_complication",
+        "outcome": "sustained",
+        "evidence": "Explicó el problema con claridad."
+      }
+    },
+    {
+      "characterText": "Bueno, si tiene el recibo original, puedo cambiárselo hoy mismo.",
+      "complicationIntroduced": true,
+      "resolved": true,
+      "assessment": {
+        "functionKey": "l2_resolve_complication",
+        "outcome": "sustained",
+        "evidence": "Propuso una solución razonable."
+      }
+    }
+  ]
+}

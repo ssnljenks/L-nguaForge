@@ -1,0 +1,12 @@
+{
+  "responses": [
+    {
+      "user": "Hola Sofía, hoy fui al mercado con mi hermana.",
+      "tutor": "¡Qué chido! ¿Y qué compraron en el mercado?"
+    },
+    {
+      "user": "Compramos fruta y unas tortillas.",
+      "tutor": "¡Órale, qué rico! ¿Te late ir por tacos mañana?"
+    }
+  ]
+}

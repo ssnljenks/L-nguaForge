@@ -31,11 +31,12 @@
   }
 
   /*
-   * REVIEW M-12: every control is at least 44 x 44 px. min-height/min-width don't apply to
-   * display:inline elements, so tappable words inside running text (class "inline") and links in
-   * prose keep their line height, as WCAG 2.5.8 allows. Primary buttons use min-h-[52px].
+   * REVIEW M-12: every control is at least 44 x 44 px, except tappable words inside running text
+   * (buttons with class "inline", as WCAG 2.5.8 allows). Browsers lay out a <button> as inline-block
+   * even with display:inline, so those must be excluded explicitly; links in prose are display:inline
+   * and unaffected. Primary buttons use min-h-[52px].
    */
-  button,
+  button:not(.inline),
   [role='button'],
   a[href],
   select,
@@ -46,7 +47,7 @@
     min-height: 44px;
   }
 
-  button,
+  button:not(.inline),
   [role='button'] {
     min-width: 44px;
   }

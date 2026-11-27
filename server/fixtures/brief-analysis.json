@@ -1,0 +1,13 @@
+{
+  "responses": [
+    {
+      "ilrLevel": "2",
+      "topic": "society",
+      "orientationLine": "This passage is from a news report.",
+      "summary": "A news item.",
+      "matchingDomains": [],
+      "keyVocabulary": [],
+      "estimatedMinutes": 2
+    }
+  ]
+}

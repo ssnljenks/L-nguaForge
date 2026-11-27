@@ -1,0 +1,9 @@
+{
+  "responses": [
+    {
+      "promptTarget": "¿Debería la ciudad prohibir los autos en el centro histórico?",
+      "promptEnglish": "Should the city ban cars from the historic center?",
+      "recommendedConnectors": ["no obstante", "por consiguiente"]
+    }
+  ]
+}

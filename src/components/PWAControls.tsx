@@ -87,9 +87,10 @@ export const OfflineIndicator: React.FC = () => {
   if (isOnline) return null;
 
   return (
+    // Under the mobile header (not over the sticky bottom CTAs) and click-through, so it never blocks a tap.
     <div
       role="status"
-      className="fixed bottom-20 md:bottom-5 left-4 z-50 flex items-center gap-2 rounded-lg border border-amber-500/40 bg-[#1B1710] px-3.5 py-2 text-xs font-medium text-amber-300 shadow-lg"
+      className="pointer-events-none fixed top-[60px] md:top-auto md:bottom-5 left-4 z-50 flex items-center gap-2 rounded-lg border border-amber-500/40 bg-[#1B1710] px-3.5 py-2 text-xs font-medium text-amber-300 shadow-lg"
     >
       <WifiOff className="w-4 h-4 shrink-0" />
       <span>Offline Mode — Local Vocab &amp; cached drills active</span>

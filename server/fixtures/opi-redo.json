@@ -1,0 +1,13 @@
+{
+  "responses": [
+    {
+      "improved": true,
+      "verdictLabel": "Stronger answer",
+      "comparisonSummary": "You used the imperfect subjunctive and conditional this time.",
+      "strengths": ["Correct si-clause", "Clear consequence"],
+      "remainingGap": "Add one concrete example.",
+      "upgradedModelAnswer": "Si cerraran la mitad de las oficinas, el transporte público perdería pasajeros y el comercio del centro sufriría.",
+      "errors": []
+    }
+  ]
+}
