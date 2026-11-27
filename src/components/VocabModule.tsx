@@ -1,22 +1,22 @@
 import React, {useMemo, useState} from 'react';
 import {BookOpen, Brain, Download, Plus, Search} from 'lucide-react';
-import type {
-  DrillHistoryEntry,
-  MilitaryDomain,
-  MissionConfig,
-  VocabCategory,
-  VocabFsrsRating,
-  VocabItem,
-} from '../types';
+import type {DrillHistoryEntry, MilitaryDomain, MissionConfig, VocabFsrsRating, VocabItem} from '../types';
 import {
   filterItemsByLanguage,
   formatVocabToAnkiCsv,
   getDialectInfo,
   LANGUAGE_LABELS,
   MILITARY_DOMAINS,
-  VALID_VOCAB_CATEGORIES,
 } from '../utils/ilrLogic';
 import {getOfflineMilitaryEntries, normalizeLookupKey} from '../utils/localDictionary';
+import {
+  filterVocabItems,
+  isGlossaryAvailable,
+  resolveVocabView,
+  visibleVocabCategoryFilters,
+  type VocabCategoryFilter,
+  type VocabMode,
+} from '../utils/vocabFilters';
 import {getDueVocabCards, sortVocabDeckByFsrs} from '../utils/vocabFsrsCore';
 import {useSpeechSynthesis} from '../hooks/useSpeech';
 import type {SaveVocabFn} from '../hooks/useWordLookup';
@@ -45,8 +45,15 @@ export const VocabModule: React.FC<VocabModuleProps> = ({
   onReviewVocabFsrs,
   onLogHistory,
 }) => {
-  const [mode, setMode] = useState<'browse' | 'recall' | 'glossary'>('browse');
-  const [categoryFilter, setCategoryFilter] = useState<'all' | VocabCategory>('all');
+  const [requestedMode, setMode] = useState<VocabMode>('browse');
+  const [requestedCategoryFilter, setCategoryFilter] = useState<VocabCategoryFilter>('all');
+  // Military Dict and the Operational/Military Terms filter exist only with Work focus on. If it is switched off
+  // while one of them is selected, the normal list is shown instead.
+  const workFocus = config.workFocusEnabled;
+  const {mode, categoryFilter} = resolveVocabView(
+    {mode: requestedMode, categoryFilter: requestedCategoryFilter},
+    workFocus
+  );
   const [glossaryDomainFilter, setGlossaryDomainFilter] = useState<'all' | MilitaryDomain>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -64,18 +71,10 @@ export const VocabModule: React.FC<VocabModuleProps> = ({
 
   const languageItems = useMemo(() => filterItemsByLanguage(items, config.language), [items, config.language]);
 
-  const filteredItems = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    return languageItems.filter((item) => {
-      if (categoryFilter !== 'all' && item.category !== categoryFilter) return false;
-      if (!q) return true;
-      return (
-        item.term.toLowerCase().includes(q) ||
-        item.englishConcept.toLowerCase().includes(q) ||
-        item.contextSentence.toLowerCase().includes(q)
-      );
-    });
-  }, [languageItems, categoryFilter, searchQuery]);
+  const filteredItems = useMemo(
+    () => filterVocabItems(languageItems, categoryFilter, searchQuery),
+    [languageItems, categoryFilter, searchQuery]
+  );
 
   const dueTodayCount = useMemo(() => getDueVocabCards(items, config.language).length, [items, config.language]);
 
@@ -183,7 +182,7 @@ export const VocabModule: React.FC<VocabModuleProps> = ({
 
         <div className="flex flex-wrap items-center gap-2.5">
           <div
-            className="grid grid-cols-3 sm:inline-flex items-center p-1 rounded-lg bg-[#111922] border border-[#23303E] w-full sm:w-auto"
+            className={`grid ${workFocus ? 'grid-cols-3' : 'grid-cols-2'} sm:inline-flex items-center p-1 rounded-lg bg-[#111922] border border-[#23303E] w-full sm:w-auto`}
             role="tablist"
             aria-label="Vocab mode"
           >
@@ -199,19 +198,21 @@ export const VocabModule: React.FC<VocabModuleProps> = ({
               <span className="sm:hidden">Library</span>
               <span className="hidden sm:inline">Vocab Library</span>
             </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'glossary'}
-              onClick={() => setMode('glossary')}
-              className={`flex items-center justify-center gap-1.5 min-h-[44px] px-2 sm:px-3 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
-                mode === 'glossary' ? 'bg-[#1D2B3A] text-[#F8FAFC]' : 'text-[#94A3B8] hover:text-white'
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5 text-[#D99B26] shrink-0" />
-              <span className="sm:hidden">Military Dict</span>
-              <span className="hidden sm:inline">Offline Military Dict</span>
-            </button>
+            {isGlossaryAvailable(workFocus) && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === 'glossary'}
+                onClick={() => setMode('glossary')}
+                className={`flex items-center justify-center gap-1.5 min-h-[44px] px-2 sm:px-3 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+                  mode === 'glossary' ? 'bg-[#1D2B3A] text-[#F8FAFC]' : 'text-[#94A3B8] hover:text-white'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5 text-[#D99B26] shrink-0" />
+                <span className="sm:hidden">Military Dict</span>
+                <span className="hidden sm:inline">Offline Military Dict</span>
+              </button>
+            )}
             <button
               type="button"
               role="tab"
@@ -292,7 +293,7 @@ export const VocabModule: React.FC<VocabModuleProps> = ({
             role="group"
             aria-label="Filter by category"
           >
-            {(['all', ...VALID_VOCAB_CATEGORIES] as const).map((cat) => (
+            {visibleVocabCategoryFilters(workFocus).map((cat) => (
               <button
                 key={cat}
                 type="button"

@@ -91,7 +91,7 @@ I walked each state by reading the code and, for the ones marked ✅ e2e, by rep
 
 1. PREP, Interpretation and Recall show the error but have no button labelled Retry; pressing the original Grade/Submit again works. Cheap to add later.
 2. The Today speaking item can be "OPI · Brief it back"; if the Brief feed was down at plan time it uses a built-in story with no audio. Fine for testing; mention it if a tester asks why there's no audio.
-3. **Product-rule gap, not changed:** the Vocab tab always offers **Military Dict** and an **Operational/Military Terms** category, even with Work focus off (found while probing the empty Vocab state). REVIEW's rule is that military content appears only with Work focus on. Hiding them is a few lines in `VocabModule.tsx`, but it is your call whether the offline dictionary counts as "work content".
+3. ~~Vocab showed Military Dict and the Operational/Military Terms category with Work focus off.~~ Fixed in `chore/military-dict-work-focus`: both are hidden with Work focus off (saved items still listed). Still visible with Work focus off: the "Operational/Military Terms" option in the Add Entry form and the military-term count in Settings' offline dictionary section.
 4. `useLocalStorage` ignores data it can't parse and falls back to defaults (logged to the browser console only). A corrupted store looks like a reset account. There's no in-app export/import besides Vocab's Anki CSV: **back up before you hand the phone to someone** (TESTING.md).
 
 ---
